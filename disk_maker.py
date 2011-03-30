@@ -6,19 +6,20 @@ class Partition(object):
     def __init__(self, fs_type=None, size=0):
         self._check_args(fs_type, size)
         self.fs_type = fs_type
-        self.size = size
+        self.size = Size(size)
     
     def __repr__(self):
-        pass
+        return
 
 class FileSystem(object):
-    __init__()
+    def __init__():
+        pass
 
-class LVMGroup(object, partition=None):
+class LVMGroup(object):
     pass
 
 class Layout(object):
-    def __init__(self, size, table='gpt'):
+    def __init__(self, disk_size, table='gpt'):
         self.size = size
         self.partitions = list()
 
@@ -48,7 +49,7 @@ class Size(object):
     terabyte = 2**40
     
     def __init__(self, value):
-        self.bytes = self._analyze(value) 
+        self.bytes = self._convert(value) 
         
 
     def _convert(self, value):
@@ -72,7 +73,7 @@ class Size(object):
             raise SizeObjectValError(
                 'Value is not in a format I can understand')
 
-        if suffx == 'k':
+        if suffix == 'k':
             return val * self.kilobyte
 
         if suffix == 'M':
@@ -88,7 +89,7 @@ class Size(object):
                 'Value is not in a format I can understand')
         
     def _units(self):
-        yield [('T', self.terabyte), 
+        return [('T', self.terabyte),
                ('G', self.gigabyte),
                ('M', self.megabyte),
                ('k', self.kilobyte),
@@ -99,10 +100,35 @@ class Size(object):
         for unit in self._units():
             if self.bytes >= unit[1]:
                 human = str(self.bytes / unit[1]) + unit[0]
-
+                break
         return human
-                
 
+    def megabytes(self):
+        return self.bytes / self.megabyte
+                
+    def __repr__(self):
+        rep = '%s : %ib' % (Size.__mro__[0], self.bytes)
+        return rep
+
+    def __str__(self):
+        return self.humanize()
+
+    def __add__(self, other):
+        return self.bytes + other.bytes
+
+    def __sub__(self, other):
+        return self.bytes - other.bytes
+
+    def __mul__(self, other):
+        return self.bytes * other.bytes
+
+    def __div__(self, other):
+        'dont devide by zero.'
+        return other.bytes/self.bytes
+
+    def __truedev__(self, other):
+        'dont device by zero'
+        return other.bytes/self.bytes
 
 class PartitionError(Exception):pass
 class SizeObjectValError(Exception):pass
