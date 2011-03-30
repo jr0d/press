@@ -51,16 +51,58 @@ class Size(object):
         self.bytes = self._analyze(value) 
         
 
-    def _analyze(self, value):
+    def _convert(self, value):
         valid_suffix = ['k', 'M', 'G', 'T']
         if type(value) == int:
             return value
 
         if type(value) != str:
             raise SizeObjectValError(
-                    'Value is not in a format I can understand')
+                'Value is not in a format I can understand')
+
+        val, suffix = (value[:-1], value[-1])
+
+        if suffix not in valid_suffix:
+            raise SizeObjectValError(
+                'Value is not in a format I can understand')
+
+        try:
+            val = int(val)
+        except ValueError:
+            raise SizeObjectValError(
+                'Value is not in a format I can understand')
+
+        if suffx == 'k':
+            return val * self.kilobyte
+
+        if suffix == 'M':
+            return val * self.megabyte
+
+        if suffix == 'G':
+            return val * self.gigabyte
+
+        if suffix == 'T':
+            return val * self.terabyte
+
+        raise SizeObjectValError(
+                'Value is not in a format I can understand')
         
-        
+    def _units(self):
+        yield [('T', self.terabyte), 
+               ('G', self.gigabyte),
+               ('M', self.megabyte),
+               ('k', self.kilobyte),
+               ('b', self.byte)]
+
+    def humanize(self):
+        human = None
+        for unit in self._units():
+            if self.bytes >= unit[1]:
+                human = str(self.bytes / unit[1]) + unit[0]
+
+        return human
+                
+
 
 class PartitionError(Exception):pass
-
+class SizeObjectValError(Exception):pass
