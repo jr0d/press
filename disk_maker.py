@@ -4,12 +4,12 @@ class Partition(object):
     __device__ = None
     __file_system__ = None
     def __init__(self, fs_type=None, size=0):
-        self._check_args(fs_type, size)
         self.fs_type = fs_type
         self.size = Size(size)
     
     def __repr__(self):
-        return
+        return '%s : %s %s' % (Partition.__mro__[0], self.fs_type, 
+                self.size.humanize())
 
 class FileSystem(object):
     def __init__():
@@ -24,7 +24,8 @@ class Layout(object):
         self.partitions = list()
 
     def add_partition(self, partition):
-        pass
+
+        self.partitions.append(partition)
 
     def remove_partition(self, partition):
         pass
