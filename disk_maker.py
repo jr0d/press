@@ -3,13 +3,17 @@ class Partition(object):
     '''Represents the base container.'''
     __device__ = None
     __file_system__ = None
-    def __init__(self, fs_type=None, size=0):
+    def __init__(self, name='', fs_type=None, size=0):
+        self.name = name
         self.fs_type = fs_type
         self.size = Size(size)
     
     def __repr__(self):
         return '%s : %s %s' % (Partition.__mro__[0], self.fs_type, 
                 self.size.humanize())
+    def __str__(self):
+        return '%s [ %s, %s ]' % (self.name, self.fs_type, self.size.humanize())
+
 
 class FileSystem(object):
     def __init__():
@@ -20,20 +24,53 @@ class LVMGroup(object):
 
 class Layout(object):
     def __init__(self, disk_size, table='gpt'):
-        self.size = size
+        self.disk_size = Size(disk_size)
         self.partitions = list()
 
     def add_partition(self, partition):
+        try:
+            self._validate_partition(partition)
+        except AttributeError:
+            raise LayoutValidationError('The partition object was invalid.')
 
         self.partitions.append(partition)
 
-    def remove_partition(self, partition):
+    def remove_partition(self, index=None):
+        if not index:
+            raise LayoutValidationError('You must specify an index')
+        self.partitions.pop(index)
+
+    def get_partition_index_by_name():
         pass
 
     def show(self):
         for partition in partitions:
             print partition
+    
+    def get_used_size(self):
+        used = Size(0)
+        for partition in self.partitions:
+            used = used + partition.size
+        
+        print type(used)
+        return used
 
+    def _validate_partition(self, partition):
+        ## check if there is available space
+        if len(self.partitions):
+            print self.disk_size
+            print self.get_used_size()
+            print partition.size
+            if self.disk_size < self.get_used_size() + partition.size:
+                raise LayoutValidationError('The partition is too big.')
+        else:
+            print partition.size
+            print self.disk_size
+            if self.disk_size < partition.size:
+                raise LayoutValidationError('The partition is too big.')
+
+    def _enum_partitions(self):
+        return enumerate(self.partitions.name)
 
     def __repr__(self):
         pass
@@ -66,14 +103,14 @@ class Size(object):
 
         if suffix not in valid_suffix:
             raise SizeObjectValError(
-                'Value is not in a format I can understand')
+                'Value is not in a format I can understand. Invalid Suffix.')
 
         try:
             val = int(val)
         except ValueError:
             raise SizeObjectValError(
-                'Value is not in a format I can understand')
-
+                'Value is not in a format I can understand. ' + \
+                'Could not convert value to int')
         if suffix == 'k':
             return val * self.kilobyte
 
@@ -126,6 +163,24 @@ class Size(object):
     def __div__(self, other):
         'dont devide by zero.'
         return other.bytes/self.bytes
+    
+    def __lt__(self, other):
+        return self.bytes < other.bytes
+
+    def __le__(self, other):
+        return self.bytes <= other.bytes
+
+    def __eq__(self, other):
+        return self.bytes == other.bytes
+
+    def __ne__(self, other):
+        return self.bytes <> other.bytes
+
+    def __gt__(self, other):
+        return self.bytes > other.bytes
+
+    def __ge__(self, other):
+        return self.bytes >= other.bytes
 
     def __truedev__(self, other):
         'dont device by zero'
@@ -133,3 +188,4 @@ class Size(object):
 
 class PartitionError(Exception):pass
 class SizeObjectValError(Exception):pass
+class LayoutValidationError(Exception):pass
