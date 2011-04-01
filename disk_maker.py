@@ -25,6 +25,7 @@ class LVMGroup(object):
 class Layout(object):
     def __init__(self, disk_size, table='gpt'):
         self.disk_size = Size(disk_size)
+        self.table = table
         self.partitions = list()
 
     def add_partition(self, partition):
@@ -48,37 +49,50 @@ class Layout(object):
             print partition
     
     def get_used_size(self):
+        if not len(self.partitions):
+            return Size(0)
+
         used = Size(0)
         for partition in self.partitions:
             used = used + partition.size
-        
-        print type(used)
         return used
+
+    def add_partition_percent(self, name, percent, fs_type):
+        pass
+
+    def add_partition_fill(self, name, fs_type):
+        pass
 
     def _validate_partition(self, partition):
         ## check if there is available space
         if len(self.partitions):
-            print self.disk_size
-            print self.get_used_size()
-            print partition.size
             if self.disk_size < self.get_used_size() + partition.size:
                 raise LayoutValidationError('The partition is too big.')
         else:
-            print partition.size
-            print self.disk_size
             if self.disk_size < partition.size:
                 raise LayoutValidationError('The partition is too big.')
 
     def _enum_partitions(self):
-        return enumerate(self.partitions.name)
+        return enumerate([partition.name for partition in self.partitions])
 
     def __repr__(self):
-        pass
+        return Layout.__mro__[0]
 
     def __str__(self):
-        return self.__repr__()
+        output = 'Partition Table (%s):\n' % (self.table) + \
+                 'Disk Size: %d (%s)\n' % (
+                         self.disk_size.bytes, self.disk_size)
 
-    
+        for partition in self.partitions:
+            output = output + \
+            '[%s]\t%s\t%s\n' % (partition.name, partition.fs_type,
+                    partition.size)
+
+        output = output + '\t\t\tremaining: %s / %s' % (self.get_used_size(),
+                self.disk_size)
+
+        return output
+
 class Size(object):
     byte = 2**3
     kilobyte = 2**10
@@ -103,7 +117,7 @@ class Size(object):
 
         if suffix not in valid_suffix:
             raise SizeObjectValError(
-                'Value is not in a format I can understand. Invalid Suffix.')
+            'Value is not in a format I can understand. Invalid Suffix.')
 
         try:
             val = int(val)
@@ -152,17 +166,17 @@ class Size(object):
         return self.humanize()
 
     def __add__(self, other):
-        return self.bytes + other.bytes
+        return Size(self.bytes + other.bytes)
 
     def __sub__(self, other):
-        return self.bytes - other.bytes
+        return Size(self.bytes - other.bytes)
 
     def __mul__(self, other):
-        return self.bytes * other.bytes
+        return Size(self.bytes * other.bytes)
 
     def __div__(self, other):
         'dont devide by zero.'
-        return other.bytes/self.bytes
+        return Size(other.bytes/self.bytes)
     
     def __lt__(self, other):
         return self.bytes < other.bytes
@@ -184,7 +198,7 @@ class Size(object):
 
     def __truedev__(self, other):
         'dont device by zero'
-        return other.bytes/self.bytes
+        return Size(other.bytes/self.bytes)
 
 class PartitionError(Exception):pass
 class SizeObjectValError(Exception):pass

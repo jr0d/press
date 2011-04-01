@@ -9,7 +9,7 @@ size2 = Size('15G')
 print size2
 print size + size2
 
-size3 = Size(size + size2)
+size3 = size + size2
 print size3.__repr__()
 print size3
 
@@ -23,7 +23,7 @@ print 'Making test Layout:\n'
 
 layout = Layout(disk_size='256G', table='gpt')
 part_boot = Partition('boot', 'ext3', '500M')
-part_tmp = Partition('tmp', 'ext4', '2G')
+part_tmp = Partition('tmp', 'ext3', '2G')
 part_opt = Partition('opt', 'ext4', '100G')
 
 layout.add_partition(part_boot)
@@ -31,5 +31,9 @@ layout.add_partition(part_tmp)
 layout.add_partition(part_root)
 layout.add_partition(part_opt)
 
-print '%s / %s' % (layout.disk_size, layout.get_used_size)
-print layout._enum_partition()
+print '%s / %s' % (layout.get_used_size(), layout.disk_size)
+for elm in layout._enum_partitions():
+    print elm
+
+
+print layout
