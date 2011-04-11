@@ -1,0 +1,10 @@
+PyOSd : Notes
+================================
+
+Relevance of Size():
+
+This class will abstract the transmission of storage measurement data. 
+
+Abstract:
+
+Machines have no use for partitions. 
