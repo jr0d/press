@@ -14,14 +14,19 @@ class PartedInterface(object):
     def __init__(self, parted_path='/sbin/parted', device='/dev/sda'):
         self.parted_path = parted_path
         self.device = device
-        self.parted = self.parted_path + ' --script ' + self.device
+        self.parted = self.parted_path + ' --script ' + self.device + ' unit b'
 
     def get_table(self):
         return robo(self.parted + ' print')
 
     def get_size(self):
         table = self.get_table()
-        return table[1].split()[2].strip('B')
+        try:
+            size = table[1].split()[2].strip('B')
+        except IndexError:
+            return None
+        return size 
+
 
     def get_partitions(self):
         table = self.get_table
