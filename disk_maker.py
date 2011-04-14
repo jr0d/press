@@ -109,6 +109,9 @@ class Size(object):
         if type(value) == int:
             return value
 
+        if value.isdigit():
+            return int(value)
+
         if type(value) != str:
             raise SizeObjectValError(
                 'Value is not in a format I can understand')

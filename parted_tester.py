@@ -3,7 +3,7 @@ from disk_maker import Size
 from parted import *
 
 
-pi = PartedInterface(device='/dev/sdc')
+pi = PartedInterface(device='/dev/sda')
 table_out = pi.get_table()
 
 for line in table_out:
