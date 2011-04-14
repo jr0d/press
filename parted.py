@@ -44,10 +44,15 @@ class PartedInterface(object):
         ret = run(command)
 
         if ret != 0:
-            print 'Could not remove partition: %d' % partition_number
+            raise PartedException(
+                    'Could not remove partition: %d' % partition_number)
 
     def wipe_table(self):
-        pass
+        part_ids = [x[0] for x in self.get_partitions()]
+
+        for part_ids in 
+
+class PartedException(Exception):pass
 
 def execute(command=''):
     p = Popen(command, shell=True)
