@@ -21,12 +21,10 @@ class PartedInterface(object):
 
     def get_size(self):
         table = self.get_table()
-        try:
-            size = table[1].split()[2].strip('B')
-        except IndexError:
-            return None
-        return size 
-
+        for line in table:
+            if 'Disk' in line:
+                return line.split()[2].strip('B')
+        return None
 
     def get_partitions(self):
         table = self.get_table
