@@ -1,4 +1,3 @@
-
 class Partition(object):
     '''Represents the base container.'''
     __device__ = None
@@ -161,6 +160,9 @@ class Size(object):
     def megabytes(self):
         return self.bytes / self.megabyte
                 
+    def tostring(self):
+        return str(self.bytes)
+
     def __repr__(self):
         rep = '%s : %ib' % (Size.__mro__[0], self.bytes)
         return rep
