@@ -83,7 +83,8 @@ class PartedInterface(object):
 
         start = self.__gpt_alignment__
         if partitions:
-            start = int(partitions[-1][2].strip('B')) + self.__partition_gap__
+            start = int(partitions[-1][2].strip('B')) + \
+            self.__partition_gap__ * 10
 
         start = Size(start)
         end = start + part_size

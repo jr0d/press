@@ -1,5 +1,5 @@
 import sys
-from types import Size
+from disk_maker import Size
 from parted import *
 
 
