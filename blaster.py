@@ -31,4 +31,6 @@ class BlasterMaster(object):
 
 
     '''
+    pass
+
 
