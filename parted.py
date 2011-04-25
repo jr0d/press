@@ -1,9 +1,9 @@
-import disk_maker
+import types
 import os
 import shlex
 import subprocess
 from subprocess import Popen, PIPE
-from disk_maker import Size
+from types import Size
 
 class PartedInterface(object):
     '''

@@ -1,4 +1,4 @@
-from disk_maker import Size, Partition, Layout
+from types import Size, Partition, Layout
 
 size = Size('124G')
 
