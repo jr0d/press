@@ -62,6 +62,9 @@ class Layout(object):
     def add_partition_fill(self, name, fs_type):
         pass
 
+    def add_partition_exact(self, size):
+        pass
+
     def _validate_partition(self, partition):
         ## check if there is available space
         if len(self.partitions):
@@ -75,7 +78,11 @@ class Layout(object):
         return enumerate([partition.name for partition in self.partitions])
 
     def __repr__(self):
-        return Layout.__mro__[0]
+        return '<%s>  : %d [%s]' % (
+                self.__class__.__name__,
+                self.disk_size.bytes,
+                self.table
+                )
 
     def __str__(self):
         output = 'Partition Table (%s):\n' % (self.table) + \
@@ -151,6 +158,8 @@ class Size(object):
 
     def humanize(self):
         human = None
+        if not self.bytes:
+            return '0b'
         for unit in self._units():
             if self.bytes >= unit[1]:
                 human = str(self.bytes / unit[1]) + unit[0]
@@ -164,7 +173,7 @@ class Size(object):
         return str(self.bytes)
 
     def __repr__(self):
-        rep = '%s : %ib' % (Size.__mro__[0], self.bytes)
+        rep = '<%s> : %ib' % (self.__class__.__name__, self.bytes)
         return rep
 
     def __str__(self):
