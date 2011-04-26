@@ -1,5 +1,5 @@
 from parted import PartedInterface, PartedInterfaceException, PartedException
-from types import Layout, Partition, Size
+from structure import Layout, Partition, Size
 
 
 

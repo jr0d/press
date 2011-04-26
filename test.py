@@ -1,4 +1,4 @@
-from types import Size, Partition, Layout
+from structure import Size, Partition, Layout
 
 size = Size('124G')
 

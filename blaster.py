@@ -1,5 +1,5 @@
 from parted import PartedInterface, PartedInterfaceException, PartedException
-from types import Layout, Partition, Size
+from structure import Layout, Partition, Size
 
 class BlasterMaster(object):
     '''
@@ -39,4 +39,5 @@ class BlasterMaster(object):
             self.parted_interface = parted_interface
 
 
+    def load_layout(self, layout):
 

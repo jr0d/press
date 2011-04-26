@@ -1,9 +1,9 @@
-import types
+import structure
 import os
 import shlex
 import subprocess
 from subprocess import Popen, PIPE
-from types import Size
+from structure import Size
 
 class PartedInterface(object):
     '''

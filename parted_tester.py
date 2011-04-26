@@ -1,5 +1,5 @@
 import sys
-from types import Size
+from structure import Size
 from parted import *
 
 
