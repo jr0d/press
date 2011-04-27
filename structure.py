@@ -56,14 +56,21 @@ class Layout(object):
             used = used + partition.size
         return used
 
-    def add_partition_percent(self, name, percent, fs_type):
-        pass
+    def add_partition_percent(self, name, fs_type, percent):
+        '''
+        Creates a partition using a percentage of available disk space.
+        '''
+        current_size = self.get_used_size()
+        
 
     def add_partition_fill(self, name, fs_type):
-        pass
-
-    def add_partition_exact(self, size):
-        pass
+        current_size = self.get_used_size()
+        partition_size = self.disk_size - current_size
+        self.add_partition(Partition(name, fs_type, size))
+    
+    def add_partition_exact(self, name, fs_type, size):
+        self.add_partition(Partition(name, fs_type, size))
+        
 
     def _validate_partition(self, partition):
         ## check if there is available space
@@ -73,6 +80,9 @@ class Layout(object):
         else:
             if self.disk_size < partition.size:
                 raise LayoutValidationError('The partition is too big.')
+
+        if partition < Size('1M'):
+            raise LayoutValidtaionError('The partition cannot be < 1MiB.')
 
     def _enum_partitions(self):
         return enumerate([partition.name for partition in self.partitions])
