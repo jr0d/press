@@ -61,8 +61,10 @@ class Layout(object):
         Creates a partition using a percentage of available disk space.
         '''
         current_size = self.get_used_size()
+        available = self.disk_size - current_size
+        size = Size(available * (percent/100))
+        self.add_partition(Partition(name, fs_type, size))
         
-
     def add_partition_fill(self, name, fs_type):
         current_size = self.get_used_size()
         partition_size = self.disk_size - current_size
@@ -70,7 +72,6 @@ class Layout(object):
     
     def add_partition_exact(self, name, fs_type, size):
         self.add_partition(Partition(name, fs_type, size))
-        
 
     def _validate_partition(self, partition):
         ## check if there is available space
@@ -124,6 +125,9 @@ class Size(object):
         valid_suffix = ['k', 'M', 'G', 'T']
         if type(value) == int:
             return value
+        
+        if type(value) == float:
+            return int(round(value))
 
         if value.isdigit():
             return int(value)

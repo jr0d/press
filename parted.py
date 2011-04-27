@@ -17,7 +17,7 @@ class PartedInterface(object):
     
     def __init__(self, parted_path='/sbin/parted', device='/dev/sda'):
         self.parted_path = parted_path
-        if not os.path.isfile(self.path):
+        if not os.path.isfile(self.parted_path):
             raise PartedInterfaceException('%s does not exist.' % self.path)
         self.device = device
         self.parted = self.parted_path + ' --script ' + self.device + ' unit b'
@@ -102,7 +102,7 @@ class PartedInterface(object):
 
 
 class PartedException(Exception):pass
-class PartedInterfaceExceptions(Exception):pass
+class PartedInterfaceException(Exception):pass
 
 def execute(command=''):
     p = Popen(command, shell=True)

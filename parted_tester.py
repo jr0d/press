@@ -31,16 +31,10 @@ print 'removed %s partitions!' % (removed)
 
 print 'Creating a test partition!'
 
-part_type = 'ext4'
-part_size = Size('1G')
+part_type = 'lvm'
+part_size = Size(1610612736)
 print part_size
 print part_size.megabytes()
 
 print 'Creating first'
 pi.create_partition(part_type, part_size)
-print 'Creating second'
-pi.create_partition(part_type, Size('500M'))
-
-
-
-
