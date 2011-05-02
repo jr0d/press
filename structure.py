@@ -2,6 +2,8 @@ class Partition(object):
     '''Represents the base container.'''
     __device__ = None
     __file_system__ = None
+    __lvm_parent__ = None
+
     def __init__(self, name='', fs_type=None, size=0):
         self.name = name
         self.fs_type = fs_type
@@ -18,14 +20,27 @@ class FileSystem(object):
     def __init__():
         pass
 
-class LVMGroup(object):
-    pass
+class PVGroup(object):
+    '''
+    A PVGroup can only be instantiated by passing a list of Partition objects
+    with the __device__ attribute set. When instantiated, PVGroup __init__ 
+    will set the __lvm_parent__ attribute of each partition added to the 
+    group.
+    '''
+    def __init__(self, partitions):
+        if partitions:
+            self.partitions = partitions
+        else:
+            self.partitions = list()
+
 
 class Layout(object):
+    __on_disk__ = False
     def __init__(self, disk_size, table='gpt'):
         self.disk_size = Size(disk_size)
         self.table = table
         self.partitions = list()
+        self.pvgroups = list()
 
     def add_partition(self, partition):
         try:
