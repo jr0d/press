@@ -1,12 +1,12 @@
 class Partition(object):
     '''
-    
+
     Represents the base container.
 
     __device__ is set when the partition object is linked to a pysical disk.
 
-    __file_system__ is when a file system is 
-    __vg_parent__ is only set when the partition is marked as a pysical 
+    __file_system__ is when a file system is
+    __vg_parent__ is only set when the partition is marked as a pysical
     volume. 
 
     '''
@@ -21,7 +21,7 @@ class Partition(object):
         self.mount_point = mount_point
 
     def __repr__(self):
-        return '%s : %s %s' % (Partition.__mro__[0], self.fs_type, 
+        return '%s : %s %s' % (Partition.__mro__[0], self.fs_type,
                 self.size.humanize())
     def __str__(self):
         return '%s [ %s, %s ]' % (self.name, self.fs_type, self.size.humanize())
@@ -36,7 +36,7 @@ class VGroup(object):
 
 class LVolume(Partition):
     def __repr__(self):
-        return '%s : %s %s' % (LVolume.__mro__[0], self.fs_type, 
+        return '%s : %s %s' % (LVolume.__mro__[0], self.fs_type,
             self.size.humanize())
 
 
@@ -67,7 +67,7 @@ class Layout(object):
     def show(self):
         for partition in partitions:
             print partition
-    
+
     def get_used_size(self):
         if not len(self.partitions):
             return Size(0)
@@ -85,12 +85,12 @@ class Layout(object):
         available = self.disk_size - current_size
         size = Size(available * (percent/100))
         self.add_partition(Partition(name, fs_type, size))
-        
+
     def add_partition_fill(self, name, fs_type):
         current_size = self.get_used_size()
         partition_size = self.disk_size - current_size
         self.add_partition(Partition(name, fs_type, size))
-    
+
     def add_partition_exact(self, name, fs_type, size):
         self.add_partition(Partition(name, fs_type, size))
 
