@@ -1,14 +1,25 @@
 class Partition(object):
-    '''Represents the base container.'''
+    '''
+    
+    Represents the base container.
+
+    __device__ is set when the partition object is linked to a pysical disk.
+
+    __file_system__ is when a file system is 
+    __vg_parent__ is only set when the partition is marked as a pysical 
+    volume. 
+
+    '''
     __device__ = None
     __file_system__ = None
-    __lvm_parent__ = None
+    __vg_parent__ = None
 
-    def __init__(self, name='', fs_type=None, size=0):
+    def __init__(self, name='', fs_type=None, size=0, mount_point=None):
         self.name = name
         self.fs_type = fs_type
         self.size = Size(size)
-    
+        self.mount_point = mount_point
+
     def __repr__(self):
         return '%s : %s %s' % (Partition.__mro__[0], self.fs_type, 
                 self.size.humanize())
@@ -20,18 +31,13 @@ class FileSystem(object):
     def __init__():
         pass
 
-class PVGroup(object):
-    '''
-    A PVGroup can only be instantiated by passing a list of Partition objects
-    with the __device__ attribute set. When instantiated, PVGroup __init__ 
-    will set the __lvm_parent__ attribute of each partition added to the 
-    group.
-    '''
-    def __init__(self, partitions):
-        if partitions:
-            self.partitions = partitions
-        else:
-            self.partitions = list()
+class VGroup(object):
+    pass
+
+class LVolume(Partition):
+    def __repr__(self):
+        return '%s : %s %s' % (LVolume.__mro__[0], self.fs_type, 
+            self.size.humanize())
 
 
 class Layout(object):
