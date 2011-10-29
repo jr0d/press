@@ -5,18 +5,25 @@ class Partition(object):
 
     __device__ is set when the partition object is linked to a pysical disk.
 
-    __file_system__ is when a file system is
+    __file_system__ a FileSystem object when a file system is assigned
+
     __vg_parent__ is only set when the partition is marked as a pysical
-    volume. 
+    volume and is part of a volume group. VGroup object.
+
+    __pv__ bool, is the partition is initilized as, or intended to be, a
+    pysical volume.
 
     '''
     __device__ = None
     __file_system__ = None
     __vg_parent__ = None
+    __pv__ = False
 
     def __init__(self, name='', fs_type=None, size=0, mount_point=None):
         self.name = name
         self.fs_type = fs_type
+        if self.fs_type:
+            self.__file_system__ = FileSystem(self.fs_type)
         self.size = Size(size)
         self.mount_point = mount_point
 
@@ -26,15 +33,25 @@ class Partition(object):
     def __str__(self):
         return '%s [ %s, %s ]' % (self.name, self.fs_type, self.size.humanize())
 
-
 class FileSystem(object):
-    def __init__():
-        pass
+    def __init__(self, fs_type='ext4'):
+        self.fs_type = fs_type
 
 class VGroup(object):
-    pass
+    def __init__(self, name, partitions=list()):
+        self.name = name
+        self.partitions = partitions
 
-class LVolume(Partition):
+class LVolume(object):
+    def __init__(
+            self, name='', fs_type=None, size=0, mount_point=None):
+        self.name = name,
+        self.fs_type = fs_type
+        if self.fs_type:
+            fs_type = FileSystem(fstype)
+        self.size = size
+        self.mount_point = mount_point
+
     def __repr__(self):
         return '%s : %s %s' % (LVolume.__mro__[0], self.fs_type,
             self.size.humanize())
@@ -46,13 +63,14 @@ class Layout(object):
         self.disk_size = Size(disk_size)
         self.table = table
         self.partitions = list()
-        self.pvgroups = list()
+        self.vgroups = list()
 
     def add_partition(self, partition):
         try:
             self._validate_partition(partition)
-        except AttributeError:
-            raise LayoutValidationError('The partition object was invalid.')
+        except AttributeError as ae:
+            raise LayoutValidationError('The partition object was invalid.' + \
+                    '\n[%s]' % str(ae))
 
         self.partitions.append(partition)
 
@@ -83,13 +101,13 @@ class Layout(object):
         '''
         current_size = self.get_used_size()
         available = self.disk_size - current_size
-        size = Size(available * (percent/100))
-        self.add_partition(Partition(name, fs_type, size))
+        size = Size(available.bytes * (percent/100.0))
+        self.add_partition(Partition(name, fs_type, size.bytes))
 
     def add_partition_fill(self, name, fs_type):
         current_size = self.get_used_size()
         partition_size = self.disk_size - current_size
-        self.add_partition(Partition(name, fs_type, size))
+        self.add_partition(Partition(name, fs_type, partition_size.bytes))
 
     def add_partition_exact(self, name, fs_type, size):
         self.add_partition(Partition(name, fs_type, size))
@@ -103,7 +121,7 @@ class Layout(object):
             if self.disk_size < partition.size:
                 raise LayoutValidationError('The partition is too big.')
 
-        if partition < Size('1M'):
+        if partition.size < Size('1M'):
             raise LayoutValidtaionError('The partition cannot be < 1MiB.')
 
     def _enum_partitions(self):
