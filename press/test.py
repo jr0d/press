@@ -30,8 +30,16 @@ layout.add_partition(part_boot)
 layout.add_partition(part_tmp)
 layout.add_partition(part_root)
 layout.add_partition(part_opt)
-layout.add_partition_percent('percent_example', 'ext4', 56)
+percent = 56
+print 'Adding partion using ' + \
+        'add_partition_percent(\'percent_example\', \'ext4\', %s)' % percent
+layout.add_partition_percent('percent_example', 'ext4', percent)
+print 'Success!'
+print 'Adding partition using ' + \
+        'add_partition_fill(\'left_over\', \'ext4\')'
 layout.add_partition_fill('left_over', 'ext4')
+print 'Sucess!'
+
 print '%s / %s' % (layout.get_used_size(), layout.disk_size)
 for elm in layout._enum_partitions():
     print elm
