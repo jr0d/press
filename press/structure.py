@@ -1,5 +1,5 @@
 class Partition(object):
-    '''
+    """
 
     Represents the base container.
 
@@ -13,7 +13,7 @@ class Partition(object):
     __pv__ bool, is the partition is initilized as, or intended to be, a
     pysical volume.
 
-    '''
+    """
     __device__ = None
     __file_system__ = None
     __vg_parent__ = None
@@ -30,6 +30,7 @@ class Partition(object):
     def __repr__(self):
         return '%s : %s %s' % (Partition.__mro__[0], self.fs_type,
                 self.size.humanize())
+
     def __str__(self):
         return '%s [ %s, %s ]' % (self.name, self.fs_type, self.size.humanize())
 
@@ -55,7 +56,6 @@ class LVolume(object):
     def __repr__(self):
         return '%s : %s %s' % (LVolume.__mro__[0], self.fs_type,
             self.size.humanize())
-
 
 class Layout(object):
     __on_disk__ = False
@@ -96,9 +96,9 @@ class Layout(object):
         return used
 
     def add_partition_percent(self, name, fs_type, percent):
-        '''
+        """
         Creates a partition using a percentage of available disk space.
-        '''
+        """
         current_size = self.get_used_size()
         available = self.disk_size - current_size
         size = Size(available.bytes * (percent/100.0))
@@ -135,33 +135,39 @@ class Layout(object):
                 )
 
     def __str__(self):
+        """
+
+        """
         output = 'Partition Table (%s):\n' % (self.table) + \
                  'Disk Size: %d (%s)\n' % (
                          self.disk_size.bytes, self.disk_size)
 
         for partition in self.partitions:
-            output = output + \
-            '[%s]\t%s\t%s\n' % (partition.name, partition.fs_type,
-                    partition.size)
+            output += '[%s]\t%s\t%s\n' % (partition.name, partition.fs_type,
+                                          partition.size)
 
-        output = output + '\t\t\tremaining: %s / %s' % (self.get_used_size(),
-                self.disk_size)
-
+        output += '\t\t\tremaining: %s / %s' % (self.get_used_size(),
+                                                self.disk_size)
         return output
 
 class Size(object):
     byte = 2**3
-    kilobyte = 2**10
-    megabyte = 2**20
-    gigabyte = 2**30
-    terabyte = 2**40
-    
+    kibibyte = 2**10
+    mebibyte = 2**20
+    gibibyte = 2**30
+    tebibyte = 2**40
+
+    kilobyte = 10**3
+
+
     def __init__(self, value):
-        self.bytes = self._convert(value) 
-        
+        self.bytes = self._convert(value)
 
     def _convert(self, value):
-        valid_suffix = ['k', 'M', 'G', 'T']
+        valid_suffix = ['k', 'M', 'G', 'T', 'P', 'E', 'Y', 'KiB', 'MiB',
+                        'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB', 'kB', 'MB',
+                        'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+
         if type(value) == int:
             return value
         
