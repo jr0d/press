@@ -29,6 +29,10 @@ class PartedInterface(object):
             raise PartedException(result.stderr)
         return result
 
+    def make_partition(self, type, start, end):
+        command = 'mkpart %s %d %d' % (type, start, end)
+        return self.run_parted(command)
+
     def get_table(self, raw=False):
         result = self.run_parted('print', raise_on_error=False)
         if result.returncode:
@@ -44,18 +48,7 @@ class PartedInterface(object):
         table = self.get_table()
         for line in table:
             if 'Disk' in line and line.split()[2][0].isdigit():
-                return line.split()[2].strip('B')
-        return None
-
-    def get_partitions(self):
-        table = self.get_table()
-        partitions = list()
-        for row in table:
-            if not row:
-                continue
-            if row.split()[0].isdigit():
-                partitions.append(row.split())
-        return partitions
+                return int(line.split()[2].strip('B'))
 
     def _get_info(self, term):
         table = self.get_table()
@@ -92,14 +85,54 @@ class PartedInterface(object):
 
     @property
     def partitions(self):
-        partitions = list()
+        p = list()
         table = self.get_table(raw=True)
-        part_data = table.split('\n\n')[1].splitlines()
+        partition_type = self.get_label()
 
-        labels = part_data[0]
+        part_data = table.split('\n\n')[1].splitlines()[1:]
 
-        return partitions
+        if not part_data:
+            return p
 
+        for part in part_data:
+            part = part.split()
+            part_info = dict()
+            part_info['number'] = int(part[0].strip())
+            part_info['start'] = int(part[1].strip('B'))
+            part_info['end'] = int(part[2].strip('B'))
+            part_info['size'] = int(part[3].strip('B'))
+
+            if partition_type == 'gpt':
+                part_info['name'] = part[4]
+                part_info['type'] = None
+            else:
+                part_info['type'] = part[4]
+                part_info['name'] = None
+
+            p.append(part_info)
+
+        return p
+
+    @property
+    def last_partition(self):
+        partitions = self.partitions
+        if not partitions:
+            return None
+        return partitions[-1]
+
+    @property
+    def extended_partition(self):
+        if self.get_label() != 'msdos':
+            return
+
+        partitions = self.partitions
+
+        if not partitions:
+            return
+
+        for part in partitions:
+            if part['type'] == 'extended':
+                return part
 
     def remove_partition(self, partition_number):
         """
@@ -114,15 +147,12 @@ class PartedInterface(object):
                 'Could not remove partition: %d' % partition_number)
 
     def wipe_table(self):
-        cnt = 0
-        part_ids = [x[0] for x in self.get_partitions()]
-        if not part_ids:
-            return cnt
+        extended_partition = self.extended_partition
+        if extended_partition:
+            self.remove_partition(extended_partition['number'])
 
-        for part_id in part_ids:
-            self.remove_partition(part_id)
-            cnt += 1
-        return cnt
+        for partition in self.partitions:
+            self.remove_partition(partition['number'])
 
     def set_label(self, label='gpt'):
         result = run(self.parted + ' mklabel ' + label)
@@ -132,6 +162,12 @@ class PartedInterface(object):
     def set_name(self, number, name):
         self.run_parted('set %d %s' % (number, name))
 
+    def set_boot_flag(self, number):
+        self.run_parted('set %d boot on' % number)
+
+    def set_lvm_flag(self, number):
+        self.run_parted('set %d lvm on' % number)
+
     @property
     def has_label(self):
         table = self.get_table()
@@ -139,50 +175,63 @@ class PartedInterface(object):
             return False
         return True
 
-    @staticmethod
-    def _get_end(partitions):
-        return int(partitions[-1][2].strip('B'))
-
-    def create_partition(self, type_or_name, part_size):
+    def create_partition(self, type_or_name, part_size, bootable=False, lvm=False):
         """
-        Get the size of the table.
         If there are existing partitions, get the end of the last partition
-        and start from there. All partitions must have atleast a 40k buffer.
+        and start from there. All partitions must have at least a 40k buffer.
         Some believe that 128MiB buffer is appropriate for user partitions.
 
-        For now, we will start the partitions at 40k and check the alignment.
+        For now, we will start the partitions at 1MiB and check the alignment.
 
-        type_or_name = primary/logical for msdos based partition tables. If a
+        type_or_name: primary/logical for msdos based partition tables. If a
         logical partition is requested, an extended lba partition will be
         created, if one does not yet exist, that fills the remainder of the disk.
         for gpt tables, the argument will be used as partition name.
 
-        part_size = size of partition, in bytes.
+        part_size: size of partition, in bytes.
+
+        return: The new partition id
         """
+
         table_size = self.get_size()
-        partitions = self.get_partitions()
 
         label = self.get_label()
 
         start = self.partition_start
 
-        if partitions:
-            start = self._get_end(partitions) + self.gap * 10
+        partition_number = 1
+
+        last_partition = self.last_partition
+
+        if last_partition:
+            start = last_partition['end'] + self.gap
+            partition_number = last_partition['number'] + 1
 
         end = start + part_size
 
-        if end > table_size:
+        if end >= table_size:
             raise PartedInterfaceException('The partition is too big.')
 
-        command = self.parted + ' mkpart ' + ' %s %d %d' % (
-            type_or_name, start, end)
-        result = run(command)
-        if result.returncode != 0:
-            raise PartedException('Could not create partition.')
+        if type_or_name == 'logical' and label == 'msdos':
+            if not self.extended_partition:
+                self.make_partition('extended', start, table_size-1)
+                start += self.gap
+                partition_number = 5
+
+        self.make_partition(type_or_name, start, end)
 
         if label == 'gpt':
             # obviously we need to determine the new partition's id.
-            self.set_name(1, type_or_name)
+            self.set_name(partition_number, type_or_name)
+
+        if bootable:
+            self.set_boot_flag(partition_number)
+
+        if lvm:
+            self.set_lvm_flag(partition_number)
+
+        return partition_number
+
 
 
 class PartedException(Exception):
