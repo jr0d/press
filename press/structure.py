@@ -211,12 +211,12 @@ class Size(object):
         self.bytes = self._convert(value)
 
     def _convert(self, value):
-        if isinstance(value, int):
+        if isinstance(value, (int, long)):
             if value > self.yobibyte:
                 raise SizeObjectValError('Value is impossibly large.')
             return value
-        
-        if isinstance(value, (float, long, Decimal)):
+
+        if isinstance(value, (float, Decimal)):
             return int(round(value))
 
         if not isinstance(value, (str, unicode)):
@@ -238,6 +238,10 @@ class Size(object):
                 'Value is not in a format I can understand. Invalid Suffix.')
 
         val, suffix = value[:suffix_index].strip(), value[suffix_index:].strip()
+
+        if suffix not in valid_suffices:
+            raise SizeObjectValError(
+                'Value is not in a format I can understand. Invalid Suffix.')
 
         try:
             val = Decimal(val)

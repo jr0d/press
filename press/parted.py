@@ -1,12 +1,11 @@
 import os
 from cli import run
-from structure import Size
 
 
 class PartedInterface(object):
     """
     Going to have to work with the parted command line tool due to time
-    constaint. pyparted is not documented and messy.
+    consistent. pyparted is not documented and messy.
 
     Once I can use libparted directly, I will move to that.
     """
@@ -18,10 +17,28 @@ class PartedInterface(object):
         self.device = device
         self.partition_start = partition_start
         self.gap = gap
-        self.parted = self.parted_path + ' --script ' + self.device + ' unit b'
+        self.parted = self.parted_path + ' --script ' + self.device + ' unit b '
 
-    def get_table(self):
-        return run(self.parted + ' print').splitlines()
+    def run_parted(self, command, raise_on_error=True):
+        """
+        parted does not use meaningful return codes. It pretty much returns 1 on
+        any error and then prints an error message on to standard error stream.
+        """
+        result = run(self.parted + command)
+        if result and raise_on_error:
+            raise PartedException(result.stderr)
+        return result
+
+    def get_table(self, raw=False):
+        result = self.run_parted('print', raise_on_error=False)
+        if result.returncode:
+            if 'unrecognised disk label' in result.stderr:
+                pass
+            else:
+                raise PartedException(result.stderr)
+        if raw:
+            return result
+        return result.splitlines()
 
     def get_size(self):
         table = self.get_table()
@@ -38,8 +55,51 @@ class PartedInterface(object):
                 continue
             if row.split()[0].isdigit():
                 partitions.append(row.split())
+        return partitions
+
+    def _get_info(self, term):
+        table = self.get_table()
+        for line in table:
+            if term in line:
+                return line.split(':')[1].strip()
+
+    def get_model(self):
+        return self._get_info('Model')
+
+    def get_sector_size(self):
+        size = self._get_info('Sector size (logical/physical)')
+        logical, physical = size.split('/')
+        logical = int(logical[:-1])
+        physical = int(physical[:-1])
+        return dict(logical=logical, physical=physical)
+
+    def get_disk_flags(self):
+        return self._get_info('Disk Flags')
+
+    def get_label(self):
+        return self._get_info('Partition Table')
+
+    @property
+    def device_info(self):
+        info = dict()
+        info['model'] = self.get_model()
+        info['device'] = self.device
+        info['size'] = self.get_size()
+        info['sector_size'] = self.get_sector_size()
+        info['partition_table'] = self.get_label()
+        info['disk_flags'] = self.get_disk_flags()
+        return info
+
+    @property
+    def partitions(self):
+        partitions = list()
+        table = self.get_table(raw=True)
+        part_data = table.split('\n\n')[1].splitlines()
+
+        labels = part_data[0]
 
         return partitions
+
 
     def remove_partition(self, partition_number):
         """
@@ -69,7 +129,21 @@ class PartedInterface(object):
         if result.returncode != 0:
             raise PartedException('Could not create filesystem label')
 
-    def create_partition(self, part_type, part_size):
+    def set_name(self, number, name):
+        self.run_parted('set %d %s' % (number, name))
+
+    @property
+    def has_label(self):
+        table = self.get_table()
+        if not table:
+            return False
+        return True
+
+    @staticmethod
+    def _get_end(partitions):
+        return int(partitions[-1][2].strip('B'))
+
+    def create_partition(self, type_or_name, part_size):
         """
         Get the size of the table.
         If there are existing partitions, get the end of the last partition
@@ -77,30 +151,45 @@ class PartedInterface(object):
         Some believe that 128MiB buffer is appropriate for user partitions.
 
         For now, we will start the partitions at 40k and check the alignment.
+
+        type_or_name = primary/logical for msdos based partition tables. If a
+        logical partition is requested, an extended lba partition will be
+        created, if one does not yet exist, that fills the remainder of the disk.
+        for gpt tables, the argument will be used as partition name.
+
+        part_size = size of partition, in bytes.
         """
-        table_size = Size(self.get_size())
+        table_size = self.get_size()
         partitions = self.get_partitions()
 
-        start = self.partition_start
-        if partitions:
-            start = int(partitions[-1][2].strip('B')) + self.gap * 10
+        label = self.get_label()
 
-        start = Size(start)
+        start = self.partition_start
+
+        if partitions:
+            start = self._get_end(partitions) + self.gap * 10
+
         end = start + part_size
 
         if end > table_size:
             raise PartedInterfaceException('The partition is too big.')
 
         command = self.parted + ' mkpart ' + ' %s %d %d' % (
-            part_type, start.bytes, end.bytes)
+            type_or_name, start, end)
         result = run(command)
         if result.returncode != 0:
             raise PartedException('Could not create partition.')
 
+        if label == 'gpt':
+            # obviously we need to determine the new partition's id.
+            self.set_name(1, type_or_name)
 
-class PartedException(Exception): pass
+
+class PartedException(Exception):
+    pass
 
 
-class PartedInterfaceException(Exception): pass
+class PartedInterfaceException(Exception):
+    pass
 
 
