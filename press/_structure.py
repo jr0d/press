@@ -1,5 +1,6 @@
 from decimal import Decimal, InvalidOperation
 
+
 class Partition(object):
     """
 
@@ -33,7 +34,7 @@ class Partition(object):
 
     def __repr__(self):
         return '%s : %s %s' % (Partition.__mro__[0], self.fs_type,
-                self.size.humanize)
+                               self.size.humanize)
 
     def __str__(self):
         return '%s [ %s, %s ]' % (self.name, self.fs_type, self.size.humanize)
@@ -62,7 +63,7 @@ class LVolume(object):
 
     def __repr__(self):
         return '%s : %s %s' % (LVolume.__mro__[0], self.fs_type,
-            self.size.humanize)
+                               self.size.humanize)
 
 
 class Layout(object):
@@ -79,7 +80,7 @@ class Layout(object):
             self._validate_partition(partition)
         except AttributeError as ae:
             raise LayoutValidationError('The partition object was invalid.' + \
-                    '\n[%s]' % str(ae))
+                                        '\n[%s]' % str(ae))
 
         self.partitions.append(partition)
 
@@ -110,7 +111,7 @@ class Layout(object):
         """
         current_size = self.get_used_size()
         available = self.disk_size - current_size
-        size = Size(available.bytes * (percent/100.0))
+        size = Size(available.bytes * (percent / 100.0))
         self.add_partition(Partition(name, fs_type, size.bytes))
 
     def add_partition_fill(self, name, fs_type):
@@ -138,10 +139,10 @@ class Layout(object):
 
     def __repr__(self):
         return '<%s>  : %d [%s]' % (
-                self.__class__.__name__,
-                self.disk_size.bytes,
-                self.table
-                )
+            self.__class__.__name__,
+            self.disk_size.bytes,
+            self.table
+        )
 
     def __str__(self):
         """
@@ -149,7 +150,7 @@ class Layout(object):
         """
         output = 'Partition Table (%s):\n' % (self.table) + \
                  'Disk Size: %d (%s)\n' % (
-                         self.disk_size.bytes, self.disk_size)
+                     self.disk_size.bytes, self.disk_size)
 
         for partition in self.partitions:
             output += '[%s]\t%s\t%s\n' % (partition.name, partition.fs_type,
@@ -163,24 +164,24 @@ class Layout(object):
 class Size(object):
     byte = 1
     kibibyte = 1024
-    mebibyte = kibibyte**2
-    gibibyte = kibibyte**3
-    tebibyte = kibibyte**4
-    pebibyte = kibibyte**5
-    exbibyte = kibibyte**6
-    zebibyte = kibibyte**7
-    yobibyte = kibibyte**8
+    mebibyte = kibibyte ** 2
+    gibibyte = kibibyte ** 3
+    tebibyte = kibibyte ** 4
+    pebibyte = kibibyte ** 5
+    exbibyte = kibibyte ** 6
+    zebibyte = kibibyte ** 7
+    yobibyte = kibibyte ** 8
 
     # Because we are dealing with disks, we'll probably need decimal byte notation
 
     kilobyte = 1000
-    megabyte = kilobyte**2
-    gigabyte = kilobyte**3
-    terabyte = kilobyte**4
-    petabyte = kilobyte**5
-    exabyte = kilobyte**6
-    zettabyte = kilobyte**7
-    yottabyte = kilobyte**8
+    megabyte = kilobyte ** 2
+    gigabyte = kilobyte ** 3
+    terabyte = kilobyte ** 4
+    petabyte = kilobyte ** 5
+    exabyte = kilobyte ** 6
+    zettabyte = kilobyte ** 7
+    yottabyte = kilobyte ** 8
 
     sector = 512
 
@@ -260,7 +261,7 @@ class Size(object):
 
         for idx in range(1, len(units)):
             if self.bytes < self.symbols[units[idx]]:
-                unit = units[idx-1]
+                unit = units[idx - 1]
                 return '%s %s' % (Decimal(self.bytes) / self.symbols[unit], unit)
 
         raise SizeObjectValError('Something very strange has happened.')
@@ -287,8 +288,8 @@ class Size(object):
 
     def __div__(self, other):
         'dont devide by zero.'
-        return Size(other.bytes/self.bytes)
-    
+        return Size(other.bytes / self.bytes)
+
     def __lt__(self, other):
         return self.bytes < other.bytes
 
@@ -309,8 +310,16 @@ class Size(object):
 
     def __truedev__(self, other):
         'dont device by zero'
-        return Size(other.bytes/self.bytes)
+        return Size(other.bytes / self.bytes)
 
-class PartitionError(Exception):pass
-class SizeObjectValError(Exception):pass
-class LayoutValidationError(Exception):pass
+
+class PartitionError(Exception):
+    pass
+
+
+class SizeObjectValError(Exception):
+    pass
+
+
+class LayoutValidationError(Exception):
+    pass

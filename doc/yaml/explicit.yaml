@@ -1,0 +1,67 @@
+layout:
+  options:
+    - no_fibre_channel # exclude fibre channel devices
+  subsystem: scsi # any, mpath, etc
+
+disks:
+  -
+    name: boot_disk
+    path: /dev/sda
+    table: boot_partition_table
+
+  -
+    name: storage_disk
+    path: /dev/sdb
+    table: storage_table
+
+partition_tables:
+    -
+      name: boot_partition_table
+      label: msdos
+      partitions:
+      -
+        name: boot
+        options:
+          - primary
+          - boot
+        size: 1GiB
+        mount_point: /boot
+        file_system:
+          type: ext4
+          label: BOOT
+
+      -
+        name: root_pv
+        options:
+          - logical
+          - lvm
+        size: 100%FREE
+
+volume_groups:
+  -
+    name: vg_system
+    physical_volumes:
+      - root_pv
+
+logical_volumes:
+  -
+    vg_system:
+    -
+      name: lv_swap
+      size: 4GiB
+      options:
+        - swap
+    -
+      name: lv_root
+      size: 75%FREE
+      mount_point: /
+      file_system:
+        type: ext4
+        label: ROOT
+        superuser_reserve: 1%
+        block_size: 4096
+        stripe: 65536
+
+
+
+

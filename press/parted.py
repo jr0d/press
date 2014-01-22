@@ -175,7 +175,7 @@ class PartedInterface(object):
             return False
         return True
 
-    def create_partition(self, type_or_name, part_size, bootable=False, lvm=False):
+    def create_partition(self, type_or_name, part_size, boot_flag=False, lvm_flag=False):
         """
         If there are existing partitions, get the end of the last partition
         and start from there. All partitions must have at least a 40k buffer.
@@ -224,14 +224,13 @@ class PartedInterface(object):
             # obviously we need to determine the new partition's id.
             self.set_name(partition_number, type_or_name)
 
-        if bootable:
+        if boot_flag:
             self.set_boot_flag(partition_number)
 
-        if lvm:
+        if lvm_flag:
             self.set_lvm_flag(partition_number)
 
         return partition_number
-
 
 
 class PartedException(Exception):
