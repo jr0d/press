@@ -140,9 +140,10 @@ class VolumeGroup(object):
     def _validate_volume(self, volume):
         if not isinstance(volume, LogicalVolume):
             return ValueError('Expected LogicalVolume instance')
-        if self.total_extents < self.current_pe + volume.size.bytes:
+        if self.total_extents < self.current_pe + volume.size.bytes / self.pe_size:
             raise LayoutValidationError(
-                'The volume is too big. %d PE > %d PE' % (self.current_pe, volume.size.bytes))
+                'The volume is too big. %d PE > %d PE' % (volume.size.bytes / self.pe_size,
+                                                          self.total_extents))
 
     def add_volume(self, volume):
         self._validate_volume(volume)
