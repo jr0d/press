@@ -119,6 +119,9 @@ class Size(object):
         return rep
 
     def __str__(self):
+        return str(self.humanize)
+
+    def __unicode__(self):
         return self.humanize
 
     def __add__(self, other):
