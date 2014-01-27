@@ -10,13 +10,18 @@ class PartedInterface(object):
     Once I can use libparted directly, I will move to that.
     """
 
-    def __init__(self, device, parted_path='/sbin/parted', partition_start=1048576, gap=1048576):
+    def __init__(self, device, parted_path='/sbin/parted', partition_start=1048576, gap=1048576,
+                 alignment=4096):
         self.parted_path = parted_path
         if not os.path.isfile(self.parted_path):
             raise PartedInterfaceException('%s does not exist.' % self.parted_path)
         self.device = device
         self.partition_start = partition_start
         self.gap = gap
+        self.alignment = alignment
+        if gap % alignment:
+            raise PartedException('Requested alignment is not a multiple of gap.')
+
         self.parted = self.parted_path + ' --script ' + self.device + ' unit b '
 
     def run_parted(self, command, raise_on_error=True):
@@ -204,7 +209,9 @@ class PartedInterface(object):
         last_partition = self.last_partition
 
         if last_partition:
-            start = last_partition['end'] + self.gap
+            aligned = last_partition['end'] + \
+                      (self.alignment - (last_partition['end'] % self.alignment))
+            start = aligned + self.gap
             partition_number = last_partition['number'] + 1
 
         end = start + part_size
