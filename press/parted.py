@@ -107,13 +107,8 @@ class PartedInterface(object):
             part_info['end'] = int(part[2].strip('B'))
             part_info['size'] = int(part[3].strip('B'))
 
-            if partition_type == 'gpt':
-                part_info['name'] = part[4]
-                part_info['type'] = None
-            else:
+            if partition_type == 'msdos':
                 part_info['type'] = part[4]
-                part_info['name'] = None
-
             p.append(part_info)
 
         return p
@@ -223,6 +218,7 @@ class PartedInterface(object):
             if not self.extended_partition:
                 self.make_partition('extended', start, table_size-1)
                 start += self.gap
+                end = start + part_size
                 partition_number = 5
 
         self.make_partition(type_or_name, start, end)
@@ -246,5 +242,3 @@ class PartedException(Exception):
 
 class PartedInterfaceException(Exception):
     pass
-
-
