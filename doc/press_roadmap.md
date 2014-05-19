@@ -62,8 +62,8 @@ Greatly simplify OS Deployment process by providing a means to deploy any OS wit
 
 #### July 14th – Prototype 003 (Final):
 * Rackspace production image creation (OMSA/PSP/Comvault, etc)
-* Kitchen sink?
-* Post install process?
+   * Kitchen sink?
+   * Post install process?
 * Deploy + ADC integration (push hard)
 
 #### July 30th – 0.4 RELEASE:
