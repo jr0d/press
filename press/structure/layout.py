@@ -223,7 +223,7 @@ class Layout(object):
         self.udev = UDevHelper()
         self.udisks = self.udev.discover_valid_storage_devices(self.fc_enabled, self.loop_enabled)
         if not self.udisks:
-            raise PhysicalDiskException('The are no valid disks.')
+            raise PhysicalDiskException('There are no valid disks.')
         self.available_devices = [{
                                       'DEVNAME': udisk.get('DEVNAME'),
                                       'DEVLINKS': udisk.get('DEVLINKS'),
@@ -247,7 +247,7 @@ class Layout(object):
         for idx in xrange(len(self.available_devices)):
             device = self.available_devices[idx]['DEVNAME']
             parted = PartedInterface(device, self.parted_path)
-            if size < parted.get_size():
+            if size < Size(parted.get_size()):
                 return idx
         return -1
 
@@ -258,7 +258,7 @@ class Layout(object):
             raise PhysicalDiskException('There are no more available devices.')
         if self.disk_association == 'explicit':
             if not disk.path:
-                raise PhysicalDiskException('explicit lookup requires and explicit name.')
+                raise PhysicalDiskException('explicit lookup requires an explicit name.')
             idx = self._find_device_by_ref(disk.path)
             if idx == -1:
                 raise PhysicalDiskException('%s is not present.' % disk.path)
@@ -275,7 +275,7 @@ class Layout(object):
             raise ValueError('Unsupported association')
 
         parted = PartedInterface(real_disk)
-        disk.size = parted.get_size()
+        disk.size = Size(parted.get_size())
         if disk.size < disk.partition_table.size:
             raise PhysicalDiskException('Partition table is larger than target disk')
 

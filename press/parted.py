@@ -94,6 +94,9 @@ class PartedInterface(object):
         table = self.get_table(raw=True)
         partition_type = self.get_label()
 
+        if partition_type == 'unknown':
+            return p
+
         part_data = table.split('\n\n')[1].splitlines()[1:]
 
         if not part_data:
@@ -177,10 +180,7 @@ class PartedInterface(object):
 
     def create_partition(self, type_or_name, part_size, boot_flag=False, lvm_flag=False):
         """
-        If there are existing partitions, get the end of the last partition
-        and start from there. All partitions must have at least a 40k buffer.
-        Some believe that 128MiB buffer is appropriate for user partitions.
-
+ 
         For now, we will start the partitions at 1MiB and check the alignment.
 
         type_or_name: primary/logical for msdos based partition tables. If a
@@ -234,6 +234,22 @@ class PartedInterface(object):
             self.set_lvm_flag(partition_number)
 
         return partition_number
+
+    def remove_mbr(self):
+        mbr_bytes = 512
+        command = 'dd if=/dev/zero of=%s bs=%d count=1' % (self.device, mbr_bytes)
+        run(command)
+
+    def remove_gpt(self):
+        """
+        512 Fake MBR
+        512 GPT Header
+        16KiB Primary Table
+        16KiB Backup Table
+        """
+        gpt_bytes = 33792
+        command = 'dd if=/dev/zero of=%s bs=%d count=1' % (self.device, gpt_bytes)
+        run(command)
 
 
 class PartedException(Exception):

@@ -29,8 +29,9 @@ class UDevHelper(object):
 
     def discover_valid_storage_devices(self, fc_enabled=True, loop_enabled=False):
         """
-        Kind of ugly, but gets the job done. It strips block devices we don't
+        Kind of ugly, but gets the job done. It strips devices we don't
         care about, such as cd roms, device mapper block devices, loop, and fibre channel.
+
         """
 
         disks = self.get_disks()
