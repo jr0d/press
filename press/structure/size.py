@@ -135,7 +135,10 @@ class Size(object):
 
     def __div__(self, other):
         'dont devide by zero.'
-        return Size(other.bytes / self.bytes)
+        return Size(self.bytes / other.bytes)
+
+    def __mod__(self, other):
+        return Size(self.bytes % other.bytes)
 
     def __lt__(self, other):
         return self.bytes < other.bytes
@@ -147,7 +150,7 @@ class Size(object):
         return self.bytes == other.bytes
 
     def __ne__(self, other):
-        return self.bytes <> other.bytes
+        return self.bytes != other.bytes
 
     def __gt__(self, other):
         return self.bytes > other.bytes
