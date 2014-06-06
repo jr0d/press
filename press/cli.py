@@ -34,6 +34,7 @@ def run(command, bufsize=1048567, dry_run=False):
         ret = p.returncode
     else:
         out, err, ret = '', '', 0
+
     attr_string = _AttributeString(out)
     attr_string.stderr = err
     attr_string.returncode = ret

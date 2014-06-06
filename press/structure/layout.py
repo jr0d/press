@@ -1,39 +1,57 @@
+from press.cli import run
 from press.parted import PartedInterface
 from press.udev import UDevHelper
 from press.structure.size import Size
 
+__all__ = [
+    'Disk',
+    'PartitionTable',
+    'Partition',
+    'LogicalVolume',
+    'FileSystemCreateException',
+    'FileSystem',
+    'EXT4',
+    'LayoutValidationError',
+    'PhysicalDiskException',
+    'Layout'
+]
+
 
 class Disk(object):
-    size = 0
-
-    def __init__(self, path, partition_table):
+    def __init__(self, path=None, partition_table=None, size=0):
         """
         """
         self.path = path
         self.partition_table = partition_table
+        self.size = Size(size)
 
 
 class PartitionTable(object):
     partitions = list()
 
-    def __init__(self, table_type, size, partition_start=1048576, gap=1048576):
-        """
-        Calculates padding with all size operations
+    def __init__(self, table_type, size=0, partition_start=1048576, gap=1048576, alignment=4096):
+        """Logical representation of a partition
         """
 
         valid_types = ['gpt', 'msdos']
         if table_type not in valid_types:
             raise ValueError('table not supported: %s' % table_type)
         self.type = table_type
+        # size must be related to
         self.size = Size(size)
         self.partition_start = Size(partition_start)
         self.gap = Size(gap)
+        self.alignment = Size(alignment)
+
+        # This variable is used to store a pointer to the end of the partition
+        # structure + (alignment - ( end % alignment ) )
+        self.partition_end = Size(partition_start)
 
     def _validate_partition(self, partition):
         if not isinstance(partition, Partition):
             return ValueError('Expected Partition instance')
         if self.partitions:
-            if self.size < self.current_usage + partition.size + self.gap:
+            if self.size < self.current_usage + self.calculate_total_size(partition.size) + self.gap:
                 raise LayoutValidationError(
                     'The partition is too big. %s > %s' % (self.current_usage, partition.size))
         elif self.size < partition.size + self.partition_start:
@@ -43,28 +61,32 @@ class PartitionTable(object):
         if partition.size < Size('1MiB'):
             raise LayoutValidationError('The partition cannot be < 1MiB.')
 
+    def calculate_total_size(self, size):
+        """Calculates total size after alignment.
+        """
+        return size + (self.alignment - size % self.alignment)
+
     @property
     def current_usage(self):
-        if not self.partitions:
-            return Size(0)
-
-        used = Size(self.partition_start)
-        for partition in self.partitions:
-            used = used + partition.size + self.gap
-        return used
+        return self.partition_end
 
     @property
     def free_space(self):
-        if not self.partitions:
-            return Size(self.partition_start)
-        return self.size - self.current_usage - self.gap
+        return self.size - (self.partition_end + self.gap)
 
     def add_partition(self, partition):
         self._validate_partition(partition)
         self.partitions.append(partition)
+        self.partition_end += partition.size + (self.alignment - (self.alignment % partition.size))
 
     def get_free_space_by_percentage(self, percent):
         return Size(self.free_space * (percent / 100.0))
+
+    def __repr__(self):
+        out = 'Table: (%s / %s)\n' % (self.current_usage, self.size)
+        for idx, partition in enumerate(self.partitions):
+            out += '%d: %s %s\n' % (idx, partition.name, partition.size)
+        return out
 
 
 class Partition(object):
@@ -170,16 +192,69 @@ class LogicalVolume(object):
 
 
 class FileSystem(object):
-    """
-    Due the the heavy variance in options, in the future FileSystem should be a base class
-    that is extended by individual fs_types, ie class EXT4, class XFS
-    """
-    def __init__(self, fs_type, size, fs_label=None, superuser_reserve=.03, stride_size=4096, stripe=65536):
+    def create(self, device):
+        raise NotImplemented('base class should not be used.')
+
+
+class FileSystemCreateException(Exception):
+    def __init__(self, fs_type, fs_command, attr_str):
         self.fs_type = fs_type
+        self.fs_command = fs_command
+        self.attr_str = attr_str
+
+
+class EXT(FileSystem):
+    fs_type = ''
+    _default_command_path = ''
+
+    def __init__(self, fs_label=None, superuser_reserve=.03, stride_size=0, stripe_width=0,
+                 command_path=''):
         self.fs_label = fs_label
         self.superuser_reserve = superuser_reserve
-        self.block_size = stride_size
-        self.stripe = stripe
+        self.stride_size = stride_size
+        self.stripe_width = stripe_width
+
+        self.command_path = self._default_command_path
+        if command_path:
+            self.command_path = command_path
+
+        self.full_command = \
+            '{command_path} -m{superuser_reserve} {extended_options}{label_options} {device}'
+
+        # algorithm for calculating stripe-width: stride * N where N are member disks that are not used
+        # as parity disks or hot spares
+        self.extended_options = ''
+        if self.stripe_width and self.stride_size:
+            self.extended_options = ' -E stride=%s,stripe_width=%s' % (self.stride_size, self.stripe_width)
+
+        self.label_options = ''
+        if self.fs_label:
+            self.label_options = ' -L %s' % self.fs_label
+
+    def create(self, device):
+        command = self.full_command.format(
+            **dict(
+                command_path=self.command_path,
+                superuser_reserve=self.superuser_reserve,
+                extended_options=self.extended_options,
+                label_options=self.label_options,
+                device=device
+            )
+        )
+        result = run(command)
+
+        if result.returncode:
+            raise FileSystemCreateException(self.fs_label, command, result)
+
+
+class EXT3(EXT):
+    fs_type = 'ext3'
+    _default_command_path = '/usr/bin/mkfs.ext3'
+
+
+class EXT4(EXT):
+    fs_type = 'ext4'
+    _default_command_path = '/usr/bin/mkfs.ext4'
 
 
 class LayoutValidationError(Exception):
@@ -233,8 +308,8 @@ class Layout(object):
 
     def _find_device_by_ref(self, ref):
         for idx in xrange(len(self.available_devices)):
-            device  = self.available_devices[idx]
-            if ref ==  device['DEVNAME']:
+            device = self.available_devices[idx]
+            if ref == device['DEVNAME']:
                 return idx
             if ref == device.get('DEVPATH'):
                 return idx
@@ -262,7 +337,7 @@ class Layout(object):
             idx = self._find_device_by_ref(disk.path)
             if idx == -1:
                 raise PhysicalDiskException('%s is not present.' % disk.path)
-            real_disk = self.available_devices.pop(idx)['DEVNAME']
+            real_disk = self.available_devices.pop(idx)
         elif self.disk_association == 'first':
             real_disk = self.available_devices[0]
             self.available_devices = list()
@@ -274,10 +349,10 @@ class Layout(object):
         else:
             raise ValueError('Unsupported association')
 
-        parted = PartedInterface(real_disk)
-        disk.size = Size(parted.get_size())
-        if disk.size < disk.partition_table.size:
-            raise PhysicalDiskException('Partition table is larger than target disk')
-
+        parted = PartedInterface(real_disk['DEVNAME'])
+        size = Size(parted.get_size())
+        disk.size = size
+        disk.partition_table.size = size
+        disk.path = PartedInterface(real_disk['DEVNAME'])
         self.disks.append(disk)
 

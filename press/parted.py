@@ -180,7 +180,7 @@ class PartedInterface(object):
 
     def create_partition(self, type_or_name, part_size, boot_flag=False, lvm_flag=False):
         """
- 
+
         For now, we will start the partitions at 1MiB and check the alignment.
 
         type_or_name: primary/logical for msdos based partition tables. If a
@@ -204,8 +204,8 @@ class PartedInterface(object):
         last_partition = self.last_partition
 
         if last_partition:
-            aligned = last_partition['end'] + \
-                      (self.alignment - (last_partition['end'] % self.alignment))
+            aligned = \
+                last_partition['end'] + (self.alignment - (last_partition['end'] % self.alignment))
             start = aligned + self.gap
             partition_number = last_partition['number'] + 1
 
@@ -216,7 +216,7 @@ class PartedInterface(object):
 
         if type_or_name == 'logical' and label == 'msdos':
             if not self.extended_partition:
-                self.make_partition('extended', start, table_size-1)
+                self.make_partition('extended', start, table_size - 1)
                 start += self.gap
                 end = start + part_size
                 partition_number = 5
