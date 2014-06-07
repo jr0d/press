@@ -161,3 +161,34 @@ class Size(object):
     def __truedev__(self, other):
         'dont device by zero'
         return Size(other.bytes / self.bytes)
+
+
+class PercentString(object):
+    def __init__(self, our_string):
+        """
+        Examples:
+            25% : 25% of entire container
+            40%FREE : 40 percent of free space
+
+        Precision is to the nearest 100th
+        """
+
+        self.raw_string = our_string
+        self.free = False
+        idx = self.raw_string.find('%')
+        if idx == -1 or idx > 3:
+            raise ValueError('Invalid expression')
+
+        value, mod = self.raw_string.split('%')
+
+        if not value.isdigit():
+            raise ValueError('Invalid expression')
+
+        value = int(value)
+        if value > 100:
+            raise ValueError('> 100%')
+
+        self.value = value * .01
+
+        if mod.upper() == 'FREE':
+            self.free = True
