@@ -3,10 +3,12 @@ from .exceptions import PartitionValidationError
 
 
 class Disk(object):
-    def __init__(self, path=None, partition_table=None, size=0):
+    def __init__(self, devname=None, devlinks=None, devpath=None, partition_table=None, size=0):
         """
         """
-        self.path = path
+        self.devname = devname
+        self.devlinks = devlinks or list()
+        self.devpath = devpath
         self.size = Size(size)
         self.partition_table = partition_table
 

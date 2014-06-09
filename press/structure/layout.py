@@ -1,8 +1,9 @@
 from press.parted import PartedInterface
 from press.udev import UDevHelper
-from press.structure.size import Size
+from press.structure import Disk, Size
 
 from .exceptions import PhysicalDiskException
+
 
 class Layout(object):
     """
@@ -38,30 +39,38 @@ class Layout(object):
         self.udisks = self.udev.discover_valid_storage_devices(self.fc_enabled, self.loop_enabled)
         if not self.udisks:
             raise PhysicalDiskException('There are no valid disks.')
-        self.available_devices = [{
-                                      'DEVNAME': udisk.get('DEVNAME'),
-                                      'DEVLINKS': udisk.get('DEVLINKS'),
-                                      'DEVPATH': udisk.get('DEVPATH')
-                                  }
-                                  for udisk in self.udisks]
+
+        self.disks = self.__populate_disks()
+        self.available_devices = self.disks
+
+    def __populate_disks(self):
+        disks = list()
+        for udisk in self.udisks:
+            device = udisk.get('DEVNAME')
+            parted = PartedInterface(device, self.parted_path)
+            size = Size(parted.get_size())
+            disk = Disk(devname=device,
+                        devlinks=udisk.get('DEVLINKS'),
+                        devpath=udisk.get('DEVPATH'), size=size)
+            disks.append(disk)
+        return disks
 
     def _find_device_by_ref(self, ref):
         for idx in xrange(len(self.available_devices)):
-            device = self.available_devices[idx]
-            if ref == device['DEVNAME']:
+            disk = self.available_devices[idx]
+            if ref == disk.devname:
                 return idx
-            if ref == device.get('DEVPATH'):
+            if ref == disk.devpath:
                 return idx
-            for link in device.get('DEVLINKS'):
+            for link in disk.devlinks:
                 if ref == link:
                     return idx
         return -1
 
     def _find_device_by_size(self, size):
         for idx in xrange(len(self.available_devices)):
-            device = self.available_devices[idx]['DEVNAME']
-            parted = PartedInterface(device, self.parted_path)
-            if size < Size(parted.get_size()):
+            disk = self.available_devices[idx]
+            if size < disk.size:
                 return idx
         return -1
 
@@ -95,5 +104,5 @@ class Layout(object):
     #     self.disks.append(disk)
     #
 
-    def add_partition(self, partition):
+    def add_partition_table_from_model(self, partition_model):
         pass
