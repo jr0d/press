@@ -1,6 +1,7 @@
 from press.parted import PartedInterface
 from press.udev import UDevHelper
-from press.structure import Disk, Size
+from .disk import Disk
+from .size import Size
 
 from .exceptions import PhysicalDiskException
 
