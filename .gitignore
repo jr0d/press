@@ -4,3 +4,4 @@
 .idea/
 scratch/
 env/
+documentation/_build/*

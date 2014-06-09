@@ -2,7 +2,7 @@ import shlex
 import subprocess
 
 
-class _AttributeString(str):
+class AttributeString(str):
     def __init__(self, x):
         """Class that inherits from str and provides additional attributes
         for storing subprocess command execution.
@@ -72,7 +72,7 @@ def run(command, bufsize=1048567, dry_run=False):
     :param dry_run: Should we perform a dry run of the command.
     :type dry_run: bool.
 
-    :returns: :func:`press.cli._AttributeString`.
+    :returns: :func:`press.cli.AttributeString`.
 
     """
 
@@ -87,7 +87,7 @@ def run(command, bufsize=1048567, dry_run=False):
     else:
         out, err, ret = '', '', 0
 
-    attr_string = _AttributeString(out)
+    attr_string = AttributeString(out)
     attr_string.stderr = err
     attr_string.returncode = ret
     attr_string.command = command
