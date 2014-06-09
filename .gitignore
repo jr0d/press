@@ -1,4 +1,7 @@
 *.pyc
 *.swp
+*egg*
 .idea/
 scratch/
+env/
+documentation/_build/*
