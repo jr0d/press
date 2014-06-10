@@ -1,5 +1,6 @@
 from press.structure import Size, Layout, Disk, PartitionTable, Partition, EXT4, PercentString
 
+
 s1 = Size(19674)
 
 print s1
@@ -34,3 +35,7 @@ print table1
 
 print table1.partitions[1].size.bytes
 print disk.partition_table.partitions[1].size.bytes
+
+layout = Layout(loop_only=True)
+
+print layout.disks[0].devname

@@ -16,7 +16,7 @@ class Disk(object):
         """Instantiate and link a PartitionTable object to Disk instance
         """
         self.partition_table = PartitionTable(table_type,
-                                              self.size,
+                                              self.size.bytes,
                                               partition_start=partition_start,
                                               gap=gap, alignment=alignment)
 
@@ -47,10 +47,10 @@ class PartitionTable(object):
         if self.partitions:
             if self.size < self.current_usage + self.gap + partition.size:
                 raise PartitionValidationError(
-                    'The partition is too big. %s > %s' % (self.current_usage, partition.size))
+                    'The partition is too big. %s < %s' % (self.size - self.current_usage, partition.size))
         elif self.size < partition.size + self.partition_start:
             raise PartitionValidationError(
-                'The partition is too big. %s > %s' % (self.current_usage, partition.size))
+                'The partition is too big. %s < %s' % (self.size - self.current_usage, partition.size))
 
         if partition.size < Size('1MiB'):
             raise PartitionValidationError('The partition cannot be < 1MiB.')

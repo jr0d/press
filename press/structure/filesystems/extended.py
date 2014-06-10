@@ -14,9 +14,7 @@ class EXT(FileSystem):
         self.stride_size = stride_size
         self.stripe_width = stripe_width
 
-        self.command_path = self._default_command_path
-        if command_path:
-            self.command_path = command_path
+        self.command_path = command_path or self._default_command_path
 
         self.full_command = \
             '{command_path} -m{superuser_reserve} {extended_options}{label_options} {device}'
