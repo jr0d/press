@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from press.parted import PartedInterface
 from press.udev import UDevHelper
 from .disk import Disk
@@ -44,11 +45,10 @@ class Layout(object):
         if not self.udisks:
             raise PhysicalDiskException('There are no valid disks.')
 
-        self.disks = self.__populate_disks()
-        self.available_devices = self.disks.items()
+        self.disks = OrderedDict()
+        self.__populate_disks()
 
     def __populate_disks(self):
-        disks = dict()
         for udisk in self.udisks:
             device = udisk.get('DEVNAME')
             parted = PartedInterface(device, self.parted_path)
@@ -56,50 +56,62 @@ class Layout(object):
             disk = Disk(devname=device,
                         devlinks=udisk.get('DEVLINKS'),
                         devpath=udisk.get('DEVPATH'), size=size)
-            disks[disk.devname] = disk
-        return disks
+            self.disks[device] = disk
 
     def find_device_by_ref(self, ref):
-        for idx in xrange(len(self.available_devices)):
-            disk = self.available_devices[idx]
+        for disk in self.disks.values():
             if ref == disk.devname:
-                return idx
+                return disk
             if ref == disk.devpath:
-                return idx
+                return disk
             for link in disk.devlinks:
                 if ref == link:
-                    return idx
-        return -1
+                    return disk
 
     def find_device_by_size(self, size):
-        for idx in xrange(len(self.available_devices)):
-            disk = self.available_devices[idx]
+        for disk in self.disks.values():
             if size < disk.size:
-                return idx
-        return -1
+                return disk
+
+
+    @property
+    def allocated(self):
+        l = list()
+        for disk in self.disks.values():
+            if disk.partition_table:
+                l.append(disk)
+        return l
+
+    @property
+    def unallocated(self):
+        l = list()
+        for disk in self.disks.values():
+            if not disk.partition_table:
+                l.append(disk)
+        return l
 
     def add_partition_table_from_model(self, partition_table):
-        if not self.available_devices:
+        unallocated = self.unallocated
+        if not unallocated:
             raise PhysicalDiskException('There are more available disks')
 
         if partition_table.disk == 'first':
-            disk = self.available_devices.pop(0)
+            disk = unallocated[0]
 
         elif partition_table.disk == 'any':
-            idx = self.find_device_by_size(partition_table.allocated_space)
-            if idx == -1:
+            disk = self.find_device_by_size(partition_table.allocated_space)
+            if not disk:
                 raise PhysicalDiskException('There is no suitable disk, table is too big')
-            disk = self.available_devices.pop(idx)
 
         else:
-            idx = self.find_device_by_ref(partition_table.disk)
-            if idx == -1:
+            disk = self.find_device_by_ref(partition_table.disk)
+            if not disk:
                 raise PhysicalDiskException('Could not associate disk, %s was not found' %
                                             partition_table.disk)
-            disk = self.available_devices.pop(idx)
 
         disk.new_partition_table(partition_table.type, partition_start=self.default_partition_start,
                                  gap=self.default_gap, alignment=self.default_alignment)
+
         for partition in partition_table.partitions:
             disk.partition_table.add_partition(partition)
 
