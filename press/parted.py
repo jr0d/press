@@ -1,5 +1,9 @@
+import logging
 import os
 from cli import run
+
+
+log = logging.getLogger(__name__)
 
 
 class PartedInterface(object):

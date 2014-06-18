@@ -107,9 +107,6 @@ class Partition(object):
     enumerate the /dev/link
     """
 
-    parted_id = None
-    device = None
-
     def __init__(self, type_or_name, size_or_percent, boot=False,
                  lvm=False, swap=False, file_system=None, mount_point=None):
         """
@@ -133,3 +130,6 @@ class Partition(object):
         self.swap = swap
         self.file_system = file_system
         self.mount_point = mount_point
+
+        self.partition_id = None
+        self.devname = None
