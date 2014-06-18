@@ -1,63 +1,26 @@
+import logging
 import shlex
 import subprocess
 
 
-class AttributeString(str):
+log = logging.getLogger(__name__)
+
+
+class _AttributeString(str):
     def __init__(self, x):
-        """Class that inherits from str and provides additional attributes
-        for storing subprocess command execution.
         """
+For introspection
+"""
         str.__init__(x)
-        self._stderr = ''
-        self._command = ''
-        self._comments = ''
-        self._returncode = None
+        self.stderr = ''
+        self.returncode = None
+        self.command = ''
+        self.comments = ''
 
     @property
     def stdout(self):
-        """Returns the command standard output.
-        """
         return self
 
-    @property
-    def stderr(self):
-        """Returns the stderr attribute.
-        """
-        return self._stderr
-
-    @stderr.setter
-    def stderr(self, value):
-        self._stderr = value
-
-    @property
-    def command(self):
-        """Returns the command attribute.
-        """
-        return self._command
-
-    @command.setter
-    def command(self, value):
-        self._command = value
-
-    @property
-    def comments(self):
-        """Returns the comments attribute.
-        """
-        return self._comments
-
-    @comments.setter
-    def comments(self, value):
-        self._comments = value
-
-    @property
-    def returncode(self):
-        """Returns the returncode attribute.
-        """
-        return self._returncode
-
-    @returncode.setter
-    def returncode(self, value):
-        self._returncode = value
 
 
 def run(command, bufsize=1048567, dry_run=False):
@@ -87,7 +50,7 @@ def run(command, bufsize=1048567, dry_run=False):
     else:
         out, err, ret = '', '', 0
 
-    attr_string = AttributeString(out)
+    attr_string = _AttributeString(out)
     attr_string.stderr = err
     attr_string.returncode = ret
     attr_string.command = command
