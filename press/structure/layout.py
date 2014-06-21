@@ -1,7 +1,7 @@
 import logging
 import time
 from collections import OrderedDict
-from press.parted import PartedInterface
+from press.parted import PartedInterface, NullDiskException
 from press.udev import UDevHelper
 from .disk import Disk
 
@@ -52,11 +52,17 @@ class Layout(object):
 
         self.disks = OrderedDict()
         self.__populate_disks()
+        if not self.disks:
+            raise PhysicalDiskException('There are no valid disks.')
 
     def __populate_disks(self):
         for udisk in self.udisks:
             device = udisk.get('DEVNAME')
-            parted = PartedInterface(device, self.parted_path)
+            try:
+                parted = PartedInterface(device, self.parted_path)
+            except NullDiskException:
+                log.debug('NullDiskException for %s' % device)
+                continue
             size = parted.get_size()
             disk = Disk(devname=device,
                         devlinks=udisk.get('DEVLINKS'),
