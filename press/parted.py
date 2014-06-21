@@ -27,6 +27,8 @@ class PartedInterface(object):
             raise PartedException('Requested alignment is not a multiple of gap.')
 
         self.parted = self.parted_path + ' --script ' + self.device + ' unit b '
+        #  Try to store the label, so that we'll raise a NullDiskException if we can't
+        self.init_label = self.get_label()
 
     def run_parted(self, command, raise_on_error=True):
         """
@@ -45,7 +47,14 @@ class PartedInterface(object):
     def get_table(self, raw=False):
         result = self.run_parted('print', raise_on_error=False)
         if result.returncode:
-            if 'unrecognised disk label' in result.stderr:
+            if not result.stderr:
+                #  udev sometimes maps /dev/loop devices before they are linked
+                #  with losetup. When using parted on such a device, it will return 1
+                #  with an no output. I need to find a better way to determine if a loop
+                #  device is linked, ie, use losetup, ioctl, or /proc/partitions
+                #  for now, we'll assume that missing output means the device is null
+                raise NullDiskException('Cannot get table for uninitialized device')
+            elif 'unrecognised disk label' in result.stderr:
                 pass
             else:
                 raise PartedException(result.stderr)
@@ -261,4 +270,8 @@ class PartedException(Exception):
 
 
 class PartedInterfaceException(Exception):
+    pass
+
+
+class NullDiskException(Exception):
     pass
