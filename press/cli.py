@@ -2,7 +2,6 @@ import logging
 import shlex
 import subprocess
 
-
 log = logging.getLogger(__name__)
 
 
@@ -22,7 +21,6 @@ For introspection
         return self
 
 
-
 def run(command, bufsize=1048567, dry_run=False):
     """Runs a command and stores the important bits in an attribute string.
 
@@ -38,7 +36,7 @@ def run(command, bufsize=1048567, dry_run=False):
     :returns: :func:`press.cli.AttributeString`.
 
     """
-
+    log.debug('Running: %s' % command)
     cmd = shlex.split(str(command))
     if not dry_run:
         p = subprocess.Popen(cmd,
@@ -50,6 +48,11 @@ def run(command, bufsize=1048567, dry_run=False):
     else:
         out, err, ret = '', '', 0
 
+    log.debug('Return Code: %d' % ret)
+    if out:
+        log.debug('stdout: %s' % out.strip())
+    if err:
+        log.debug('stderr: %s' % err.strip())
     attr_string = _AttributeString(out)
     attr_string.stderr = err
     attr_string.returncode = ret
