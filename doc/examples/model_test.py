@@ -1,16 +1,16 @@
 from press.models.partition import PartitionTableModel
-from press.parted import PartedInterface
-from press.structure import EXT4, Partition, PercentString, Size, Layout
+from press.structure import EXT4, Partition, PercentString, Size, Layout, SWAP
 
 disk = '/dev/loop0'
 
+p1 = Partition('primary', '2GiB', file_system=EXT4('BOOT'), boot=True, mount_point='/boot')
+p2 = Partition('primary', '512MiB', swap=True, file_system=SWAP('SWAP'))
+p3 = Partition('logical', PercentString('25%FREE'), file_system=EXT4(), mount_point='/')
 
-p1 = Partition('primary', '2GiB', file_system=EXT4('BOOT'), boot=True)
-p2 = Partition('logical', PercentString('25%FREE'), file_system=EXT4())
 
 pm1 = PartitionTableModel('msdos', disk=disk)
 
-pm1.add_partitions([p1, p2])
+pm1.add_partitions([p1, p2, p3])
 
 print pm1.allocated_space
 
