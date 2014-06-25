@@ -4,9 +4,6 @@ from .exceptions import LVMValidationError
 
 class VolumeGroup(object):
     """
-    Nearly a clone of the PartitionTable container, but for Logical Volumes. There
-    are two many naming differences to subclass, however.
-
     """
     logical_volumes = list()
 

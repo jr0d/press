@@ -75,6 +75,10 @@ class PartitionTable(object):
             return self.size - self.partition_start
         return self.size - (self.partition_end + self.gap)
 
+    @property
+    def physical_volumes(self):
+        return [partition for partition in self.partitions if partition.lvm]
+
     def add_partition(self, partition):
         if partition.percent_string:
             adjusted_size = self.calculate_total_size(partition.percent_string)
@@ -115,6 +119,7 @@ class Partition(object):
         size: a Size compatible value (see Size object documentation)..
         boot: set the boot flag on this partition when it is writen to disk
         lvm: set the lvm flag on this partition when it is written to disk
+             Layout will consider this a physical volume
         name: the name of the partition, valid only on gpt partition tables
         """
         if isinstance(size_or_percent, PercentString):
