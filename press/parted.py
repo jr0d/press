@@ -41,6 +41,7 @@ class PartedInterface(object):
         return result
 
     def make_partition(self, type, start, end):
+        log.info("Creating partition type %s, start %d, end %d" % (type, start, end))
         command = 'mkpart %s %d %d' % (type, start, end)
         return self.run_parted(command)
 

@@ -1,5 +1,7 @@
 from ..structure import Size
+import logging
 
+log = logging.getLogger(__name__)
 
 class PartitionTableModel(object):
     """
@@ -14,6 +16,7 @@ class PartitionTableModel(object):
             first: The first available disk, regardless of size will be used
             any: Any disk that can accommodate the static allocation of the partitions
         """
+        log.info('Initializing new Partition Table Model: Type: %s , Disk: %s' % (table_type, disk))
         self.partitions = list()
         self.disk = disk
 
@@ -33,6 +36,15 @@ class PartitionTableModel(object):
         """Adds partitions from iterable
         """
         for partition in partitions:
+            if partition.swap:
+                log.info('Adding partition: SWAP, size: %s' % partition.size)
+            else:
+                if partition.percent_string:
+                    log.info('Adding partition: %s, size: %s' %
+                           (partition.mount_point, partition.percent_string))
+                else:
+                    log.info('Adding partition: %s, size: %s' %
+                             (partition.mount_point, partition.size))
             self.add_partition(partition)
 
     @property
