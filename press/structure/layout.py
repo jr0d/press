@@ -11,22 +11,26 @@ log = logging.getLogger(__name__)
 
 
 class Layout(object):
+    """The highest level class.
     """
-    The highest level class.
-    """
-    disks = list()
-    volume_groups = list()
 
     def __init__(self, subsystem='all',
                  use_fibre_channel=True, use_loop_devices=True, loop_only=False,
                  parted_path='/sbin/parted',
                  default_partition_start=1048576, default_gap=1048576, default_alignment=4096,
-                 disk_association='explicit',
-                 *args, **kwargs):
+                 disk_association='explicit'):
         """
         Docs, maybe later
 
-        disk_association: explicit: path must be associated with Disk object
+        :param subsystem:
+        :param use_fibre_channel:
+        :param use_loop_devices:
+        :param loop_only:
+        :param parted_path:
+        :param default_partition_start:
+        :param default_gap:
+        :param default_alignment:
+        :param disk_association: explicit: path must be associated with Disk object
                           first: Use only the first available disk, subsequent calls to add_disk
                             trigger an exception
                           any: The first available disk is used that can accommodate the
@@ -69,6 +73,11 @@ class Layout(object):
             self.disks[device] = disk
 
     def find_device_by_ref(self, ref):
+        """
+
+        :param ref:
+        :return:
+        """
         for disk in self.disks.values():
             if ref == disk.devname:
                 return disk
@@ -79,11 +88,21 @@ class Layout(object):
                     return disk
 
     def find_device_by_size(self, size):
+        """
+
+        :param size:
+        :return:
+        """
         for disk in self.disks.values():
             if size < disk.size:
                 return disk
 
     def _get_parted_interface_for_allocated_device(self, disk):
+        """
+
+        :param disk:
+        :return: :raise LayoutValidationError:
+        """
         if not disk.partition_table:
             raise LayoutValidationError('Disk is not allocated')
         return PartedInterface(device=disk.devname,
@@ -152,8 +171,8 @@ class Layout(object):
                                                        partition.size.bytes,
                                                        boot_flag=partition.boot,
                                                        lvm_flag=partition.lvm)
-                #  it takes some time for the uevent to register and the partition to be added
-                #  to udisks. To avoid this sleep and possible race condition, we should switch
+                # it takes some time for the uevent to register and the partition to be added
+                # to udisks. To avoid this sleep and possible race condition, we should switch
                 #  to using a udev monitor which as the original design
                 time.sleep(5)
                 partition_name = self._find_partition_devname(disk, partition_id)

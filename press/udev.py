@@ -27,6 +27,9 @@ class UDevHelper(object):
         devices = self.get_partitions()
         return devices.match_parent(pyudev.Device.from_device_file(self.context, device))
 
+    def get_device_by_name(self, devname):
+        return pyudev.Device.from_device_file(self.context, devname)
+
     def discover_valid_storage_devices(self, fc_enabled=True, loop_enabled=False):
         """
         Kind of ugly, but gets the job done. It strips devices we don't
