@@ -63,9 +63,8 @@ class LogicalVolume(object):
     """
     device = None
 
-    def __init__(self, name, size, swap=False, file_system=None, mount_point=None):
+    def __init__(self, name, size, file_system=None, mount_point=None):
         self.name = name
         self.size = Size(size)
-        self.swap = swap
         self.file_system = file_system
         self.mount_point = mount_point

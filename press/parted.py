@@ -1,7 +1,9 @@
 import logging
 import os
-from cli import run
 
+from press.cli import run
+from press.sysfs_info import AlignmentInfo, append_sys
+from press.udev import UDevHelper
 
 log = logging.getLogger(__name__)
 
@@ -29,6 +31,15 @@ class PartedInterface(object):
         self.parted = self.parted_path + ' --script ' + self.device + ' unit b '
         #  Try to store the label, so that we'll raise a NullDiskException if we can't
         self.init_label = self.get_label()
+        self.sector_size = self._get_sector_size()
+        self.kernel_alignment_info = self.__get_alignment_info(device)
+
+    @staticmethod
+    def __get_alignment_info(device):
+        uh = UDevHelper()
+        devpath = uh.get_device_by_name(device)['DEVPATH']
+        path = append_sys(devpath)
+        return AlignmentInfo(path)
 
     def run_parted(self, command, raise_on_error=True):
         """
@@ -78,7 +89,7 @@ class PartedInterface(object):
     def get_model(self):
         return self._get_info('Model')
 
-    def get_sector_size(self):
+    def _get_sector_size(self):
         size = self._get_info('Sector size (logical/physical)')
         logical, physical = size.split('/')
         logical = int(logical[:-1])
@@ -97,7 +108,7 @@ class PartedInterface(object):
         info['model'] = self.get_model()
         info['device'] = self.device
         info['size'] = self.get_size()
-        info['sector_size'] = self.get_sector_size()
+        info['sector_size'] = self.sector_size
         info['partition_table'] = self.get_label()
         info['disk_flags'] = self.get_disk_flags()
         return info
