@@ -1,7 +1,9 @@
 from press.cli import run
 from . import FileSystem
 from ..exceptions import FileSystemCreateException
+import logging
 
+log = logging.getLogger(__name__)
 
 class EXT(FileSystem):
     fs_type = ''
@@ -39,6 +41,7 @@ class EXT(FileSystem):
                 device=device
             )
         )
+        log.info("Creating filesystem: %s" % command)
         result = run(command)
 
         if result.returncode:

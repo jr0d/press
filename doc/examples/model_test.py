@@ -1,11 +1,15 @@
 from press.models.partition import PartitionTableModel
 from press.structure import EXT4, Partition, PercentString, Size, Layout, SWAP
+from press.logger import *
+import logging
+## JUST SETTING UP LOGGING FOR TESTING. LIBRARIES SHOULDN'T DO THIS.
+setup_logging()
 
 disk = '/dev/loop0'
 
 p1 = Partition('primary', '2GiB', file_system=EXT4('BOOT'), boot=True, mount_point='/boot')
 p2 = Partition('primary', '512MiB', swap=True, file_system=SWAP('SWAP'))
-p3 = Partition('logical', PercentString('25%FREE'), file_system=EXT4(), mount_point='/')
+p3 = Partition('logical', PercentString('25%FREE'), file_system=EXT4('ROOT'), mount_point='/')
 
 
 pm1 = PartitionTableModel('msdos', disk=disk)

@@ -50,9 +50,9 @@ def run(command, bufsize=1048567, dry_run=False):
 
     log.debug('Return Code: %d' % ret)
     if out:
-        log.debug('stdout: %s' % out.strip())
+        log.debug('stdout: \n%s' % out.strip())
     if err:
-        log.debug('stderr: %s' % err.strip())
+        log.debug('stderr: \n%s' % err.strip())
     attr_string = _AttributeString(out)
     attr_string.stderr = err
     attr_string.returncode = ret
