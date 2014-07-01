@@ -17,17 +17,24 @@ handlers:
 
     file:
         class: logging.FileHandler
+        level: INFO
+        formatter: simple
+        filename: /tmp/press.log
+
+    cli:
+        class: logging.FileHandler
         level: DEBUG
         formatter: simple
-        filename: /tmp/press-debug.log
+        filename: /tmp/cli.out
+
 
 loggers:
     press.cli:
         level: DEBUG
-        handlers: [console, file]
-        propagate: no
+        handlers: [cli]
+        propagate: yes
 
-root:
-    level: INFO
-    handlers: [console, file]
-...
+    '':
+        level: INFO
+        handlers: [console, file]
+
