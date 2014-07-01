@@ -1,7 +1,9 @@
 from press.cli import run
 from . import FileSystem
 from ..exceptions import FileSystemCreateException
+import logging
 
+log = logging.getLogger(__name__)
 
 class SWAP(FileSystem):
     def __init__(self, label=None, command_path='/usr/bin/mkswap'):
@@ -21,6 +23,7 @@ class SWAP(FileSystem):
             label_option=self.label_option,
             device=device
         ))
+        log.info("Creating filesystem: %s" % command)
         result = run(command)
 
         if result.returncode:

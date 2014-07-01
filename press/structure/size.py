@@ -192,3 +192,6 @@ class PercentString(object):
 
         if mod.upper() == 'FREE':
             self.free = True
+
+    def __repr__(self):
+        return self.raw_string
