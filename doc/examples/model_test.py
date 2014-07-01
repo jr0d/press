@@ -8,41 +8,6 @@ import logging
 ## JUST SETTING UP LOGGING FOR TESTING. LIBRARIES SHOULDN'T DO THIS.
 setup_logging()
 
-FORMAT = "%(asctime)s - %(levelname)s : %(name)s - %(message)s"
-config_dict = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'standard': {'format': FORMAT},
-    },
-    'handlers': {
-        'default': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'standard'
-        },
-        'debug': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': '/tmp/console.out',
-            'formatter': 'standard'
-        }
-    },
-    'loggers': {
-        '': {
-            'handlers': ['default'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'press.cli': {
-            'handlers': ['debug'],
-            'level': 'DEBUG',
-            'propagate': True
-        }
-    }
-}
-logging.config.dictConfig(config_dict)
-
 log = logging.getLogger(__name__)
 
 disk = '/dev/loop0'
