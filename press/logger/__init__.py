@@ -3,8 +3,9 @@ import logging.config
 
 import yaml
 
+
 def setup_logging(
-    default_path='press/logger/logging.yaml', 
+    default_path='configuration/logging.yaml',
     default_level=logging.DEBUG,
     env_key='LOG_CFG'
 ):

@@ -1,0 +1,40 @@
+---
+
+version: 1
+
+disable_existing_loggers: False
+
+formatters:
+    simple:
+        format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+handlers:
+    console:
+        class: logging.StreamHandler
+        level: INFO
+        formatter: simple
+        stream: ext://sys.stdout
+
+    file:
+        class: logging.FileHandler
+        level: INFO
+        formatter: simple
+        filename: /tmp/press.log
+
+    cli:
+        class: logging.FileHandler
+        level: DEBUG
+        formatter: simple
+        filename: /tmp/cli.out
+
+
+loggers:
+    press.cli:
+        level: DEBUG
+        handlers: [cli]
+        propagate: yes
+
+    '':
+        level: INFO
+        handlers: [console, file]
+
