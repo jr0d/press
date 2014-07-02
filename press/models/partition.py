@@ -3,6 +3,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class PartitionTableModel(object):
     """
     Mimics PartitionTable structured class but does not contain size attribute.
