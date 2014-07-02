@@ -16,17 +16,14 @@ class PartedInterface(object):
     Once I can use libparted directly, I will move to that.
     """
 
-    def __init__(self, device, parted_path='/sbin/parted', partition_start=1048576, gap=1048576,
-                 alignment=4096):
+    def __init__(self, device, parted_path='/sbin/parted', partition_start=1048576,
+                 alignment=1048576):
         self.parted_path = parted_path
         if not os.path.isfile(self.parted_path):
             raise PartedInterfaceException('%s does not exist.' % self.parted_path)
         self.device = device
         self.partition_start = partition_start
-        self.gap = gap
         self.alignment = alignment
-        if gap % alignment:
-            raise PartedException('Requested alignment is not a multiple of gap.')
 
         self.parted = self.parted_path + ' --script ' + self.device + ' unit b '
         #  Try to store the label, so that we'll raise a NullDiskException if we can't
@@ -205,17 +202,6 @@ class PartedInterface(object):
 
     def create_partition(self, type_or_name, part_size, boot_flag=False, lvm_flag=False):
         """
-
-        For now, we will start the partitions at 1MiB and check the alignment.
-
-        type_or_name: primary/logical for msdos based partition tables. If a
-        logical partition is requested, an extended lba partition will be
-        created, if one does not yet exist, that fills the remainder of the disk.
-        for gpt tables, the argument will be used as partition name.
-
-        part_size: size of partition, in bytes.
-
-        return: The new partition id
         """
 
         table_size = self.get_size()
@@ -231,7 +217,7 @@ class PartedInterface(object):
         if last_partition:
             aligned = \
                 last_partition['end'] + (self.alignment - (last_partition['end'] % self.alignment))
-            start = aligned + self.gap
+            start = aligned
             partition_number = last_partition['number'] + 1
 
         end = start + part_size
@@ -242,7 +228,6 @@ class PartedInterface(object):
         if type_or_name == 'logical' and label == 'msdos':
             if not self.extended_partition:
                 self.make_partition('extended', start, table_size - 1)
-                start += self.gap
                 end = start + part_size
                 partition_number = 5
 
