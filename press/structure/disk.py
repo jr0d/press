@@ -12,17 +12,17 @@ class Disk(object):
         self.size = Size(size)
         self.partition_table = partition_table
 
-    def new_partition_table(self, table_type, partition_start=1048576, gap=1048576, alignment=4096):
+    def new_partition_table(self, table_type, partition_start=1048576, alignment=1048576):
         """Instantiate and link a PartitionTable object to Disk instance
         """
         self.partition_table = PartitionTable(table_type,
                                               self.size.bytes,
                                               partition_start=partition_start,
-                                              gap=gap, alignment=alignment)
+                                              alignment=alignment)
 
 
 class PartitionTable(object):
-    def __init__(self, table_type, size, partition_start=1048576, gap=1048576, alignment=4096):
+    def __init__(self, table_type, size, partition_start=1048576, alignment=1048576):
         """Logical representation of a partition
         """
 
@@ -33,7 +33,6 @@ class PartitionTable(object):
         # size must be related to
         self.size = Size(size)
         self.partition_start = Size(partition_start)
-        self.gap = Size(gap)
         self.alignment = Size(alignment)
 
         # This variable is used to store a pointer to the end of the partition
@@ -45,7 +44,7 @@ class PartitionTable(object):
         if not isinstance(partition, Partition):
             return ValueError('Expected Partition instance')
         if self.partitions:
-            if self.size < self.current_usage + self.gap + partition.size:
+            if self.size < self.current_usage + partition.size:
                 raise PartitionValidationError(
                     'The partition is too big. %s < %s' % (self.size - self.current_usage, partition.size))
         elif self.size < partition.size + self.partition_start:
@@ -73,7 +72,7 @@ class PartitionTable(object):
     def free_space(self):
         if not self.partitions:
             return self.size - self.partition_start
-        return self.size - (self.partition_end + self.gap)
+        return self.size - self.partition_end
 
     @property
     def physical_volumes(self):

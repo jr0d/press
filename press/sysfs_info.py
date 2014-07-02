@@ -21,7 +21,7 @@ class AlignmentInfo(object):
         self.attributes = {
             'alignment_offset': (None, 'alignment_offset'),
             'physical_block_size': (None, 'queue/physical_block_size'),
-            'logical_block_size': (None, 'queue/physical_block_size'),
+            'logical_block_size': (None, 'queue/logical_block_size'),
             'optimal_io_size': (None, 'queue/optimal_io_size')
         }
         self.devpath = devpath

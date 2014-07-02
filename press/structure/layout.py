@@ -17,7 +17,7 @@ class Layout(object):
     def __init__(self, subsystem='all',
                  use_fibre_channel=True, use_loop_devices=True, loop_only=False,
                  parted_path='/sbin/parted',
-                 default_partition_start=1048576, default_gap=1048576, default_alignment=4096,
+                 default_partition_start=1048576, default_alignment=1048576,
                  disk_association='explicit'):
         """
         Docs, maybe later
@@ -28,7 +28,6 @@ class Layout(object):
         :param loop_only:
         :param parted_path:
         :param default_partition_start:
-        :param default_gap:
         :param default_alignment:
         :param disk_association: explicit: path must be associated with Disk object
                           first: Use only the first available disk, subsequent calls to add_disk
@@ -41,7 +40,6 @@ class Layout(object):
         self.loop_enabled = use_loop_devices
         self.parted_path = parted_path
         self.default_partition_start = default_partition_start
-        self.default_gap = default_gap
         self.default_alignment = default_alignment
         self.disk_association = disk_association
         self.udev = UDevHelper()
@@ -108,7 +106,6 @@ class Layout(object):
         return PartedInterface(device=disk.devname,
                                parted_path=self.parted_path,
                                partition_start=disk.partition_table.partition_start.bytes,
-                               gap=disk.partition_table.gap.bytes,
                                alignment=disk.partition_table.alignment.bytes
         )
 
@@ -148,7 +145,7 @@ class Layout(object):
                                             partition_table.disk)
 
         disk.new_partition_table(partition_table.type, partition_start=self.default_partition_start,
-                                 gap=self.default_gap, alignment=self.default_alignment)
+                                 alignment=self.default_alignment)
 
         for partition in partition_table.partitions:
             disk.partition_table.add_partition(partition)
