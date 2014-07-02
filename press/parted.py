@@ -228,7 +228,7 @@ class PartedInterface(object):
         if type_or_name == 'logical' and label == 'msdos':
             if not self.extended_partition:
                 self.make_partition('extended', start, table_size - 1)
-                end = start + part_size
+                start += self.partition_start
                 partition_number = 5
 
         self.make_partition(type_or_name, start, end)
