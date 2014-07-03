@@ -17,7 +17,7 @@ class PartitionTableModel(object):
             first: The first available disk, regardless of size will be used
             any: Any disk that can accommodate the static allocation of the partitions
         """
-        log.info('Initializing new Partition Table Model: Type: %s , Disk: %s' % (table_type, disk))
+        log.info('Modeling new Partition Table Model: Type: %s , Disk: %s' % (table_type, disk))
         self.partitions = list()
         self.disk = disk
 
@@ -31,21 +31,21 @@ class PartitionTableModel(object):
         """
         :param partition: (Partition) should be compatible with a structure.disk.Partition object
         """
+        log.info(
+            'Modeling new partition: %s : %s, size: %s / %d, fs: %s, mount_point: %s' % (
+                self.type == 'gpt' and 'name' or 'type',
+                partition.name,
+                partition.size or partition.percent_string,
+                partition.size and partition.size.bytes or 0,
+                partition.file_system,
+                partition.mount_point))
         self.partitions.append(partition)
 
     def add_partitions(self, partitions):
         """Adds partitions from iterable
         """
         for partition in partitions:
-            if partition.swap:
-                log.info('Adding partition: SWAP, size: %s' % partition.size)
-            else:
-                if partition.percent_string:
-                    log.info('Adding partition: %s, size: %s' %
-                           (partition.mount_point, partition.percent_string))
-                else:
-                    log.info('Adding partition: %s, size: %s' %
-                             (partition.mount_point, partition.size))
+
             self.add_partition(partition)
 
     @property

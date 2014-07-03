@@ -1,5 +1,9 @@
+import logging
+
 from .size import Size, PercentString
 from .exceptions import PartitionValidationError
+
+log = logging.getLogger(__name__)
 
 
 class Disk(object):
@@ -41,8 +45,9 @@ class PartitionTable(object):
         self.partitions = list()
 
     def _validate_partition(self, partition):
-        if not isinstance(partition, Partition):
-            return ValueError('Expected Partition instance')
+        if partition.size < Size('1MiB'):
+            raise PartitionValidationError('The partition cannot be < 1MiB.')
+
         if self.partitions:
             if self.size < self.current_usage + partition.size:
                 raise PartitionValidationError(
@@ -51,8 +56,8 @@ class PartitionTable(object):
             raise PartitionValidationError(
                 'The partition is too big. %s < %s' % (self.size - self.current_usage, partition.size))
 
-        if partition.size < Size('1MiB'):
-            raise PartitionValidationError('The partition cannot be < 1MiB.')
+    def calculate_aligned_size(self, size):
+        return size + self.alignment - size % self.alignment
 
     def calculate_total_size(self, size):
         """Calculates total size after alignment.
@@ -62,7 +67,7 @@ class PartitionTable(object):
                 size = self.get_percentage_of_free_space(size.value)
             else:
                 size = self.get_percentage_of_usable_space(size.value)
-        return size + (self.alignment - size % self.alignment)
+        return size
 
     @property
     def current_usage(self):
@@ -71,8 +76,11 @@ class PartitionTable(object):
     @property
     def free_space(self):
         if not self.partitions:
-            return self.size - self.partition_start
-        return self.size - self.partition_end
+            free = self.size - self.partition_start
+        else:
+            free = self.size - self.partition_end + self.alignment - self.partition_end % self.alignment
+        log.debug('Free space: %d' % free.bytes)
+        return free
 
     @property
     def physical_volumes(self):
@@ -111,7 +119,7 @@ class Partition(object):
     """
 
     def __init__(self, type_or_name, size_or_percent, boot=False,
-                 lvm=False, swap=False, file_system=None, mount_point=None):
+                 lvm=False, file_system=None, mount_point=None):
         """
         Constructor:
 
@@ -122,7 +130,7 @@ class Partition(object):
         name: the name of the partition, valid only on gpt partition tables
         """
         if isinstance(size_or_percent, PercentString):
-            self.size = Size(0)
+            self.size = None
             self.percent_string = size_or_percent
         else:
             self.size = Size(size_or_percent)
@@ -131,7 +139,6 @@ class Partition(object):
         self.boot = boot
         self.lvm = lvm
         self.name = type_or_name
-        self.swap = swap
         self.file_system = file_system
         self.mount_point = mount_point
 
