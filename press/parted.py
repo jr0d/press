@@ -202,6 +202,12 @@ class PartedInterface(object):
 
     def create_partition(self, type_or_name, part_size, boot_flag=False, lvm_flag=False):
         """
+
+        :rtype : int
+        :param type_or_name:
+        :param part_size:
+        :param boot_flag:
+        :param lvm_flag:
         """
 
         table_size = self.get_size()
@@ -222,8 +228,16 @@ class PartedInterface(object):
 
         end = start + part_size
 
-        if end >= table_size:
-            raise PartedInterfaceException('The partition is too big.')
+        if end > table_size:
+            #  Should be >= for msdos and end >= table_size - 34 sectors for gpt
+            raise PartedInterfaceException('The partition is too big. %d > %d' % (end, table_size))
+
+        ##### TODO: gpt chops 34 sectors from the end of the disk, need to account for this
+        #  in our percentage calculations, and also ensure that explicit declarations do not
+        #  overrun.
+        if end == table_size:
+            # Shave one byte ? Do this in PartitionTable!!!!
+            end -= 1
 
         if type_or_name == 'logical' and label == 'msdos':
             if not self.extended_partition:

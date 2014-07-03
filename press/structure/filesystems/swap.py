@@ -5,7 +5,10 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class SWAP(FileSystem):
+    fs_type = 'swap'
+
     def __init__(self, label=None, command_path='/usr/bin/mkswap'):
         self.label = label
         self.command_path = command_path
