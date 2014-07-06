@@ -150,7 +150,8 @@ class Layout(object):
         for partition in partition_table.partitions:
             disk.partition_table.add_partition(partition)
 
-    def _find_partition_devname(self, disk, partition_id):
+    def find_partition_devname(self, disk, partition_id):
+        # make this part of UDevHelper?
         partitions = self.udev.find_partitions(disk.devname)
         for partition in partitions:
             if int(partition.get('UDISKS_PARTITION_NUMBER', -1)) == partition_id:
@@ -172,7 +173,10 @@ class Layout(object):
                 # to udisks. To avoid this sleep and possible race condition, we should switch
                 #  to using a udev monitor which as the original design
                 time.sleep(5)
-                partition_name = self._find_partition_devname(disk, partition_id)
+                partition_name = self.find_partition_devname(disk, partition_id)
+                partition.devname = partition_name
+                partition.partition_id = partition_id
+
                 if not partition_name:
                     log.error('%s %s %s' % (partition_name, disk, partition_id))
                     raise PhysicalDiskException('Could not relate partition id to devname')

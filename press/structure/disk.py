@@ -6,6 +6,11 @@ from .exceptions import PartitionValidationError
 log = logging.getLogger(__name__)
 
 
+GPT = 'gpt'
+MSDOS = 'msdos'
+GPT_BACKUP_SIZE = 17408
+
+
 class Disk(object):
     def __init__(self, devname=None, devlinks=None, devpath=None, partition_table=None, size=0):
         """
@@ -30,18 +35,17 @@ class PartitionTable(object):
         """Logical representation of a partition
         """
 
-        valid_types = ['gpt', 'msdos']
+        valid_types = [GPT, MSDOS]
         if table_type not in valid_types:
             raise ValueError('table not supported: %s' % table_type)
         self.type = table_type
-        # size must be related to
         self.size = Size(size)
         self.partition_start = Size(partition_start)
         self.alignment = Size(alignment)
 
         # This variable is used to store a pointer to the end of the partition
         # structure + (alignment - ( end % alignment ) )
-        self.partition_end = Size(partition_start)
+        self.partition_end = self.partition_start
         self.partitions = list()
 
     def _validate_partition(self, partition):
@@ -70,6 +74,14 @@ class PartitionTable(object):
         return size
 
     @property
+    def is_gpt(self):
+        return self.type == GPT
+
+    @property
+    def is_msdos(self):
+        return self.type == MSDOS
+
+    @property
     def current_usage(self):
         return self.partition_end
 
@@ -78,7 +90,10 @@ class PartitionTable(object):
         if not self.partitions:
             free = self.size - self.partition_start
         else:
-            free = self.size - self.partition_end + self.alignment - self.partition_end % self.alignment
+            free = \
+                self.size - self.partition_end + self.alignment - self.partition_end % self.alignment
+        if self.type == GPT:
+            free -= Size(GPT_BACKUP_SIZE)
         log.debug('Free space: %d' % free.bytes)
         return free
 
@@ -91,6 +106,19 @@ class PartitionTable(object):
             adjusted_size = self.calculate_total_size(partition.percent_string)
         else:
             adjusted_size = self.calculate_total_size(partition.size)
+
+        #  Adjust size to conform with parted logic
+
+        #  TODO: Make Size operator overloads work with ints
+        if self.is_gpt \
+                and self.partition_end.bytes + adjusted_size.bytes > self.size.bytes - GPT_BACKUP_SIZE:
+            # parted reserves 17408 bytes for a gpt backup at the end of the disk
+            adjusted_size -= self.partition_end + adjusted_size - self.size - Size(GPT_BACKUP_SIZE)
+
+        if self.is_msdos and self.partition_end + adjusted_size == self.size:
+            # 100% full - 1, the last byte overruns disk geometry
+            adjusted_size.bytes -= 1
+
         partition.size = adjusted_size
         self._validate_partition(partition)
         self.partitions.append(partition)
