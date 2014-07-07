@@ -14,8 +14,8 @@ def setup_logging(
     :param default_path: Path to logging configuration.
     :type default_path: str.
 
-    :param default_level: The default logging level.
-    :type default_level: logging.[DEBUG, INFO, WARNING, ERROR, CRITICAL].
+    :param default_level: logging level.
+    :type default_level: int.
 
     :param env_key: Environment key for logger.
     :type env_key: str.
