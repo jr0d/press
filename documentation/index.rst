@@ -1,21 +1,17 @@
-OS Deployment's Press API Documentation.
-========================================
+.. press documentation master file, created by
+   sphinx-quickstart on Mon Jul  7 10:02:09 2014.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to press's documentation!
+=================================
 
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
-   press/cli.rst
-   press/parted.rst
-   press/udev.rst
-   press/models/partition.rst
-   press/structure/disk.rst
-   press/structure/exceptions.rst
-   press/structure/layout.rst
-   press/structure/lvm.rst
-   press/structure/size.rst
-   press/structure/filesystems/extended.rst
+   press
 
 
 Indices and tables
