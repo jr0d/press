@@ -8,8 +8,8 @@ log = logging.getLogger(__name__)
 class _AttributeString(str):
     def __init__(self, x):
         """
-For introspection
-"""
+        For introspection
+        """
         str.__init__(x)
         self.stderr = ''
         self.returncode = None
