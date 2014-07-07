@@ -11,6 +11,15 @@ def setup_logging(
 ):
     """Setup logging configuration
 
+    :param default_path: Path to logging configuration.
+    :type default_path: str.
+
+    :param default_level: logging level.
+    :type default_level: int.
+
+    :param env_key: Environment key for logger.
+    :type env_key: str.
+
     """
     path = default_path
     value = os.getenv(env_key, None)
