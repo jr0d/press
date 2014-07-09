@@ -30,9 +30,6 @@ class UDevHelper(object):
     def get_device_by_name(self, devname):
         return pyudev.Device.from_device_file(self.context, devname)
 
-    def get_uuid_by_name(self, devname):
-        return pyudev.Device.from_device_file(self.context,devname).get('ID_FS_UUID')
-
     def discover_valid_storage_devices(self, fc_enabled=True, loop_enabled=False):
         """
         Kind of ugly, but gets the job done. It strips devices we don't

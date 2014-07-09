@@ -192,7 +192,7 @@ class Layout(object):
         :param partition: This is the partition object used to create the partition
         :return: nothing is returned, it is applied to self.fstab
         """
-        supported_methods = ['DEVNAME', 'UUID']
+        supported_methods = ['DEVNAME', 'UUID', 'LABEL']
         if method not in supported_methods:
             raise Exception
         log.info('Generating %s partition table.' % method)
@@ -204,12 +204,15 @@ class Layout(object):
             partition_table = disk.partition_table
             for partition in partition_table.partitions:
                 try:
-                    uuid = self.udev.get_uuid_by_name(partition.devname)
+                    uuid = self.udev.get_device_by_name(partition.devname)['ID_FS_UUID']
                 except:
-                    log.error('Partition/Filesystem %s does not exist yet: ' % partition.devname)
-                    uuid = 'None'
-                    method = 'DEVNAME'
-
+                    log.error('Partition/Filesystem does not exist yet. Call Layout.apply() first.')
+                    return None
+                try:
+                    label = self.udev.get_device_by_name(partition.devname)['ID_FS_LABEL']
+                except:
+                    log.error('Partition %s does not have a LABEL' % partition.devname)
+                    return None
                 options = 'defaults'
                 dump_and_pass = '0 0'
 
@@ -221,9 +224,11 @@ class Layout(object):
                     options += ',nosuid,nodev,noexec'
 
                 if method == 'UUID':
-                    fstab += '#%s\nUUID=%s\t\t' % (partition.devname, uuid)
+                    fstab += '#DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % (partition.devname, label, uuid)
+                elif method == 'LABEL':
+                    fstab += '#DEVNAME=%s\tUUID=%s\nLABEL=%s\t\t' % (partition.devname, uuid, label)
                 else:
-                    fstab += '#UUID=%s\n%s\t\t' % (uuid, partition.devname)
+                    fstab += '#UUID=%s\tLABEL=%s\n%s\t\t' % (uuid,label, partition.devname)
                 fstab += '%s\t\t%s\t\t%s\t\t%s\n\n' % (
                 partition.mount_point, partition.file_system, options,dump_and_pass)
         return fstab
