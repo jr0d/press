@@ -205,13 +205,25 @@ class Layout(object):
             for partition in partition_table.partitions:
                 try:
                     uuid = self.udev.get_device_by_name(partition.devname)['ID_FS_UUID']
-                except:
-                    log.error('Partition/Filesystem does not exist yet. Call Layout.apply() first.')
+                except KeyError, e:
+                    log.error('Disk %s does not exist. Call Layout.apply() first. Error: %s' %
+                              (partition.devname,e))
+                    return None
+                except OSError, e:
+                    log.error('Disk %s not found. Error %s' % (partition.devname, e))
+                    return None
+                except TypeError, e:
+                    log.error('UUID lookup for disk %s failed. Call Layout.apply() first. Error: %s' %
+                              (partition.devname, e))
                     return None
                 try:
                     label = self.udev.get_device_by_name(partition.devname)['ID_FS_LABEL']
-                except:
-                    log.error('Partition %s does not have a LABEL' % partition.devname)
+                except KeyError, e:
+                    log.error('Disk %s does not have a lable. Error %s' % e)
+                    return None
+                except TypeError, e:
+                    log.error('LABEL lookup for disk %s failed. Error: %s' %
+                              (partition.devname, e))
                     return None
                 options = 'defaults'
                 dump_and_pass = '0 0'
