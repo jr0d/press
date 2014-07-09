@@ -185,3 +185,45 @@ class Layout(object):
                     partition.file_system.create(partition_name)
 
 
+    def generate_fstab(self, method = 'UUID'):
+        """
+        This generates an fstab for this partition layout
+
+        :param partition: This is the partition object used to create the partition
+        :return: nothing is returned, it is applied to self.fstab
+        """
+        supported_methods = ['DEVNAME', 'UUID']
+        if method not in supported_methods:
+            raise Exception
+        log.info('Generating %s partition table.' % method)
+        fstab = ''
+        for disk in self.allocated:
+            parted = self._get_parted_interface_for_allocated_device(disk)
+            parted.get_table()
+
+            partition_table = disk.partition_table
+            for partition in partition_table.partitions:
+                try:
+                    uuid = self.udev.get_uuid_by_name(partition.devname)
+                except:
+                    log.error('Partition/Filesystem %s does not exist yet: ' % partition.devname)
+                    uuid = 'None'
+                    method = 'DEVNAME'
+
+                options = 'defaults'
+                dump_and_pass = '0 0'
+
+                if partition.mount_point == '/boot':
+                    dump_and_pass = '0 1'
+                elif partition.mount_point == '/':
+                    dump_and_pass = '0 2'
+                elif partition.mount_point == '/tmp':
+                    options += ',nosuid,nodev,noexec'
+
+                if method == 'UUID':
+                    fstab += '#%s\nUUID=%s\t\t' % (partition.devname, uuid)
+                else:
+                    fstab += '#UUID=%s\n%s\t\t' % (uuid, partition.devname)
+                fstab += '%s\t\t%s\t\t%s\t\t%s\n\n' % (
+                partition.mount_point, partition.file_system, options,dump_and_pass)
+        return fstab
