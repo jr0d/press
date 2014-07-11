@@ -55,9 +55,6 @@ class Layout(object):
         self.__populate_disks()
         if not self.disks:
             raise PhysicalDiskException('There are no valid disks.')
-        self.UUID = False
-        self.SSD = False
-        self.fstab = ''
 
     def __populate_disks(self):
         for udisk in self.udisks:
@@ -186,30 +183,5 @@ class Layout(object):
 
                 if partition.file_system:
                     partition.file_system.create(partition_name)
-                    self.update_fstab(partition, self.UUID, self.SSD)
 
 
-    def update_fstab(self, partition, UUID, SSD):
-        """
-        This updates the self.fstab string with a usable fstab for this partition layout
-
-        :param partition: This is the partition object used to create the partition
-        :return: nothing is returned, it is applied to self.fstab
-        """
-        uuid = self.udev.get_uuid_by_name(partition.devname)
-        options = 'defaults'
-        dump_and_pass = '0 0'
-
-        if partition.mount_point == '/boot':
-            dump_and_pass = '0 1'
-        elif partition.mount_point == '/':
-            dump_and_pass = '0 2'
-        elif partition.mount_point == '/tmp':
-            options += ',nosuid,nodev,noexec'
-
-        if UUID:
-            self.fstab += '#%s\nUUID=%s\t\t' % (partition.devname, uuid)
-        else:
-            self.fstab += '#UUID=%s\n%s\t\t' % (uuid, partition.devname)
-        self.fstab += '%s\t\t%s\t\t%s\t\t%s\n\n' % (
-            partition.mount_point, partition.file_system, options,dump_and_pass)
