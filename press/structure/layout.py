@@ -183,3 +183,64 @@ class Layout(object):
 
                 if partition.file_system:
                     partition.file_system.create(partition_name)
+
+
+    def generate_fstab(self, method = 'UUID'):
+        """
+        This generates an fstab for this partition layout
+
+        :param partition: This is the partition object used to create the partition
+        :return: nothing is returned, it is applied to self.fstab
+        """
+        supported_methods = ['DEVNAME', 'UUID', 'LABEL']
+        if method not in supported_methods:
+            raise Exception
+        log.info('Generating %s partition table.' % method)
+        fstab = ''
+        for disk in self.allocated:
+            parted = self._get_parted_interface_for_allocated_device(disk)
+            parted.get_table()
+
+            partition_table = disk.partition_table
+            for partition in partition_table.partitions:
+                try:
+                    uuid = self.udev.get_device_by_name(partition.devname)['ID_FS_UUID']
+                except KeyError, e:
+                    log.error('Disk %s does not exist. Call Layout.apply() first. Error: %s' %
+                              (partition.devname,e))
+                    return None
+                except OSError, e:
+                    log.error('Disk %s not found. Error %s' % (partition.devname, e))
+                    return None
+                except TypeError, e:
+                    log.error('UUID lookup for disk %s failed. Call Layout.apply() first. Error: %s' %
+                              (partition.devname, e))
+                    return None
+                try:
+                    label = self.udev.get_device_by_name(partition.devname)['ID_FS_LABEL']
+                except KeyError, e:
+                    log.error('Disk %s does not have a lable. Error %s' % e)
+                    return None
+                except TypeError, e:
+                    log.error('LABEL lookup for disk %s failed. Error: %s' %
+                              (partition.devname, e))
+                    return None
+                options = 'defaults'
+                dump_and_pass = '0 0'
+
+                if partition.mount_point == '/boot':
+                    dump_and_pass = '0 1'
+                elif partition.mount_point == '/':
+                    dump_and_pass = '0 2'
+                elif partition.mount_point == '/tmp':
+                    options += ',nosuid,nodev,noexec'
+
+                if method == 'UUID':
+                    fstab += '#DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % (partition.devname, label, uuid)
+                elif method == 'LABEL':
+                    fstab += '#DEVNAME=%s\tUUID=%s\nLABEL=%s\t\t' % (partition.devname, uuid, label)
+                else:
+                    fstab += '#UUID=%s\tLABEL=%s\n%s\t\t' % (uuid,label, partition.devname)
+                fstab += '%s\t\t%s\t\t%s\t\t%s\n\n' % (
+                partition.mount_point, partition.file_system, options,dump_and_pass)
+        return fstab
