@@ -11,8 +11,10 @@ disk = '/dev/loop0'
 
 p1 = Partition('primary', '2GiB', file_system=EXT4('BOOT'), boot=True, mount_point='/boot')
 p2 = Partition('primary', '512MiB', file_system=SWAP('SWAP'))
-p3 = Partition('logical', ('512MiB'), file_system=EXT4('TMP'), mount_point='/tmp')
-p4 = Partition('logical', PercentString('25%FREE'), file_system=EXT4('ROOT'), mount_point='/')
+p3 = Partition('logical', ('512MiB'),
+               file_system=EXT4('TMP', mount_options=['default', 'nosuid', 'noexec', 'nodev']),
+               mount_point='/tmp')
+p4 = Partition('logical', PercentString('25%FREE'), file_system=EXT4('ROOT', fsck_option=1), mount_point='/')
 
 pm1 = PartitionTableModel('msdos', disk=disk)
 
@@ -29,3 +31,4 @@ log.debug(l1.disks[disk].partition_table)
 
 l1.apply()
 log.info('Apply completed!')
+print l1.generate_fstab()

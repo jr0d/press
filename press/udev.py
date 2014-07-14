@@ -28,7 +28,11 @@ class UDevHelper(object):
         return devices.match_parent(pyudev.Device.from_device_file(self.context, device))
 
     def get_device_by_name(self, devname):
-        return pyudev.Device.from_device_file(self.context, devname)
+        try:
+            udisk = pyudev.Device.from_device_file(self.context, devname)
+        except OSError:
+            return None
+        return udisk
 
     def discover_valid_storage_devices(self, fc_enabled=True, loop_enabled=False):
         """

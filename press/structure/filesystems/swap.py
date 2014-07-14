@@ -9,14 +9,15 @@ log = logging.getLogger(__name__)
 class SWAP(FileSystem):
     fs_type = 'swap'
 
-    def __init__(self, label=None, command_path='/usr/bin/mkswap'):
-        self.label = label
+    def __init__(self, fs_label=None, command_path='/usr/bin/mkswap', mount_options=None):
+        super(SWAP, self).__init__(fs_label, mount_options, 0)
         self.command_path = command_path
 
         self.command = '{command_path} {label_option} {device}'
+        self.mount_options = mount_options or self.default_mount_options
 
-        if self.label:
-            self.label_option = ' -L %s' % self.label
+        if self.fs_label:
+            self.label_option = ' -L %s' % self.fs_label
         else:
             self.label_option = ''
 
