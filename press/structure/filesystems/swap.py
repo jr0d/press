@@ -1,6 +1,8 @@
 from press.cli import run
 from . import FileSystem
 from ..exceptions import FileSystemCreateException
+from press.udev import UDevHelper
+
 import logging
 
 log = logging.getLogger(__name__)
@@ -19,6 +21,7 @@ class SWAP(FileSystem):
             self.label_option = ' -L %s' % self.label
         else:
             self.label_option = ''
+        self.udev = UDevHelper()
 
     def create(self, device):
         command = self.command.format(**dict(
@@ -31,3 +34,4 @@ class SWAP(FileSystem):
 
         if result.returncode:
             raise FileSystemCreateException(self.label, command, result)
+        return self.get_uuid(device)

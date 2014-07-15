@@ -12,6 +12,7 @@ import pyudev
 class UDevHelper(object):
     def __init__(self):
         self.context = pyudev.Context()
+        self.monitor = pyudev.Monitor.from_netlink(self.context)
 
     def get_partitions(self):
         return self.context.list_devices(subsystem='block', DEVTYPE='partition')
@@ -56,3 +57,14 @@ class UDevHelper(object):
             pruned.append(disk)
 
         return pruned
+
+    def monitor_partition_by_devname(self, partition_id):
+        self.monitor.filter_by('block', device_type="partition")
+        for action, device in self.monitor:
+            try:
+                if action == 'add' and device['UDISKS_PARTITION_NUMBER'] == str(partition_id):
+                    return str(device['DEVNAME'])
+
+            except KeyError, e:
+                print 'UDISK_PARTITION_TABLE_COUNT not found'
+                pass
