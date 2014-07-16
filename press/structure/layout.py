@@ -169,20 +169,16 @@ class Layout(object):
                                                        partition.size.bytes,
                                                        boot_flag=partition.boot,
                                                        lvm_flag=partition.lvm)
-                # it takes some time for the uevent to register and the partition to be added
-                # to udisks. To avoid this sleep and possible race condition, we should switch
-                #  to using a udev monitor which as the original design
-                time.sleep(5)
-                partition_name = self.find_partition_devname(disk, partition_id)
-                partition.devname = partition_name
+
+                partition.devname = self.udev.monitor_partition_by_devname(partition_id)
                 partition.partition_id = partition_id
 
-                if not partition_name:
-                    log.error('%s %s %s' % (partition_name, disk, partition_id))
+                if not partition.devname:
+                    log.error('%s %s %s' % (partition.devname, disk, partition_id))
                     raise PhysicalDiskException('Could not relate partition id to devname')
 
                 if partition.file_system:
-                    partition.file_system.create(partition_name)
+                    partition.uuid, partition.label = partition.file_system.create(partition.devname)
 
 
     def generate_fstab(self, method = 'UUID'):
@@ -193,16 +189,22 @@ class Layout(object):
         :return: nothing is returned, it is applied to self.fstab
         """
         supported_methods = ['DEVNAME', 'UUID', 'LABEL']
+
         if method not in supported_methods:
             raise Exception
+
         log.info('Generating %s partition table.' % method)
+
         fstab = ''
+
         for disk in self.allocated:
             parted = self._get_parted_interface_for_allocated_device(disk)
             parted.get_table()
 
             partition_table = disk.partition_table
+
             for partition in partition_table.partitions:
+<<<<<<< HEAD
                 try:
                     uuid = self.udev.get_device_by_name(partition.devname)['ID_FS_UUID']
                 except KeyError, e:
@@ -225,22 +227,34 @@ class Layout(object):
                     log.error('LABEL lookup for disk %s failed. Error: %s' %
                               (partition.devname, e))
                     return None
+=======
+>>>>>>> 198b7f6be699571380fef31b803dd4244c4817c3
                 options = 'defaults'
                 dump_and_pass = '0 0'
 
                 if partition.mount_point == '/boot':
                     dump_and_pass = '0 1'
+
                 elif partition.mount_point == '/':
                     dump_and_pass = '0 2'
+
                 elif partition.mount_point == '/tmp':
                     options += ',nosuid,nodev,noexec'
 
-                if method == 'UUID':
-                    fstab += '#DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % (partition.devname, label, uuid)
-                elif method == 'LABEL':
-                    fstab += '#DEVNAME=%s\tUUID=%s\nLABEL=%s\t\t' % (partition.devname, uuid, label)
-                else:
-                    fstab += '#UUID=%s\tLABEL=%s\n%s\t\t' % (uuid,label, partition.devname)
-                fstab += '%s\t\t%s\t\t%s\t\t%s\n\n' % (
-                partition.mount_point, partition.file_system, options,dump_and_pass)
+                try:
+                    if method == 'UUID':
+                        fstab += '#DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % (partition.devname, partition.label, partition.uuid)
+
+                    elif method == 'LABEL':
+                        fstab += '#DEVNAME=%s\tUUID=%s\nLABEL=%s\t\t' % (partition.devname, partition.uuid, partition.label)
+
+                    else:
+                        fstab += '#UUID=%s\tLABEL=%s\n%s\t\t' % (partition.uuid, partition.label, partition.devname)
+
+                    fstab += '%s\t\t%s\t\t%s\t\t%s\n\n' % (
+                        partition.mount_point, partition.file_system, options,dump_and_pass)
+
+                except AttributeError, e:
+                    log.error('Attirbute missing.  Run Layout.apply() first. Errors: %s' % e)
+
         return fstab
