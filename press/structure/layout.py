@@ -1,5 +1,4 @@
 import logging
-import time
 from collections import OrderedDict
 from press import helpers
 from press.parted import PartedInterface, NullDiskException
@@ -186,12 +185,12 @@ class Layout(object):
                     partition.uuid, partition.label = partition.file_system.create(partition.devname)
 
 
-    def generate_fstab(self, method='UUID'):
+    def generate_fstab(self, method='UUID', press_prefix=None):
         """
         This generates an fstab for this partition layout
 
         :param partition: This is the partition object used to create the partition
-        :return: nothing is returned, it is applied to self.fstab
+        :return: returns fstab in method format.
         """
         supported_methods = ['DEVNAME', 'UUID', 'LABEL']
 
@@ -241,10 +240,38 @@ class Layout(object):
                     else:
                         fstab += '#UUID=%s\tLABEL=%s\n%s\t\t' % (partition.uuid, partition.label, partition.devname)
 
-                    fstab += '%s\t\t%s\t\t%s\t\t%s\n\n' % (
-                        partition.mount_point, partition.file_system, options,dump_and_pass)
+                    fstab += '%s%s\t\t%s\t\t%s\t\t%s\n\n' % (
+                        press_prefix, partition.mount_point, partition.file_system, options,dump_and_pass)
 
                 except AttributeError, e:
                     log.error('Attributes missing.  Run Layout.apply() first. Errors: %s' % e)
 
         return header + '\n\n' + fstab
+
+    def mount_disk(self, base_dir='/mnt/press'):
+
+        log.info('Making base directory %s.' % base_dir)
+        helpers.deployment.mkdir(base_dir)
+
+        log.info("Generating 'fake' press fstab.")
+        helpers.file.write('/mnt/press_fstab', self.generate_fstab(method='DEVNAME',press_prefix='/mnt/press'))
+
+        log.info('Mounting root files system as %s' % base_dir)
+        helpers.deployment.mount('-T /mnt/press_fstab %s' % base_dir)
+
+        for disk in self.allocated:
+
+            partition_table = disk.partition_table
+
+            for partition in partition_table.partitions[::-1]:
+                if partition.mount_point and partition.mount_point[0] == '/':
+                    target_directory = base_dir + partition.mount_point
+                    log.info('Making target directory %s for partition %s.' %
+                             (target_directory, partition.devname ))
+                    helpers.deployment.mkdir(target_directory)
+
+        log.info('Mounting all remaining mount points.')
+        helpers.deployment.mount('-T /mnt/press_fstab -a')
+
+    def deploy_os(self):
+        pass
