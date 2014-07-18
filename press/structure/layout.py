@@ -248,30 +248,57 @@ class Layout(object):
 
         return header + '\n\n' + fstab
 
-    def mount_disk(self, base_dir='/mnt/press'):
 
-        log.info('Making base directory %s.' % base_dir)
-        helpers.deployment.mkdir(base_dir)
 
-        log.info("Generating 'fake' press fstab.")
-        helpers.file.write('/mnt/press_fstab', self.generate_fstab(method='DEVNAME',press_prefix='/mnt/press'))
-
-        log.info('Mounting root files system as %s' % base_dir)
-        helpers.deployment.mount('-T /mnt/press_fstab %s' % base_dir)
-
+    def parse_partitions(self):
         for disk in self.allocated:
 
             partition_table = disk.partition_table
+            mounts = dict()
+            for partition in partition_table.partitions:
+                if partition.mount_point != None:
+                    p_depth = self.mount_depth(partition.mount_point)
+                    if mounts.get(p_depth):
+                        mounts[p_depth] += [(partition.devname, partition.mount_point)]
+                    else:
+                        mounts[p_depth] = [(partition.devname, partition.mount_point)]
+            return mounts
 
-            for partition in partition_table.partitions[::-1]:
-                if partition.mount_point and partition.mount_point[0] == '/':
-                    target_directory = base_dir + partition.mount_point
-                    log.info('Making target directory %s for partition %s.' %
-                             (target_directory, partition.devname ))
-                    helpers.deployment.mkdir(target_directory)
 
-        log.info('Mounting all remaining mount points.')
-        helpers.deployment.mount('-T /mnt/press_fstab -a')
+    def mount_depth(self,mount_point, depth=1):
+        if mount_point == '/':
+            return 0
+        if mount_point[1:].find('/') == -1:
+            return depth
+        else:
+            depth += 1
+            mount_point = mount_point[mount_point[1:].find('/') + 1:]
+            return self.mount_depth(mount_point, depth)
 
-    def deploy_os(self):
-        pass
+
+
+    def mount_disk(self, base_dir='/mnt/press'):
+
+        mounts = self.parse_partitions()
+
+        for depth in sorted(mounts):
+            for mount in mounts[depth]:
+                devname = mount[0]
+                mount_point = mount[1]
+                log.info('Making directory %s' % base_dir + mount_point)
+                helpers.deployment.mkdir(base_dir + mount_point)
+                log.info('Mounting %s on %s' % (devname, base_dir + mount_point))
+                helpers.deployment.mount('%s %s' % (devname, base_dir + mount_point))
+
+
+        log.info('Creating and placing fstab in /etc/fstab_rs')
+        helpers.deployment.mkdir(base_dir + '/etc')
+        helpers.file.write(base_dir + '/etc/fstab_rs', self.generate_fstab())
+
+        log.info('Creating and bind mounting /proc and /dev')
+        helpers.deployment.mkdir(base_dir + '/proc')
+        helpers.deployment.mkdir(base_dir + '/dev')
+        helpers.deployment.mount('-o bind /proc %s' % (base_dir + '/proc'))
+        helpers.deployment.mount('-o bind /dev %s' % (base_dir + '/dev'))
+
+        log.info("Drive is mounted and ready for OS image.")
