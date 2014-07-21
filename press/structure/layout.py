@@ -185,7 +185,7 @@ class Layout(object):
                     partition.uuid, partition.label = partition.file_system.create(partition.devname)
 
 
-    def generate_fstab(self, method='UUID', press_prefix=None):
+    def generate_fstab(self, method='UUID'):
         """
         This generates an fstab for this partition layout
 
@@ -240,8 +240,8 @@ class Layout(object):
                     else:
                         fstab += '#UUID=%s\tLABEL=%s\n%s\t\t' % (partition.uuid, partition.label, partition.devname)
 
-                    fstab += '%s%s\t\t%s\t\t%s\t\t%s\n\n' % (
-                        press_prefix, partition.mount_point, partition.file_system, options,dump_and_pass)
+                    fstab += '%s\t\t%s\t\t%s\t\t%s\n\n' % (
+                        partition.mount_point, partition.file_system, options,dump_and_pass)
 
                 except AttributeError, e:
                     log.error('Attributes missing.  Run Layout.apply() first. Errors: %s' % e)
