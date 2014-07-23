@@ -7,6 +7,8 @@ log = logging.getLogger(__name__)
 
 
 class PostException(Exception):
+    pass
+
 
 class Post(object):
     """
