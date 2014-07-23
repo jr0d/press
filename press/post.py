@@ -1,8 +1,14 @@
 
 from press.cli import run
+import logging
 
 
-class BasePost(object):
+log = logging.getLogger(__name__)
+
+
+class PostException(Exception):
+
+class Post(object):
     """
     Base Post Class.
     """
@@ -16,6 +22,11 @@ class BasePost(object):
         """
 
         ret = run('useradd %s' % username)
+        if not ret.returncode == 0:
+            log.error('useradd failed with return_code: %s. Reasons: %s' % (
+                ret.returncode, ret.stderr)
+            )
+            raise PostException(ret.stderr)
         return ret
 
     def passwd(self, username, password):
@@ -27,8 +38,12 @@ class BasePost(object):
         :return: `press.cli._AttributeString`
         """
         ret = run('echo %s | passwd %s --stdin' % (password, username))
-        if ret.returncode == 0:
-            return ret
+        if not ret.returncode == 0:
+            log.error('passwd failed with return_code: %s. Reasons: %s' % (
+                ret.returncode, ret.stderr)
+            )
+            raise PostException(ret.stderr)
+        return ret
 
     def grub_install(self, disk):
         """
