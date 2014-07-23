@@ -29,3 +29,11 @@ class BasePost(object):
         ret = run('echo %s | passwd %s --stdin' % (password, username))
         if ret.returncode == 0:
             return ret
+
+    def grub_install(self, disk):
+        """
+        Install grub on disk.
+
+        :param disk: Disk as a string /dev/sda
+        """
+        return NotImplemented
