@@ -1,6 +1,8 @@
 from press.cli import run
 from . import FileSystem
 from ..exceptions import FileSystemCreateException
+from press.udev import UDevHelper
+
 import logging
 
 log = logging.getLogger(__name__)
@@ -30,6 +32,7 @@ class EXT(FileSystem):
         self.label_options = ''
         if self.fs_label:
             self.label_options = ' -L %s' % self.fs_label
+        self.udev = UDevHelper()
 
     def create(self, device):
         command = self.full_command.format(
@@ -47,6 +50,7 @@ class EXT(FileSystem):
         if result.returncode:
             raise FileSystemCreateException(self.fs_label, command, result)
 
+        return self.get_uuid(device)
 
 class EXT3(EXT):
     fs_type = 'ext3'
