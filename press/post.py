@@ -7,15 +7,6 @@ class BasePost(object):
     Base Post Class.
     """
 
-    def userexist(self, username):
-        """
-        Check if a user exist.
-        """
-        ret = run('id %s' % username)
-        if ret.returncode == 0:
-            return True
-        return False
-
     def useradd(self, username):
         """
         Creates a user with defaults options.
@@ -35,7 +26,6 @@ class BasePost(object):
         :param password: The new password to set on account.
         :return: `press.cli._AttributeString`
         """
-        if self.userexist(username):
-            ret = run('echo %s | passwd %s --stdin' % (password, username))
-            if ret.returncode == 0:
-                return ret
+        ret = run('echo %s | passwd %s --stdin' % (password, username))
+        if ret.returncode == 0:
+            return ret
