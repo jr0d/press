@@ -26,7 +26,7 @@ class Post(object):
         os.chroot(newroot)
         os.chdir('/')
 
-    def exit_chroot(self):
+    def __exit__(self):
         """
         Exits an active chroot
         """
