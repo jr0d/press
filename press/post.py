@@ -1,6 +1,7 @@
 
 from press.cli import run
 import logging
+import os
 
 
 log = logging.getLogger(__name__)
@@ -14,6 +15,25 @@ class Post(object):
     """
     Base Post Class.
     """
+
+    def __init__(self, newroot):
+        """
+        Starts post process.
+
+        :param newroot: String path to our new root.
+        """
+        self.real_root = os.open('/', os.O_RDONLY)
+        os.chroot(newroot)
+        os.chdir('/')
+
+    def exit_chroot(self):
+        """
+        Exits an active chroot
+        """
+        if self.real_root:
+            os.fchdir(self.real_root)
+            os.chroot('.')
+            os.chdir('/')
 
     def useradd(self, username):
         """
