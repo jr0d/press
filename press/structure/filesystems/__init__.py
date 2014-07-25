@@ -20,7 +20,7 @@ class FileSystem(object):
         :param device: This is the device ie. /dev/sda1
         :return: Returns the UUID and LABEL.
         """
-        uuid = run('blkid -o value -s UUID %s' % device)
-        label = run('blkid -o value -s LABEL %s' % device)
+        uuid = run('blkid -o value -s UUID %s' % device).strip('\n')
+        label = run('blkid -o value -s LABEL %s' % device).strip('\n')
         return uuid, label
 

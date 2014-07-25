@@ -224,8 +224,6 @@ class Layout(object):
                 elif str(partition.file_system) == 'swap':
                     partition.mount_point = 'swap'
 
-                partition.uuid = partition.uuid.strip('\n')
-                partition.label = partition.label.strip('\n')
                 try:
                     if method == 'UUID':
                         fstab += '#DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % \
