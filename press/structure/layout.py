@@ -295,10 +295,4 @@ class Layout(object):
         helpers.deployment.mkdir(base_dir + '/etc')
         helpers.file.write(base_dir + '/etc/fstab_rs', self.generate_fstab())
 
-        log.info('Creating and bind mounting /proc and /dev')
-        helpers.deployment.mkdir(base_dir + '/proc')
-        helpers.deployment.mkdir(base_dir + '/dev')
-        helpers.deployment.mount('-o bind /proc %s' % (base_dir + '/proc'))
-        helpers.deployment.mount('-o bind /dev %s' % (base_dir + '/dev'))
-
         log.info("Drive is mounted and ready for OS image.")
