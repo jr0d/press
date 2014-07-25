@@ -25,3 +25,12 @@ class DebianPost(Post):
                 )
                 raise PostException(ret.stderr)
             return ret
+
+    def install_packages(self, packages=[]):
+        """
+        Install packages using the system's Package Manager.
+
+        :param packages: A list of strings. Each string is a debian package
+        to be installed.
+        """
+        return self.apt_get_install(packages)

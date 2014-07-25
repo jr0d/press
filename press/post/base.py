@@ -74,3 +74,12 @@ class Post(object):
         :param disk: Disk as a string /dev/sda
         """
         return NotImplemented
+
+    def install_packages(self, packages=[]):
+        """
+        Install packages using the system's Package Manager.
+
+        :param packages: A list of strings. Each string is a debian package
+        to be installed.
+        """
+        return NotImplemented
