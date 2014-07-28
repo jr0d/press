@@ -1,12 +1,13 @@
 import logging
-import time
+
 from collections import OrderedDict
+
 from press import helpers
 from press.parted import PartedInterface, NullDiskException
 from press.udev import UDevHelper
 from press.structure.disk import Disk
 
-from .exceptions import (
+from press.structure.exceptions import (
     PhysicalDiskException,
     LayoutValidationError,
     GeneralValidationException
@@ -184,7 +185,6 @@ class Layout(object):
 
                 if partition.file_system:
                     partition.uuid, partition.label = partition.file_system.create(partition.devname)
-
 
     def generate_fstab(self, method='UUID'):
         """
