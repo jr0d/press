@@ -5,3 +5,4 @@
 scratch/
 env/
 documentation/_build/*
+.vagrant/
