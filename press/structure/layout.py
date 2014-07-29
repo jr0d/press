@@ -1,5 +1,4 @@
 import logging
-import time
 from collections import OrderedDict
 from press import helpers
 from press.parted import PartedInterface, NullDiskException
@@ -191,7 +190,7 @@ class Layout(object):
         This generates an fstab for this partition layout
 
         :param partition: This is the partition object used to create the partition
-        :return: nothing is returned, it is applied to self.fstab
+        :return: returns fstab in method format.
         """
         supported_methods = ['DEVNAME', 'UUID', 'LABEL']
 
@@ -251,3 +250,52 @@ class Layout(object):
                     log.error('Attributes missing.  Run Layout.apply() first. Errors: %s' % e)
 
         return header + '\n\n' + fstab
+
+
+
+    def parse_partitions(self):
+        for disk in self.allocated:
+
+            partition_table = disk.partition_table
+            mounts = dict()
+            for partition in partition_table.partitions:
+                if partition.mount_point != None:
+                    p_depth = self.mount_depth(partition.mount_point)
+                    if mounts.get(p_depth):
+                        mounts[p_depth] += [(partition.devname, partition.mount_point)]
+                    else:
+                        mounts[p_depth] = [(partition.devname, partition.mount_point)]
+            return mounts
+
+
+    def mount_depth(self,mount_point, depth=1):
+        if mount_point == '/':
+            return 0
+        if mount_point[1:].find('/') == -1:
+            return depth
+        else:
+            depth += 1
+            mount_point = mount_point[mount_point[1:].find('/') + 1:]
+            return self.mount_depth(mount_point, depth)
+
+
+
+    def mount_disk(self, base_dir='/mnt/press'):
+
+        mounts = self.parse_partitions()
+
+        for depth in sorted(mounts):
+            for mount in mounts[depth]:
+                devname = mount[0]
+                mount_point = mount[1]
+                log.info('Making directory %s' % base_dir + mount_point)
+                helpers.deployment.mkdir(base_dir + mount_point)
+                log.info('Mounting %s on %s' % (devname, base_dir + mount_point))
+                helpers.deployment.mount('%s %s' % (devname, base_dir + mount_point))
+
+
+        log.info('Creating and placing fstab in /etc/fstab_rs')
+        helpers.deployment.mkdir(base_dir + '/etc')
+        helpers.file.write(base_dir + '/etc/fstab_rs', self.generate_fstab())
+
+        log.info("Drive is mounted and ready for OS image.")
