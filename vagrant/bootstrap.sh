@@ -1,8 +1,6 @@
 #!/bin/bash
 
-echo "Server = http://mirror.rackspace.com/archlinux/\$repo/os/\$arch" > /etc/pacman.d/mirrorlist
-
-pacman -Syy --noconfirm python2-pip python2-yaml
-pushd /vagrant
-python2 setup.py develop
-losetup disk -f
+echo "Creating loopback disk"
+dd if=/dev/zero of=/loop_disk bs=256MiB count=16
+losetup -D
+losetup /loop_disk -f
