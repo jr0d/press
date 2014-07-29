@@ -1,18 +1,23 @@
 #!/bin/bash
 
+ENVDIR='/root/env'
+ENVNAME='press'
+
 echo "Server = http://mirror.rackspace.com/archlinux/\$repo/os/\$arch" > /etc/pacman.d/mirrorlist
 
 pacman -Syy
 pacman -S --noconfirm python2-pip
 pip2 install virtualenv
-if [ ! -d "env" ]; then
-	mkdir env
+if [ ! -d "$ENVDIR" ]; then
+	mkdir "$ENVDIR"
 fi
-pushd env
-if [ ! -f "press/bin/activate" ]; then
+pushd "$ENVDIR"
+
+if [ ! -f "$ENVDIR/$ENVNAME/bin/activate" ]; then
 	virtualenv -p /usr/bin/python2 press
 fi
-. press/bin/activate
+
+. "$ENVDIR/$ENVNAME/bin/activate"
 
 pip install ipython
 popd
@@ -21,4 +26,3 @@ python setup.py develop
 losetup disk -f
 popd
 
-chown -R vagrant: env
