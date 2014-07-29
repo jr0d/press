@@ -10,8 +10,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # please see the online documentation at vagrantup.com.
 
   # Every Vagrant virtual environment requires a box to build off of.
-  config.vm.box = "terrywang/archlinux"
+  config.vm.box = "press/arch_press_udisks"
   config.vm.provision :shell, path: "vagrant/bootstrap.sh"
-  # config.ssh.username = "root"
- 
+  config.ssh.username = "root"
 end
