@@ -1,4 +1,5 @@
-import time
+from press.cli import run
+
 
 class FileSystem(object):
     fs_type = ''
