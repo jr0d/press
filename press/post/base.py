@@ -73,7 +73,7 @@ class Post(object):
 
         :param script: A full path to script to run
         """
-        ret = run('./%s' % script)
+        ret = run('%s' % script)
         if not ret.returncode == 0:
             log.error('failed to execute %s, return_code: %s. Reasons: %s' % (
                 script, ret.returncode, ret.stderr)
