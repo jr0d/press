@@ -1,5 +1,12 @@
-from .size import Size
-from .exceptions import LVMValidationError
+from press.structure import Size
+from press.structure.exceptions import LVMValidationError
+
+
+class PhysicalVolume(object):
+    def __init__(self, devname, extents, pe_size):
+        self.devname = devname
+        self.extents = self.available_extents = extents
+
 
 
 class VolumeGroup(object):

@@ -20,5 +20,6 @@ class LVMValidationError(Exception):
 class PhysicalDiskException(Exception):
     pass
 
+
 class GeneralValidationException(Exception):
     pass
