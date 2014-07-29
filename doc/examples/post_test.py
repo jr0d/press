@@ -6,9 +6,12 @@ setup_logging()
 
 log = logging.getLogger(__name__)
 
-new_root = '/dev/loop0'
+new_root = '/mnt/press'
 
 post = DebianPost(new_root)
 post.useradd('rack')
 post.passwd('rack', 'password')
+
+# After we complete lets delete the Post to call __exit__ function.
+post.__exit__()
 
