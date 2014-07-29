@@ -67,6 +67,20 @@ class Post(object):
             raise PostException(ret.stderr)
         return ret
 
+    def execute(self, script):
+        """
+        Executes a script using cli.
+
+        :param script: A full path to script to run
+        """
+        ret = run('./%s' % script)
+        if not ret.returncode == 0:
+            log.error('failed to execute %s, return_code: %s. Reasons: %s' % (
+                script, ret.returncode, ret.stderr)
+            )
+            raise PostException(ret.stderr)
+        return ret
+
     def grub_install(self, disk):
         """
         Install grub on disk.
