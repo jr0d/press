@@ -22,6 +22,8 @@ class Post(object):
 
         :param newroot: String path to our new root.
         """
+        self.__bind_mount(prefix='/mnt/press',
+                          mount_points=['/proc', '/dev', '/sys'])
         self.real_root = os.open('/', os.O_RDONLY)
         os.chroot(newroot)
         os.chdir('/')
@@ -34,6 +36,18 @@ class Post(object):
             os.fchdir(self.real_root)
             os.chroot('.')
             os.chdir('/')
+
+    @staticmethod
+    def __bind_mount(prefix, mount_points):
+        """
+
+        :param mount_points:
+        :return:
+        """
+        for mount_point in mount_points:
+            log.info('Bind mounting %s to %s%s' % (
+                mount_point, prefix, mount_point))
+            run('mount --rbind %s %ss%s' % (mount_point, prefix, mount_point))
 
     def useradd(self, username):
         """
