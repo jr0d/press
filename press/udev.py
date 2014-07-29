@@ -66,6 +66,6 @@ class UDevHelper(object):
 
     def monitor_partition_by_devname(self, partition_id):
         self.monitor.filter_by('block', device_type="partition")
-        for action, device in self.monitor:
-                if action == 'add' and device.get('UDISKS_PARTITION_NUMBER') == str(partition_id):
+        for _, device in self.monitor:
+                if device.get('UDISKS_PARTITION_NUMBER') == str(partition_id):
                     return str(device['DEVNAME'])

@@ -227,7 +227,7 @@ class Layout(object):
                                  (partition.devname, partition.label, partition.uuid)
 
                     elif method == 'LABEL':
-                        if partition.label == None:
+                        if partition.label is None:
                             fstab_label_missing = 'Missing label in configuration for: %s. Switching to DEVNAME\n' % \
                                                   partition.devname
                             log.info(fstab_label_missing)

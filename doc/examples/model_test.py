@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 disk = '/dev/loop0'
 
-p1 = Partition('primary', '2GiB', file_system=EXT4('BOOT'), boot=True, mount_point='/boot')
+p1 = Partition('primary', '1GiB', file_system=EXT4('BOOT'), boot=True, mount_point='/boot')
 p2 = Partition('primary', '512MiB', file_system=SWAP('SWAP'))
 p3 = Partition('logical', '512MiB', file_system=EXT4('TMP'), mount_point='/tmp')
 p4 = Partition('logical', PercentString('25%FREE'), file_system=EXT4('ROOT'), mount_point='/')
