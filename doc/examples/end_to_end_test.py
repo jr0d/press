@@ -1,5 +1,7 @@
 from press.models.partition import PartitionTableModel
 from press.structure import EXT4, Partition, PercentString, Size, Layout, SWAP
+from press.post.debian import DebianPost
+from press.cli import run
 from press.logger import setup_logging
 from press import helpers
 
@@ -51,6 +53,25 @@ else:
     print("Validation can't be performed")
 
 log.info('Extracting image.')
-dl.extract('/mnt/press')
+
+new_root = '/mnt/press'
+
+dl.extract(new_root)
+
+# Nessy adding some POST action
+run('cp /etc/resolv.conf %s/etc/resolv.conf' % new_root)
+
+post = DebianPost(new_root)
+post.useradd('rack')
+post.passwd('rack', 'password')
+
+# Install Kernel
+post.install_packages(['linux-generic'])
+
+post.grub_install('/dev/loop')
+
+# After we complete lets delete the Post to call __exit__ function.
+post.__exit__()
+
 log.info('Done!')
 
