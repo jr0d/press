@@ -18,7 +18,8 @@ setup(name='press',
       zip_safe=False,
       install_requires=[
           'pyudev',
-          'requests'
+          'requests',
+          'pyyaml'
       ],
       entry_points="""
       # -*- Entry points: -*-
