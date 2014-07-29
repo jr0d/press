@@ -221,6 +221,9 @@ class Layout(object):
                 elif partition.mount_point == '/tmp':
                     options += ',nosuid,nodev,noexec'
 
+                elif str(partition.file_system) == 'swap':
+                    partition.mount_point = 'swap'
+
                 try:
                     if method == 'UUID':
                         fstab += '#DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % \
