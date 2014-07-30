@@ -47,7 +47,7 @@ class Post(object):
         for mount_point in mount_points:
             log.info('Bind mounting %s to %s%s' % (
                 mount_point, prefix, mount_point))
-            run('mount --rbind %s %ss%s' % (mount_point, prefix, mount_point))
+            run('mount --rbind %s %s%s' % (mount_point, prefix, mount_point))
 
     def useradd(self, username):
         """
