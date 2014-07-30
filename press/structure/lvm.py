@@ -8,7 +8,6 @@ class PhysicalVolume(object):
         self.extents = self.available_extents = extents
 
 
-
 class VolumeGroup(object):
     """
     """

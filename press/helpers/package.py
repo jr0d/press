@@ -11,4 +11,3 @@ def get_package_version(package):
 
 def get_press_version():
     return get_package_version('press')
-
