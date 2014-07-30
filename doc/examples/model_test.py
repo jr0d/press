@@ -1,5 +1,5 @@
 from press.models.partition import PartitionTableModel
-from press.structure import EXT4, Partition, PercentString, Size, Layout, SWAP
+from press.structure import EXT4, Partition, PercentString, Layout, SWAP
 from press.logger import setup_logging
 
 import logging
@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 disk = '/dev/loop0'
 
 p1 = Partition('primary', '1GiB', file_system=EXT4('BOOT'), boot=True, mount_point='/boot')
-p2 = Partition('primary', '512MiB', file_system=SWAP('SWAP'))
+p2 = Partition('primary', '512MiB', file_system=SWAP())
 p3 = Partition('logical', '512MiB', file_system=EXT4('TMP'), mount_point='/tmp')
 p4 = Partition('logical', PercentString('25%FREE'), file_system=EXT4('ROOT'), mount_point='/')
 
