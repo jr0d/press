@@ -7,13 +7,16 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class EXT(FileSystem):
     fs_type = ''
     _default_command_path = ''
 
     def __init__(self, fs_label=None, superuser_reserve=.03, stride_size=0, stripe_width=0,
-                 command_path=''):
-        self.fs_label = fs_label
+                 command_path='', mount_options=None, fsck_option=2):
+
+        super(EXT, self).__init__(fs_label, mount_options, fsck_option)
+
         self.superuser_reserve = superuser_reserve
         self.stride_size = stride_size
         self.stripe_width = stripe_width
@@ -34,7 +37,7 @@ class EXT(FileSystem):
             self.label_options = ' -L %s' % self.fs_label
         self.udev = UDevHelper()
 
-    def create(self, device):
+    def __create(self, device):
         command = self.full_command.format(
             **dict(
                 command_path=self.command_path,
@@ -50,7 +53,6 @@ class EXT(FileSystem):
         if result.returncode:
             raise FileSystemCreateException(self.fs_label, command, result)
 
-        return self.get_uuid(device)
 
 class EXT3(EXT):
     fs_type = 'ext3'

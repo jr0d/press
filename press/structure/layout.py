@@ -19,7 +19,7 @@ class Layout(object):
     """The highest level class.
     """
 
-    def __init__(self, subsystem='all',
+    def __init__(self,
                  use_fibre_channel=True, use_loop_devices=True, loop_only=False,
                  parted_path='/sbin/parted',
                  default_partition_start=1048576, default_alignment=1048576,
@@ -111,8 +111,7 @@ class Layout(object):
         return PartedInterface(device=disk.devname,
                                parted_path=self.parted_path,
                                partition_start=disk.partition_table.partition_start.bytes,
-                               alignment=disk.partition_table.alignment.bytes
-        )
+                               alignment=disk.partition_table.alignment.bytes)
 
     @property
     def allocated(self):
@@ -183,15 +182,16 @@ class Layout(object):
                     raise PhysicalDiskException('Could not relate partition id to devname')
 
                 if partition.file_system:
-                    partition.uuid, partition.label = partition.file_system.create(partition.devname)
+                    partition.file_system.create(partition.devname)
 
     def generate_fstab(self, method='UUID'):
         """
         This generates an fstab for this partition layout
 
-        :param partition: This is the partition object used to create the partition
-        :return: returns fstab in method format.
+        :param method: UUID, DEVNAME, or LABEL
+        :return: (str) the generated fstab
         """
+
         supported_methods = ['DEVNAME', 'UUID', 'LABEL']
 
         if method not in supported_methods:
@@ -208,65 +208,49 @@ class Layout(object):
             partition_table = disk.partition_table
 
             for partition in partition_table.partitions:
-                options = 'defaults'
-                dump_and_pass = '0 0'
+                if not partition.file_system:
+                    continue
 
-                if partition.mount_point == '/boot':
-                    dump_and_pass = '0 1'
+                udisk = self.udev.get_device_by_name(partition.devname)
+                if not udisk:
+                    continue
 
-                elif partition.mount_point == '/':
-                    dump_and_pass = '0 2'
+                uuid = partition.file_system.fs_uuid
+                if not uuid:
+                    continue
 
-                elif partition.mount_point == '/tmp':
-                    options += ',nosuid,nodev,noexec'
+                label = partition.file_system.fs_label
+                if (method == 'LABEL') and not label:
+                    log.debug(
+                        'Missing label, offender: %s' % partition.devname)
 
-                elif str(partition.file_system) == 'swap':
-                    partition.mount_point = 'swap'
+                options = partition.file_system.generate_mount_options()
+                dump = '0'
+                fsck_option = partition.file_system.fsck_option
 
-                try:
-                    if method == 'UUID':
-                        fstab += '#DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % \
-                                 (partition.devname, partition.label, partition.uuid)
-
-                    elif method == 'LABEL':
-                        if partition.label is None:
-                            fstab_label_missing = 'Missing label in configuration for: %s. Switching to DEVNAME\n' % \
-                                                  partition.devname
-                            log.info(fstab_label_missing)
-                            fstab += '#' + fstab_label_missing
-                            fstab += '#UUID=%s\tLABEL=%s\n%s\t\t' % (partition.uuid, partition.label, partition.devname)
-
-                        else:
-                            fstab += '#DEVNAME=%s\tUUID=%s\nLABEL=%s\t\t' % \
-                                     (partition.devname, partition.uuid, partition.label)
-
-                    else:
-                        fstab += '#UUID=%s\tLABEL=%s\n%s\t\t' % (partition.uuid, partition.label, partition.devname)
-
-                    fstab += '%s\t\t%s\t\t%s\t\t%s\n\n' % (
-                        partition.mount_point, partition.file_system, options,dump_and_pass)
-
-                except AttributeError, e:
-                    log.error('Attributes missing.  Run Layout.apply() first. Errors: %s' % e)
+                if method == 'UUID':
+                    fstab += '# DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % (partition.devname, label or '', uuid)
+                elif method == 'LABEL' and label:
+                    fstab += '# DEVNAME=%s\tUUID=%s\nLABEL=%s\t\t' % (partition.devname, uuid, label)
+                else:
+                    fstab += '# UUID=%s\tLABEL=%s\n%s\t\t' % (uuid, label or '', partition.devname)
+                fstab += '%s\t\t%s\t\t%s\t\t%s %s\n\n' % (
+                    partition.mount_point, partition.file_system, options, dump, fsck_option)
 
         return header + '\n\n' + fstab
 
-
-
     def parse_partitions(self):
         for disk in self.allocated:
-
             partition_table = disk.partition_table
             mounts = dict()
             for partition in partition_table.partitions:
-                if partition.mount_point != None:
+                if partition.mount_point:
                     p_depth = self.mount_depth(partition.mount_point)
                     if mounts.get(p_depth):
                         mounts[p_depth] += [(partition.devname, partition.mount_point)]
                     else:
                         mounts[p_depth] = [(partition.devname, partition.mount_point)]
             return mounts
-
 
     def mount_depth(self,mount_point, depth=1):
         if mount_point == '/':
@@ -277,8 +261,6 @@ class Layout(object):
             depth += 1
             mount_point = mount_point[mount_point[1:].find('/') + 1:]
             return self.mount_depth(mount_point, depth)
-
-
 
     def mount_disk(self, base_dir='/mnt/press'):
 
@@ -299,3 +281,4 @@ class Layout(object):
         helpers.file.write(base_dir + '/etc/fstab_rs', self.generate_fstab())
 
         log.info("Drive is mounted and ready for OS image.")
+
