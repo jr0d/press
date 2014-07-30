@@ -1,7 +1,6 @@
 from press.cli import run
-from . import FileSystem
-from ..exceptions import FileSystemCreateException
-from press.udev import UDevHelper
+from press.structure.filesystems import FileSystem
+from press.structure.exceptions import FileSystemCreateException
 
 import logging
 
@@ -13,9 +12,9 @@ class EXT(FileSystem):
     _default_command_path = ''
 
     def __init__(self, fs_label=None, superuser_reserve=.03, stride_size=0, stripe_width=0,
-                 command_path='', mount_options=None, fsck_option=2):
+                 command_path='', mount_options=None):
 
-        super(EXT, self).__init__(fs_label, mount_options, fsck_option)
+        super(EXT, self).__init__(fs_label, mount_options)
 
         self.superuser_reserve = superuser_reserve
         self.stride_size = stride_size
@@ -24,7 +23,7 @@ class EXT(FileSystem):
         self.command_path = command_path or self._default_command_path
 
         self.full_command = \
-            '{command_path} -m{superuser_reserve} {extended_options}{label_options} {device}'
+            '{command_path} -U{uuid} -m{superuser_reserve} {extended_options}{label_options} {device}'
 
         # algorithm for calculating stripe-width: stride * N where N are member disks that are not used
         # as parity disks or hot spares
@@ -35,16 +34,16 @@ class EXT(FileSystem):
         self.label_options = ''
         if self.fs_label:
             self.label_options = ' -L %s' % self.fs_label
-        self.udev = UDevHelper()
 
-    def __create(self, device):
+    def create(self, device):
         command = self.full_command.format(
             **dict(
                 command_path=self.command_path,
                 superuser_reserve=self.superuser_reserve,
                 extended_options=self.extended_options,
                 label_options=self.label_options,
-                device=device
+                device=device,
+                uuid=self.fs_uuid
             )
         )
         log.info("Creating filesystem: %s" % command)

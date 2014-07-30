@@ -211,10 +211,6 @@ class Layout(object):
                 if not partition.file_system:
                     continue
 
-                udisk = self.udev.get_device_by_name(partition.devname)
-                if not udisk:
-                    continue
-
                 uuid = partition.file_system.fs_uuid
                 if not uuid:
                     continue
@@ -226,7 +222,7 @@ class Layout(object):
 
                 options = partition.file_system.generate_mount_options()
                 dump = '0'
-                fsck_option = partition.file_system.fsck_option
+                fsck_option = partition.fsck_option
 
                 if method == 'UUID':
                     fstab += '# DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % (partition.devname, label or '', uuid)

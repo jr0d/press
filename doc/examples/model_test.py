@@ -14,7 +14,8 @@ p2 = Partition('primary', '512MiB', file_system=SWAP('SWAP'))
 p3 = Partition('logical', ('512MiB'),
                file_system=EXT4('TMP', mount_options=['default', 'nosuid', 'noexec', 'nodev']),
                mount_point='/tmp')
-p4 = Partition('logical', PercentString('25%FREE'), file_system=EXT4('ROOT', fsck_option=1), mount_point='/')
+p4 = Partition('logical', PercentString('25%FREE'),
+               file_system=EXT4('ROOT'), mount_point='/', fsck_option=1)
 
 pm1 = PartitionTableModel('msdos', disk=disk)
 

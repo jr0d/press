@@ -147,7 +147,7 @@ class Partition(object):
     """
 
     def __init__(self, type_or_name, size_or_percent, boot=False,
-                 lvm=False, file_system=None, mount_point=None):
+                 lvm=False, file_system=None, mount_point=None, fsck_option=0):
         """
         Constructor:
 
@@ -172,3 +172,4 @@ class Partition(object):
 
         self.partition_id = None
         self.devname = None
+        self.fsck_option = fsck_option

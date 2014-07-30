@@ -12,10 +12,10 @@ class SWAP(FileSystem):
     fs_type = 'swap'
 
     def __init__(self, fs_label=None, command_path='/usr/bin/mkswap', mount_options=None):
-        super(SWAP, self).__init__(fs_label, mount_options, 0)
+        super(SWAP, self).__init__(fs_label, mount_options)
         self.command_path = command_path
 
-        self.command = '{command_path} {label_option} {device}'
+        self.command = '{command_path} -U {uuid} {label_option} {device}'
         self.mount_options = mount_options or self.default_mount_options
 
         if self.fs_label:
@@ -24,11 +24,12 @@ class SWAP(FileSystem):
             self.label_option = ''
         self.udev = UDevHelper()
 
-    def __create(self, device):
+    def create(self, device):
         command = self.command.format(**dict(
             command_path=self.command_path,
             label_option=self.label_option,
-            device=device
+            device=device,
+            uuid=self.fs_uuid
         ))
         log.info("Creating filesystem: %s" % command)
         result = run(command)

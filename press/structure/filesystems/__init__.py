@@ -1,27 +1,16 @@
-from press.cli import run
-
-
-def get_uuid(device):
-    """
-    Get UUID and LABEL from blkid.
-    :param device: This is the device ie. /dev/sda1
-    :return: Returns the UUID
-    """
-    uuid = run('blkid -o value -s UUID %s' % device).strip('')
-    return uuid
+import uuid
 
 
 class FileSystem(object):
     fs_type = ''
     default_mount_options = ['default']
 
-    def __init__(self, fs_label=None, mount_options=None, fsck_option=0):
+    def __init__(self, fs_label=None, mount_options=None):
         self.fs_label = fs_label
         self.mount_options = mount_options or self.default_mount_options
-        self.fsck_option = fsck_option
-        self.fs_uuid = None
+        self.fs_uuid = uuid.uuid4()
 
-    def __create(self, device):
+    def create(self, device):
         """
 
         :param device:
@@ -31,10 +20,6 @@ class FileSystem(object):
 
     def __post_create(self, device):
         self.fs_uuid = get_uuid(device)
-
-    def create(self, device):
-        self.__create(device)
-        self.__post_create(device)
 
     def generate_mount_options(self):
         if hasattr(self, 'mount_options'):
