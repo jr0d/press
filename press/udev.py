@@ -12,6 +12,7 @@ import pyudev
 class UDevHelper(object):
     def __init__(self):
         self.context = pyudev.Context()
+        self.monitor = pyudev.Monitor.from_netlink(self.context)
 
     def get_partitions(self):
         return self.context.list_devices(subsystem='block', DEVTYPE='partition')
@@ -56,3 +57,15 @@ class UDevHelper(object):
             pruned.append(disk)
 
         return pruned
+
+    def yield_mapped_devices(self):
+        disks = self.get_disks()
+        for disk in disks:
+            if disk.get('MAJOR') == '254':  # Device Mapper (LVM)
+                yield disk
+
+    def monitor_partition_by_devname(self, partition_id):
+        self.monitor.filter_by('block', device_type="partition")
+        for _, device in self.monitor:
+                if device.get('UDISKS_PARTITION_NUMBER') == str(partition_id):
+                    return str(device['DEVNAME'])

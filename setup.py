@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.1.2'
+version = '0.1.3'
 
 setup(name='press',
       version=version,
@@ -17,7 +17,9 @@ setup(name='press',
       include_package_data=True,
       zip_safe=False,
       install_requires=[
-          'pyudev'
+          'pyudev',
+          'requests',
+          'pyyaml'
       ],
       entry_points="""
       # -*- Entry points: -*-
