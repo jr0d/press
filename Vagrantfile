@@ -13,4 +13,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = "press/arch_press_udisks"
   config.vm.provision :shell, path: "vagrant/bootstrap.sh"
   config.ssh.username = "root"
+  config.vm.provider "virtualbox" do |v|
+    v.gui = true
+  end
 end

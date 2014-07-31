@@ -16,10 +16,11 @@ class DebianPost(Post):
         :param packages: A list of strings. Each string is a debian package
         to be installed.
         """
+        log.debug('Installing %s with apt-get' % packages)
         return run('apt-get -y install %s' % ' '.join(packages),
                    raise_exception=True)
 
-    def install_packages(self, packages=[]):
+    def install_packages(self, packages):
         """
         Install packages using the system's Package Manager.
 
@@ -34,5 +35,6 @@ class DebianPost(Post):
 
         :param disk: Disk as a string /dev/sda
         """
+        log.debug('Setting up grub on %s' % disk)
         run('grub-mkconfig -o /boot/grub/grub.cfg', raise_exception=True)
         run('grub-install %s' % disk, raise_exception=True)

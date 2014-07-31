@@ -57,7 +57,7 @@ class Post(object):
         :param username: The username to add.
         :returns: `press.cli._AttributeString`
         """
-
+        log.debug('Adding user %s' % username)
         ret = run('useradd %s' % username, raise_exception=True)
         return ret
 
@@ -69,6 +69,7 @@ class Post(object):
         :param password: The new password to set on account.
         :return: `press.cli._AttributeString`
         """
+        log.debug('Setting password for user %s' % username)
         ret = run('echo %s | passwd %s --stdin' % (password, username),
                   raise_exception=True)
         return ret
@@ -79,6 +80,7 @@ class Post(object):
 
         :param script: A full path to script to run
         """
+        log.debug('Executing file %s' % script)
         ret = run('%s' % script, raise_exception=True)
         return ret
 

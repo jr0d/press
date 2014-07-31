@@ -65,9 +65,6 @@ post = DebianPost(new_root)
 post.useradd('rack')
 post.passwd('rack', 'password')
 
-# Install Kernel
-post.install_packages(['linux-generic'])
-
 post.grub_install('/dev/loop')
 
 # After we complete lets delete the Post to call __exit__ function.
