@@ -21,7 +21,11 @@ class _AttributeString(str):
         return self
 
 
-def run(command, bufsize=1048567, dry_run=False):
+class CLIException(Exception):
+    pass
+
+
+def run(command, bufsize=1048567, dry_run=False, raise_exception=False):
     """Runs a command and stores the important bits in an attribute string.
 
     :param command: Command to execute.
@@ -52,7 +56,10 @@ def run(command, bufsize=1048567, dry_run=False):
     if out:
         log.debug('stdout: \n%s' % out.strip())
     if err:
-        log.debug('stderr: \n%s' % err.strip())
+        log.error('stderr: \n%s' % err.strip())
+        if raise_exception:
+            raise CLIException(err)
+
     attr_string = _AttributeString(out)
     attr_string.stderr = err
     attr_string.returncode = ret
