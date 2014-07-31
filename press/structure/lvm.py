@@ -7,17 +7,25 @@ log = logging.getLogger(__name__)
 
 
 class PhysicalVolume(object):
-    def __init__(self, devname, size):
-        self.devname = devname
-        self.size = Size(size)
+    def __init__(self, reference):
+        """
+        :param reference: This is typically a partition object, but could also
+         be a disk object in the future, right now; whole device PV's are not supported.
+         Once the reference has been applied, refernece.devname should be set, allowing
+         the apply function to do it's work. From the configuration file, these will be
+         linked via list index.
+        """
+        self.ref = reference
+        self.size = reference.size
 
 
 class VolumeGroup(object):
     """
     """
-    logical_volumes = list()
 
     def __init__(self, name, physical_volumes, pe_size=4194304):
+        self.logical_volumes = list()
+
         self.name = name
         self.physical_volumes = physical_volumes
         self.pv_raw_size = Size(sum([pv.size.bytes for pv in self.physical_volumes]))

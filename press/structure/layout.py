@@ -38,8 +38,11 @@ class Layout(object):
                             trigger an exception
                           any: The first available disk is used that can accommodate the
                             partition table
+
+        :ivar self.committed: False on __init__, True after calling apply()
         """
 
+        self.committed = False
         self.fc_enabled = use_fibre_channel
         self.loop_enabled = use_loop_devices
         self.parted_path = parted_path
@@ -59,6 +62,8 @@ class Layout(object):
         self.__populate_disks()
         if not self.disks:
             raise PhysicalDiskException('There are no valid disks.')
+
+        self.volume_groups = list()
 
     def __populate_disks(self):
         for udisk in self.udisks:
@@ -128,6 +133,15 @@ class Layout(object):
                 l.append(disk)
         return l
 
+    @property
+    def lvm_partitions(self):
+        lvm_partitions = list()
+        for disk in self.disks.values():
+            for partition in disk.partition_table.partitions:
+                if partition.lvm:
+                    lvm_partitions.append((disk, partition))
+        return lvm_partitions
+
     def add_partition_table_from_model(self, partition_table):
         unallocated = self.unallocated
         if not unallocated:
@@ -160,6 +174,9 @@ class Layout(object):
             if int(partition.get('UDISKS_PARTITION_NUMBER', -1)) == partition_id:
                 return partition.get('DEVNAME')
 
+    def add_volume_group(self, vg):
+        self.volume_groups.append(vg)
+
     def apply(self):
         """Lots of logging here
         """
@@ -182,6 +199,7 @@ class Layout(object):
 
                 if partition.file_system:
                     partition.file_system.create(partition.devname)
+        self.committed = True
 
     def generate_fstab(self, method='UUID'):
         """
@@ -270,10 +288,8 @@ class Layout(object):
                 log.info('Mounting %s on %s' % (devname, base_dir + mount_point))
                 helpers.deployment.mount('%s %s' % (devname, base_dir + mount_point))
 
-
         log.info('Creating and placing fstab in /etc/fstab_rs')
         helpers.deployment.mkdir(base_dir + '/etc')
         helpers.file.write(base_dir + '/etc/fstab_rs', self.generate_fstab())
 
         log.info("Drive is mounted and ready for OS image.")
-

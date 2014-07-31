@@ -25,7 +25,7 @@ class CLIException(Exception):
     pass
 
 
-def run(command, bufsize=1048567, dry_run=False, raise_exception=False):
+def run(command, bufsize=1048567, dry_run=False, raise_exception=False, ignore_error=False):
     """Runs a command and stores the important bits in an attribute string.
 
     :param command: Command to execute.
@@ -55,8 +55,11 @@ def run(command, bufsize=1048567, dry_run=False, raise_exception=False):
     log.debug('Return Code: %d' % ret)
     if out:
         log.debug('stdout: \n%s' % out.strip())
-    if err:
-        log.error('stderr: \n%s' % err.strip())
+    if ret and not ignore_error:
+        log.error('Return: %d running: %s stdout: %s\nstderr: \n%s' % (ret,
+                                                                       command,
+                                                                       out.strip(),
+                                                                       err.strip()))
         if raise_exception:
             raise CLIException(err)
 

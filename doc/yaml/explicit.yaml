@@ -40,6 +40,7 @@ partition_tables:
 volume_groups:
   -
     name: vg_system
+    extent_size: 4MiB
     physical_volumes:
       - root_pv
 
@@ -49,8 +50,9 @@ logical_volumes:
     -
       name: lv_swap
       size: 4GiB
-      options:
-        - swap
+      file_system:
+        type: swap
+        label: SWAP
     -
       name: lv_root
       size: 75%FREE
