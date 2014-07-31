@@ -25,6 +25,7 @@ class LVM(object):
     """
 
     pvdisplay_command = 'pvdisplay -C --separator : --unit b -o +pvseg_size'
+    vgdisplay_command = 'vgdisplay -C --separator : --unit b -o +vg_all'
 
     def __init__(self):
         """

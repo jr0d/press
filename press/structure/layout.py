@@ -27,7 +27,6 @@ class Layout(object):
         """
         Docs, maybe later
 
-        :param subsystem:
         :param use_fibre_channel:
         :param use_loop_devices:
         :param loop_only:
@@ -248,7 +247,7 @@ class Layout(object):
                         mounts[p_depth] = [(partition.devname, partition.mount_point)]
             return mounts
 
-    def mount_depth(self,mount_point, depth=1):
+    def mount_depth(self, mount_point, depth=1):
         if mount_point == '/':
             return 0
         if mount_point[1:].find('/') == -1:
