@@ -91,7 +91,7 @@ class LVM(object):
         """
         Create a physical volume using pvcreate command line tool.
         """
-        log.info('running pvcreate')
+        log.info('Creating physical volume: %s' % physical_volume)
         command = 'pvcreate %s' % physical_volume
         return self.__execute(command)
 
@@ -112,7 +112,7 @@ class LVM(object):
         res = self.__execute(command)
         return self.__to_dict(res)
 
-    def vgcreate(self, group_label, physical_volumes):
+    def vgcreate(self, group_label, physical_volumes, pe_size=4194304):
         """
         Create a volume group using vgcreate command line tool.
 
@@ -122,10 +122,9 @@ class LVM(object):
         # If input physical_volumes was a list lets create space seperated,
         # list of pvs
         log.info('running vgcreate')
-        if type(physical_volumes) == list:
-            physical_volumes = ' '.join(physical_volumes)
+        physical_volumes = ' '.join(physical_volumes)
 
-        command = 'vgcreate %s %s' % (group_label, physical_volumes)
+        command = 'vgcreate -s %d %s %s' % (group_label, physical_volumes)
         return self.__execute(command)
 
     def vgremove(self, group_label):
@@ -181,11 +180,4 @@ class LVM(object):
     def activate_volume(self, volume_group):
         return self.vgchange('-a y %s' % volume_group)
 
-    def get_pe_size(self, physical_volume):
-        data = self.pvdisplay(physical_volume)
-        if not data:
-            return
-        data = data[0]
-        free_pe = Size(data['PSize'].lower())
-        total_pe = int(data['SSize'])
-        return Size(free_pe.bytes / total_pe)
+

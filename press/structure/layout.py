@@ -3,8 +3,11 @@ from collections import OrderedDict
 
 from press import helpers
 from press.parted import PartedInterface, NullDiskException
+from press.lvm import LVM
 from press.udev import UDevHelper
 from press.structure.disk import Disk
+from press.structure.lvm import VolumeGroup
+from press.structure.size import Size
 
 from press.structure.exceptions import (
     PhysicalDiskException,
@@ -64,6 +67,7 @@ class Layout(object):
             raise PhysicalDiskException('There are no valid disks.')
 
         self.volume_groups = list()
+        self.lvm = LVM()
 
     def __populate_disks(self):
         for udisk in self.udisks:
@@ -133,15 +137,6 @@ class Layout(object):
                 l.append(disk)
         return l
 
-    @property
-    def lvm_partitions(self):
-        lvm_partitions = list()
-        for disk in self.disks.values():
-            for partition in disk.partition_table.partitions:
-                if partition.lvm:
-                    lvm_partitions.append((disk, partition))
-        return lvm_partitions
-
     def add_partition_table_from_model(self, partition_table):
         unallocated = self.unallocated
         if not unallocated:
@@ -174,8 +169,16 @@ class Layout(object):
             if int(partition.get('UDISKS_PARTITION_NUMBER', -1)) == partition_id:
                 return partition.get('DEVNAME')
 
-    def add_volume_group(self, vg):
-        self.volume_groups.append(vg)
+    def add_volume_group_from_model(self, model_vg):
+        for pv in model_vg.physical_volumes:
+            if not pv.reference.lvm:
+                raise LayoutValidationError('Reference partition is not flagged for LVM use')
+            if not isinstance(pv.reference.size, Size) and not pv.size.bytes:
+                raise LayoutValidationError('Reference partition has not be allocated')
+        real_vg = VolumeGroup(model_vg.name, model_vg.physical_volumes, model_vg.pe_size)
+        for lv in model_vg.logical_volumes:
+            real_vg.add_logical_volume(lv)
+        self.volume_groups.append(real_vg)
 
     def apply(self):
         """Lots of logging here
@@ -199,6 +202,14 @@ class Layout(object):
 
                 if partition.file_system:
                     partition.file_system.create(partition.devname)
+
+            for volume_group in self.volume_groups:
+                for pv in volume_group.physical_volumes:
+                    if not pv.reference.devname:
+                        raise LayoutValidationError('devname is not populated, and it should be')
+                    self.lvm.pvcreate(pv.reference.devname)
+                self.lvm.vgcreate()
+
         self.committed = True
 
     def generate_fstab(self, method='UUID'):

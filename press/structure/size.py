@@ -56,6 +56,9 @@ class Size(object):
         self.bytes = self._convert(value)
 
     def _convert(self, value):
+        if isinstance(value, Size):
+            return value.bytes
+
         if isinstance(value, (int, long)):
             if value > self.yobibyte:
                 raise SizeObjectValError('Value is impossibly large.')

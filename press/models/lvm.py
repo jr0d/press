@@ -4,11 +4,11 @@ from press.structure import Size
 
 
 class VolumeGroupModel(object):
-    def __init__(self, name, partition_refs, pe_size='4MiB'):
+    def __init__(self, name, physical_volumes, pe_size='4MiB'):
         self.logical_volumes = list()
 
         self.name = name
-        self.partition_refs = partition_refs
+        self.physical_volumes = physical_volumes
         self.pe_size = Size(pe_size)
 
     def add_logical_volume(self, lv):
