@@ -22,6 +22,9 @@ class _AttributeString(str):
 
 
 class CLIException(Exception):
+    """
+    Exception used by cli.run function
+    """
     pass
 
 
