@@ -22,6 +22,9 @@ class _AttributeString(str):
 
 
 class CLIException(Exception):
+    """
+    Exception used by cli.run function
+    """
     pass
 
 
@@ -55,7 +58,7 @@ def run(command, bufsize=1048567, dry_run=False, raise_exception=False):
     log.debug('Return Code: %d' % ret)
     if out:
         log.debug('stdout: \n%s' % out.strip())
-    if err:
+    if ret:
         log.error('stderr: \n%s' % err.strip())
         if raise_exception:
             raise CLIException(err)

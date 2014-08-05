@@ -8,6 +8,9 @@ log = logging.getLogger(__name__)
 
 
 class PostException(Exception):
+    """
+    Exceptions used with in the Post class.
+    """
     pass
 
 

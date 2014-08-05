@@ -1,5 +1,5 @@
 
-from press.post.base import Post, PostException
+from press.post.base import Post
 
 from press.cli import run
 import logging
@@ -36,5 +36,7 @@ class DebianPost(Post):
         :param disk: Disk as a string /dev/sda
         """
         log.debug('Setting up grub on %s' % disk)
+        run('echo "grub-pc grub-pc/install_devices multiselect %s" | debconf-set-selections' % disk,
+            raise_exception=True)
         run('grub-mkconfig -o /boot/grub/grub.cfg', raise_exception=True)
         run('grub-install %s' % disk, raise_exception=True)
