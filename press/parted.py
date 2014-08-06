@@ -38,12 +38,12 @@ class PartedInterface(object):
         path = append_sys(devpath)
         return AlignmentInfo(path)
 
-    def run_parted(self, command, raise_on_error=True, ignore_error=False):
+    def run_parted(self, command, raise_on_error=True, ignore_error=False, quiet=False):
         """
         parted does not use meaningful return codes. It pretty much returns 1 on
         any error and then prints an error message on to standard error stream.
         """
-        result = run(self.parted + command, ignore_error=ignore_error)
+        result = run(self.parted + command, ignore_error=ignore_error, quiet=quiet)
         if result and raise_on_error:
             raise PartedException(result.stderr)
         return result
@@ -54,7 +54,7 @@ class PartedInterface(object):
         return self.run_parted(command)
 
     def get_table(self, raw=False):
-        result = self.run_parted('print', raise_on_error=False, ignore_error=True)
+        result = self.run_parted('print', raise_on_error=False, ignore_error=True, quiet=True)
         if result.returncode:
             if not result.stderr:
                 #  udev sometimes maps /dev/loop devices before they are linked

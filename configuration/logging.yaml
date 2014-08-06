@@ -1,5 +1,3 @@
----
-
 version: 1
 
 disable_existing_loggers: False
@@ -32,6 +30,11 @@ loggers:
     press.cli:
         level: DEBUG
         handlers: [cli]
+        propagate: yes
+
+    press.structure:
+        level: DEBUG
+        handlers: [console, file]
         propagate: yes
 
     '':

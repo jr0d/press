@@ -18,7 +18,7 @@ p2 = Partition('primary', '512MiB', file_system=SWAP('SWAP'), mount_point='none'
 p3 = Partition('logical', '512MiB',
                file_system=EXT4('TMP', mount_options=['default', 'nosuid', 'noexec', 'nodev']),
                mount_point='/tmp', fsck_option=2)
-p4 = Partition('logical', PercentString('75%FREE'), lvm=True)
+p4 = Partition('logical', '763MiB', lvm=True)
 
 pm1 = PartitionTableModel('msdos', disk=disk)
 
@@ -33,6 +33,8 @@ lv1 = LogicalVolume('lv_test1', PercentString('100%FREE'),
                     fsck_option=1)
 vg1.add_logical_volume(lv1)
 
+print vg1
+
 l1 = Layout(loop_only=True)
 
 l1.add_partition_table_from_model(pm1)
@@ -46,6 +48,6 @@ log.debug(l1.disks)
 log.debug(l1.disks[disk].partition_table)
 
 
-# l1.apply()
+l1.apply()
 log.info('Apply completed!')
 print l1.generate_fstab()

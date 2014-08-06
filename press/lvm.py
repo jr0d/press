@@ -5,7 +5,6 @@ Original Author: Jeff Ness
 import logging
 import subprocess
 
-from press.structure.size import Size
 
 log = logging.getLogger(__name__)
 
@@ -87,6 +86,10 @@ class LVM(object):
 
         return response
 
+    @staticmethod
+    def bytestring(bytes):
+        return '%dB' % bytes
+
     def pvcreate(self, physical_volume):
         """
         Create a physical volume using pvcreate command line tool.
@@ -112,19 +115,19 @@ class LVM(object):
         res = self.__execute(command)
         return self.__to_dict(res)
 
-    def vgcreate(self, group_label, physical_volumes, pe_size=4194304):
+    def vgcreate(self, vg_name, physical_volumes, pe_size=4194304):
         """
         Create a volume group using vgcreate command line tool.
 
         physical_volumes is a list containing at least one physical_volume,
         or a single physical_volume.
         """
-        # If input physical_volumes was a list lets create space seperated,
-        # list of pvs
-        log.info('running vgcreate')
+        # physical_volumeS should always be a list becaouse it is plural
+        # Justification: 'Explicit is better than implicit' PEP 20
+        pe_size = self.bytestring(pe_size)
+        log.info('Creating VG: %s, PV: %s, PE/LE Size: %s' % (vg_name, physical_volumes, pe_size))
         physical_volumes = ' '.join(physical_volumes)
-
-        command = 'vgcreate -s %d %s %s' % (group_label, physical_volumes)
+        command = 'vgcreate --physicalextentsize %s %s %s' % (pe_size, vg_name, physical_volumes)
         return self.__execute(command)
 
     def vgremove(self, group_label):
@@ -144,7 +147,7 @@ class LVM(object):
         res = self.__execute(command)
         return self.__to_dict(res)
 
-    def lvcreate(self, size, group_label, volume_label):
+    def lvcreate(self, extents, vg_name, lv_name):
         """
         Create a logical volume using lvcreate command line tool.
 
@@ -152,8 +155,8 @@ class LVM(object):
         100MB would represent 100 Megabytes, while 2GB would represent
         2 Gigabytes.
         """
-        log.info('running lvcreate')
-        command = 'lvcreate -L %s -n %s %s' % (size, volume_label, group_label)
+        log.info('Creating Volume Group: %s, Extents: %s, VG: %s' % (lv_name, extents, vg_name))
+        command = 'lvcreate --extents %s -n %s %s' % (extents, lv_name, vg_name)
         return self.__execute(command)
 
     def lvdisplay(self, combined_label=''):

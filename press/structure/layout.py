@@ -204,12 +204,15 @@ class Layout(object):
                     partition.file_system.create(partition.devname)
 
             for volume_group in self.volume_groups:
+                devnames = list()
                 for pv in volume_group.physical_volumes:
                     if not pv.reference.devname:
                         raise LayoutValidationError('devname is not populated, and it should be')
+                    devnames.append(pv.reference.devname)
                     self.lvm.pvcreate(pv.reference.devname)
-                self.lvm.vgcreate()
-
+                self.lvm.vgcreate(volume_group.name, devnames, volume_group.pe_size.bytes)
+                for lv in volume_group.logical_volumes:
+                    self.lvm.lvcreate(lv.extents, volume_group.name, lv.name)
         self.committed = True
 
     def generate_fstab(self, method='UUID'):

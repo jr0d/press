@@ -70,6 +70,16 @@ class VolumeGroup(object):
             volume.size = self.convert_percent_to_size(volume.percent_string.value,
                                                        volume.percent_string.free)
         self._validate_volume(volume)
+        extents = volume.size.bytes / self.pe_size.bytes
+        unused = volume.size % self.pe_size
+        log.info('Adding logical volume: %s / %d LE, unusable: %s' % (volume.size, extents, unused))
+        allocated_pe = self.current_pe + extents
+        log.debug('allocated: %d , total: %d' % (allocated_pe, self.extents))
+        if allocated_pe == self.extents:
+            # Shrink extents by 1 to avoid overrun
+            log.info('Shrinking volume by 1 extent')
+            extents -= 1
+        volume.extents = extents
         self.logical_volumes.append(volume)
 
     def add_volumes(self, volumes):
@@ -105,8 +115,6 @@ class LogicalVolume(object):
     """
     Very similar to Partition, device is the /dev/link after the device is created.
     """
-    device = None
-
     def __init__(self, name, size_or_percent, file_system=None, mount_point=None, fsck_option=0):
         self.name = name
         if isinstance(size_or_percent, PercentString):
@@ -119,3 +127,6 @@ class LogicalVolume(object):
         self.file_system = file_system
         self.mount_point = mount_point
         self.fsck_option = fsck_option
+
+        # extents are calculated and stored by the VolumeGroup.add_logical_volume() method
+        self.extents = None
