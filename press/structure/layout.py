@@ -205,6 +205,8 @@ class Layout(object):
 
             for volume_group in self.volume_groups:
                 devnames = list()
+                monitor = self.udev.get_monitor()
+                monitor.start()
                 for pv in volume_group.physical_volumes:
                     if not pv.reference.devname:
                         raise LayoutValidationError('devname is not populated, and it should be')
@@ -213,6 +215,9 @@ class Layout(object):
                 self.lvm.vgcreate(volume_group.name, devnames, volume_group.pe_size.bytes)
                 for lv in volume_group.logical_volumes:
                     self.lvm.lvcreate(lv.extents, volume_group.name, lv.name)
+                    log.info(lv.name)
+                    device = self.udev.monitor_for_volume(monitor, lv.name)
+                    log.info(device['DEVLINKS'])
         self.committed = True
 
     def generate_fstab(self, method='UUID'):

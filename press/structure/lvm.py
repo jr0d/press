@@ -130,3 +130,6 @@ class LogicalVolume(object):
 
         # extents are calculated and stored by the VolumeGroup.add_logical_volume() method
         self.extents = None
+
+        self.devname = None
+        self.devlinks = None

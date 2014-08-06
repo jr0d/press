@@ -32,11 +32,6 @@ loggers:
         handlers: [cli]
         propagate: yes
 
-    press.structure:
-        level: DEBUG
-        handlers: [console, file]
-        propagate: yes
-
     '':
         level: INFO
         handlers: [console, file]

@@ -12,7 +12,13 @@ import pyudev
 class UDevHelper(object):
     def __init__(self):
         self.context = pyudev.Context()
-        self.monitor = pyudev.Monitor.from_netlink(self.context)
+
+    def get_monitor(self):
+        """
+        Because filters cannot be removed
+        :return: fresh pyudev.Monitor
+        """
+        return pyudev.Monitor.from_netlink(self.context)
 
     def get_partitions(self):
         return self.context.list_devices(subsystem='block', DEVTYPE='partition')
@@ -69,7 +75,15 @@ class UDevHelper(object):
                 yield disk
 
     def monitor_partition_by_devname(self, partition_id):
-        self.monitor.filter_by('block', device_type="partition")
-        for _, device in self.monitor:
+        monitor = self.get_monitor()
+        monitor.filter_by('block', device_type="partition")
+        for _, device in monitor:
                 if device.get('UDISKS_PARTITION_NUMBER') == str(partition_id):
                     return str(device['DEVNAME'])
+
+    @staticmethod
+    def monitor_for_volume(monitor, lv_name):
+        monitor.filter_by('block')
+        for action, device in monitor:
+            if device.get('DM_LV_NAME') == lv_name:
+                return device
