@@ -3,8 +3,11 @@ from collections import OrderedDict
 
 from press import helpers
 from press.parted import PartedInterface, NullDiskException
+from press.lvm import LVM
 from press.udev import UDevHelper
 from press.structure.disk import Disk
+from press.structure.lvm import VolumeGroup
+from press.structure.size import Size
 
 from press.structure.exceptions import (
     PhysicalDiskException,
@@ -38,8 +41,11 @@ class Layout(object):
                             trigger an exception
                           any: The first available disk is used that can accommodate the
                             partition table
+
+        :ivar self.committed: False on __init__, True after calling apply()
         """
 
+        self.committed = False
         self.fc_enabled = use_fibre_channel
         self.loop_enabled = use_loop_devices
         self.parted_path = parted_path
@@ -59,6 +65,9 @@ class Layout(object):
         self.__populate_disks()
         if not self.disks:
             raise PhysicalDiskException('There are no valid disks.')
+
+        self.volume_groups = list()
+        self.lvm = LVM()
 
     def __populate_disks(self):
         for udisk in self.udisks:
@@ -160,6 +169,17 @@ class Layout(object):
             if int(partition.get('UDISKS_PARTITION_NUMBER', -1)) == partition_id:
                 return partition.get('DEVNAME')
 
+    def add_volume_group_from_model(self, model_vg):
+        for pv in model_vg.physical_volumes:
+            if not pv.reference.lvm:
+                raise LayoutValidationError('Reference partition is not flagged for LVM use')
+            if not isinstance(pv.reference.size, Size) and not pv.size.bytes:
+                raise LayoutValidationError('Reference partition has not be allocated')
+        real_vg = VolumeGroup(model_vg.name, model_vg.physical_volumes, model_vg.pe_size)
+        for lv in model_vg.logical_volumes:
+            real_vg.add_logical_volume(lv)
+        self.volume_groups.append(real_vg)
+
     def apply(self):
         """Lots of logging here
         """
@@ -182,6 +202,18 @@ class Layout(object):
 
                 if partition.file_system:
                     partition.file_system.create(partition.devname)
+
+            for volume_group in self.volume_groups:
+                devnames = list()
+                for pv in volume_group.physical_volumes:
+                    if not pv.reference.devname:
+                        raise LayoutValidationError('devname is not populated, and it should be')
+                    devnames.append(pv.reference.devname)
+                    self.lvm.pvcreate(pv.reference.devname)
+                self.lvm.vgcreate(volume_group.name, devnames, volume_group.pe_size.bytes)
+                for lv in volume_group.logical_volumes:
+                    self.lvm.lvcreate(lv.extents, volume_group.name, lv.name)
+        self.committed = True
 
     def generate_fstab(self, method='UUID'):
         """
@@ -270,10 +302,8 @@ class Layout(object):
                 log.info('Mounting %s on %s' % (devname, base_dir + mount_point))
                 helpers.deployment.mount('%s %s' % (devname, base_dir + mount_point))
 
-
         log.info('Creating and placing fstab in /etc/fstab_rs')
         helpers.deployment.mkdir(base_dir + '/etc')
         helpers.file.write(base_dir + '/etc/fstab_rs', self.generate_fstab())
 
         log.info("Drive is mounted and ready for OS image.")
-

@@ -1,26 +1,33 @@
 import logging
 
-from press.structure import Size, PercentString
+from press.structure.size import Size, PercentString
 from press.structure.exceptions import LVMValidationError
 
 log = logging.getLogger(__name__)
 
 
 class PhysicalVolume(object):
-    def __init__(self, devname, size):
-        self.devname = devname
-        self.size = Size(size)
+    """
+    :param reference: This is typically a partition object, but could also
+     be a disk object in the future, right now; whole device PV's are not supported.
+     Once the reference has been applied, refernece.devname should be set, allowing
+     the apply function to do it's work. From the configuration file, these will be
+     linked via list index.
+    """
+    def __init__(self, reference):
+        self.reference = reference
 
 
 class VolumeGroup(object):
     """
     """
-    logical_volumes = list()
 
     def __init__(self, name, physical_volumes, pe_size=4194304):
+        self.logical_volumes = list()
+
         self.name = name
         self.physical_volumes = physical_volumes
-        self.pv_raw_size = Size(sum([pv.size.bytes for pv in self.physical_volumes]))
+        self.pv_raw_size = Size(sum([pv.reference.size.bytes for pv in self.physical_volumes]))
         self.pe_size = Size(pe_size)
         self.extents = self.pv_raw_size.bytes / self.pe_size.bytes
         self.size = Size(self.pe_size.bytes * self.extents)
@@ -58,16 +65,26 @@ class VolumeGroup(object):
             raise LVMValidationError('There is not enough space for volume: avail: %s, size: %s' % (
                 self.free_space, volume.size))
 
-    def add_volume(self, volume):
+    def add_logical_volume(self, volume):
         if volume.percent_string:
             volume.size = self.convert_percent_to_size(volume.percent_string.value,
                                                        volume.percent_string.free)
         self._validate_volume(volume)
+        extents = volume.size.bytes / self.pe_size.bytes
+        unused = volume.size % self.pe_size
+        log.info('Adding logical volume: %s / %d LE, unusable: %s' % (volume.size, extents, unused))
+        allocated_pe = self.current_pe + extents
+        log.debug('allocated: %d , total: %d' % (allocated_pe, self.extents))
+        if allocated_pe == self.extents:
+            # Shrink extents by 1 to avoid overrun
+            log.info('Shrinking volume by 1 extent')
+            extents -= 1
+        volume.extents = extents
         self.logical_volumes.append(volume)
 
     def add_volumes(self, volumes):
         for volume in volumes:
-            self.add_volume(volume)
+            self.add_logical_volume(volume)
 
     def get_percentage_of_free_space(self, percent):
         return Size(self.free_space.bytes * percent)
@@ -80,7 +97,7 @@ class VolumeGroup(object):
               '\nSize: %s (Unusable: %s)\nUsed: %s / %d\nAvailable: %s / %d' \
               '\nLV(s): %s' % (
                   self.name,
-                  str([pv.devname for pv in self.physical_volumes]),
+                  str([pv.reference.devname for pv in self.physical_volumes]),
                   self.extents,
                   self.pe_size,
                   self.size,
@@ -98,8 +115,6 @@ class LogicalVolume(object):
     """
     Very similar to Partition, device is the /dev/link after the device is created.
     """
-    device = None
-
     def __init__(self, name, size_or_percent, file_system=None, mount_point=None, fsck_option=0):
         self.name = name
         if isinstance(size_or_percent, PercentString):
@@ -112,3 +127,6 @@ class LogicalVolume(object):
         self.file_system = file_system
         self.mount_point = mount_point
         self.fsck_option = fsck_option
+
+        # extents are calculated and stored by the VolumeGroup.add_logical_volume() method
+        self.extents = None
