@@ -8,6 +8,9 @@ log = logging.getLogger(__name__)
 
 
 class PostException(Exception):
+    """
+    Exceptions used with in the Post class.
+    """
     pass
 
 
@@ -45,9 +48,10 @@ class Post(object):
         :return:
         """
         for mount_point in mount_points:
-            log.info('Bind mounting %s to %s%s' % (
+            log.debug('Bind mounting %s to %s%s' % (
                 mount_point, prefix, mount_point))
-            run('mount --rbind %s %ss%s' % (mount_point, prefix, mount_point))
+            run('mount --rbind %s %s%s' % (mount_point, prefix, mount_point),
+                raise_exception=True)
 
     def useradd(self, username):
         """
@@ -56,13 +60,8 @@ class Post(object):
         :param username: The username to add.
         :returns: `press.cli._AttributeString`
         """
-
-        ret = run('useradd %s' % username)
-        if not ret.returncode == 0:
-            log.error('useradd failed with return_code: %s. Reasons: %s' % (
-                ret.returncode, ret.stderr)
-            )
-            raise PostException(ret.stderr)
+        log.debug('Adding user %s' % username)
+        ret = run('useradd %s' % username, raise_exception=True)
         return ret
 
     def passwd(self, username, password):
@@ -73,12 +72,9 @@ class Post(object):
         :param password: The new password to set on account.
         :return: `press.cli._AttributeString`
         """
-        ret = run('echo %s | passwd %s --stdin' % (password, username))
-        if not ret.returncode == 0:
-            log.error('passwd failed with return_code: %s. Reasons: %s' % (
-                ret.returncode, ret.stderr)
-            )
-            raise PostException(ret.stderr)
+        log.debug('Setting password for user %s' % username)
+        ret = run('echo %s | passwd %s --stdin' % (password, username),
+                  raise_exception=True)
         return ret
 
     def execute(self, script):
@@ -87,12 +83,8 @@ class Post(object):
 
         :param script: A full path to script to run
         """
-        ret = run('%s' % script)
-        if not ret.returncode == 0:
-            log.error('failed to execute %s, return_code: %s. Reasons: %s' % (
-                script, ret.returncode, ret.stderr)
-            )
-            raise PostException(ret.stderr)
+        log.debug('Executing file %s' % script)
+        ret = run('%s' % script, raise_exception=True)
         return ret
 
     def grub_install(self, disk):
@@ -103,7 +95,7 @@ class Post(object):
         """
         return NotImplemented
 
-    def install_packages(self, packages=[]):
+    def install_packages(self, packages):
         """
         Install packages using the system's Package Manager.
 

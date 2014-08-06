@@ -11,14 +11,15 @@ log = logging.getLogger(__name__)
 class SWAP(FileSystem):
     fs_type = 'swap'
 
-    def __init__(self, label=None, command_path='/usr/bin/mkswap'):
-        self.label = label
+    def __init__(self, fs_label=None, command_path='/usr/bin/mkswap', mount_options=None):
+        super(SWAP, self).__init__(fs_label, mount_options)
         self.command_path = command_path
 
-        self.command = '{command_path} {label_option} {device}'
+        self.command = '{command_path} -U {uuid} {label_option} {device}'
+        self.mount_options = mount_options or self.default_mount_options
 
-        if self.label:
-            self.label_option = ' -L %s' % self.label
+        if self.fs_label:
+            self.label_option = ' -L %s' % self.fs_label
         else:
             self.label_option = ''
         self.udev = UDevHelper()
@@ -27,11 +28,11 @@ class SWAP(FileSystem):
         command = self.command.format(**dict(
             command_path=self.command_path,
             label_option=self.label_option,
-            device=device
+            device=device,
+            uuid=self.fs_uuid
         ))
         log.info("Creating filesystem: %s" % command)
         result = run(command)
 
         if result.returncode:
-            raise FileSystemCreateException(self.label, command, result)
-        return self.get_uuid(device)
+            raise FileSystemCreateException(self.fs_label, command, result)

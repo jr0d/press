@@ -21,7 +21,15 @@ class _AttributeString(str):
         return self
 
 
-def run(command, bufsize=1048567, dry_run=False):
+class CLIException(Exception):
+    """
+    Exception used by cli.run function
+    """
+    pass
+
+
+def run(command, bufsize=1048567, dry_run=False, raise_exception=False, ignore_error=False,
+        quiet=False):
     """Runs a command and stores the important bits in an attribute string.
 
     :param command: Command to execute.
@@ -36,7 +44,8 @@ def run(command, bufsize=1048567, dry_run=False):
     :returns: :func:`press.cli.AttributeString`.
 
     """
-    log.debug('Running: %s' % command)
+    if not quiet:
+        log.debug('Running: %s' % command)
     cmd = shlex.split(str(command))
     if not dry_run:
         p = subprocess.Popen(cmd,
@@ -48,11 +57,18 @@ def run(command, bufsize=1048567, dry_run=False):
     else:
         out, err, ret = '', '', 0
 
-    log.debug('Return Code: %d' % ret)
-    if out:
-        log.debug('stdout: \n%s' % out.strip())
-    if err:
-        log.debug('stderr: \n%s' % err.strip())
+    if not quiet:
+        log.debug('Return Code: %d' % ret)
+        if out:
+            log.debug('stdout: \n%s' % out.strip())
+    if ret and not ignore_error:
+        log.error('Return: %d running: %s stdout: %s\nstderr: \n%s' % (ret,
+                                                                       command,
+                                                                       out.strip(),
+                                                                       err.strip()))
+        if raise_exception:
+            raise CLIException(err)
+
     attr_string = _AttributeString(out)
     attr_string.stderr = err
     attr_string.returncode = ret

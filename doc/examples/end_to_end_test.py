@@ -1,5 +1,7 @@
 from press.models.partition import PartitionTableModel
-from press.structure import EXT4, Partition, PercentString, Size, Layout, SWAP
+from press.structure import EXT4, Partition, PercentString, Layout, SWAP
+from press.post.debian import DebianPost
+from press.cli import run
 from press.logger import setup_logging
 from press import helpers
 
@@ -39,7 +41,9 @@ def my_callback(bytes_so_far):
     print('Bytes so far: %d' % bytes_so_far)
 
 log.info('Starting download of image')
-dl = helpers.download.Download('http://cdimage.ubuntu.com/ubuntu-core/releases/trusty/release/ubuntu-core-14.04-core-amd64.tar.gz', hash_method='sha1', expected_hash='ce3ad2ae205f5a90759d0a57b8cd90e687b4af1d', chunk_size=1024*1024)
+dl = helpers.download.Download(
+    'http://newdev.kickstart.rackspace.com/ubuntu/testing/debian-7-wheezy-amd64.tar.gz',
+    hash_method='sha1', expected_hash='3a23da7bc7636cb101a27a2f9855b427656f4775', chunk_size=1024*1024)
 dl.download(my_callback)
 if dl.can_validate():
     print('Can do validation..')
@@ -51,6 +55,23 @@ else:
     print("Validation can't be performed")
 
 log.info('Extracting image.')
-dl.extract('/mnt/press')
+
+new_root = '/mnt/press'
+
+dl.extract(new_root)
+
+# Nessy adding some POST action
+run('cp /etc/resolv.conf %s/etc/resolv.conf' % new_root)
+run('mv /etc/fstab_rs %s/etc/fstab' % new_root)
+
+post = DebianPost(new_root)
+post.useradd('rack')
+post.passwd('rack', 'password')
+
+post.grub_install('/dev/loop0')
+
+# After we complete lets delete the Post to call __exit__ function.
+post.__exit__()
+
 log.info('Done!')
 

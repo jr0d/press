@@ -1,5 +1,5 @@
 
-from press.post.base import Post, PostException
+from press.post.base import Post
 
 from press.cli import run
 import logging
@@ -10,23 +10,17 @@ log = logging.getLogger(__name__)
 
 class DebianPost(Post):
 
-    def apt_get_install(self, packages=[]):
+    def apt_get_install(self, packages):
         """
         Install a package using apt.
         :param packages: A list of strings. Each string is a debian package
         to be installed.
         """
-        if packages:
-            ret = run('apt-get -y install %s' % ' '.join(packages))
-            if not ret.returncode == 0:
-                log.error(
-                    'apt_get_install failed with return_code: %s. Reasons: %s'
-                    % ret.returncode, ret.stderr
-                )
-                raise PostException(ret.stderr)
-            return ret
+        log.debug('Installing %s with apt-get' % packages)
+        return run('apt-get -y install %s' % ' '.join(packages),
+                   raise_exception=True)
 
-    def install_packages(self, packages=[]):
+    def install_packages(self, packages):
         """
         Install packages using the system's Package Manager.
 
@@ -41,5 +35,9 @@ class DebianPost(Post):
 
         :param disk: Disk as a string /dev/sda
         """
-        run('grub-mkconfig -o /boot/grub/grub.cfg')
-        run('grub-install %s' % disk)
+        log.debug('Setting up grub on %s' % disk)
+        debconf = 'grub-pc grub-pc/install_devices multiselect %s' % disk
+        run('echo "%s" | debconf-set-selections' % debconf,
+            raise_exception=True)
+        run('grub-mkconfig -o /boot/grub/grub.cfg', raise_exception=True)
+        run('grub-install %s' % disk, raise_exception=True)

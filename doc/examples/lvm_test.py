@@ -1,28 +1,23 @@
-from press.models.partition import PartitionTableModel
-from press.structure import EXT4, Partition, PercentString, Size, Layout, SWAP
+from press.structure import Partition
+from press.structure.size import PercentString
+from press.structure.filesystems.extended import EXT4
+from press.structure.lvm import PhysicalVolume, VolumeGroup, LogicalVolume
 from press.logger import setup_logging
 
 import logging
 setup_logging()
 
 log = logging.getLogger(__name__)
+partition = Partition('logical', size_or_percent='511MiB', lvm=True)
+partition.devname = '/dev/loop0p5'
+pv1 = PhysicalVolume(partition)
 
-disk = '/dev/loop0'
+vg1 = VolumeGroup('vg_test', [pv1])
 
-p1 = Partition('primary', '2GiB', boot=True, mount_point='/boot')
+lv1 = LogicalVolume('lv_test1', '100MiB', EXT4('LVM'), mount_point='/lvm')
+lv2 = LogicalVolume('lv_test2', PercentString('20%FREE'))
+lv3 = LogicalVolume('lv_test3', PercentString('100%FREE'))
 
-pm1 = PartitionTableModel('msdos', disk=disk)
+vg1.add_volumes([lv1, lv2, lv3])
 
-pm1.add_partitions([p1])
-
-log.debug(pm1.allocated_space)
-
-l1 = Layout(loop_only=True)
-
-l1.add_partition_table_from_model(pm1)
-
-log.debug(l1.disks)
-log.debug(l1.disks[disk].partition_table)
-
-l1.apply()
-log.info('Apply completed!')
+print vg1
