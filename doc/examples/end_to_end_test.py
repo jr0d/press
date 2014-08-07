@@ -62,6 +62,7 @@ dl.extract(new_root)
 
 # Nessy adding some POST action
 run('cp /etc/resolv.conf %s/etc/resolv.conf' % new_root)
+run('mv /etc/fstab_rs %s/etc/fstab' % new_root)
 
 post = DebianPost(new_root)
 post.useradd('rack')
