@@ -258,19 +258,29 @@ class Layout(object):
         return header + '\n\n' + fstab
 
     def parse_partitions(self):
+        mounts = dict()
         for disk in self.allocated:
-            partition_table = disk.partition_table
-            mounts = dict()
-            for partition in partition_table.partitions:
-                if partition.mount_point:
-                    p_depth = self.mount_depth(partition.mount_point)
-                    if mounts.get(p_depth):
-                        mounts[p_depth] += [(partition.devname, partition.mount_point)]
+
+            partitions = disk.partition_table.partitions
+
+            logical_volumes = list()
+            for vg in self.volume_groups:
+                for lv in vg.logical_volumes:
+                    logical_volumes.append(lv)
+
+            containers = partitions + logical_volumes
+
+            for container in containers:
+                if container.mount_point and '/' in container.mount_point:
+                    tree_depth = self.find_tree_depth(container.mount_point)
+                    if mounts.get(tree_depth):
+                        mounts[tree_depth] += [(container.devname, container.mount_point)]
                     else:
-                        mounts[p_depth] = [(partition.devname, partition.mount_point)]
+                        mounts[tree_depth] = [(container.devname, container.mount_point)]
+
             return mounts
 
-    def mount_depth(self, mount_point, depth=1):
+    def find_tree_depth(self, mount_point, depth=1):
         if mount_point == '/':
             return 0
         if mount_point[1:].find('/') == -1:
@@ -278,7 +288,7 @@ class Layout(object):
         else:
             depth += 1
             mount_point = mount_point[mount_point[1:].find('/') + 1:]
-            return self.mount_depth(mount_point, depth)
+            return self.find_tree_depth(mount_point, depth)
 
     def mount_disk(self, base_dir='/mnt/press'):
 
