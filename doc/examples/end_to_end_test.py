@@ -14,7 +14,7 @@ disk = '/dev/loop0'
 
 p1 = Partition('primary', '250MiB', file_system=EXT4('BOOT'), boot=True, mount_point='/boot')
 p2 = Partition('primary', '512MiB', file_system=SWAP('SWAP'))
-p3 = Partition('logical', ('512MiB'), file_system=EXT4(), mount_point='/tmp')
+p3 = Partition('logical', '512MiB', file_system=EXT4(), mount_point='/tmp')
 p4 = Partition('logical', PercentString('85%FREE'), file_system=EXT4('ROOT'), mount_point='/')
 
 pm1 = PartitionTableModel('msdos', disk=disk)
