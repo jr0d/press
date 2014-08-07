@@ -173,3 +173,35 @@ class Partition(object):
         self.partition_id = None
         self.devname = None
         self.fsck_option = fsck_option
+
+    def generate_fstab_entry(self, method='UUID'):
+        if not self.file_system:
+            return
+
+        uuid = self.file_system.fs_uuid
+        if not uuid:
+            return
+
+        label = self.file_system.fs_label
+
+        if (method == 'LABEL') and not label:
+            # To the label - J. Kelly, 2nd shift slogan
+            log.debug('Missing label, can\'t take it there')
+
+        options = self.file_system.generate_mount_options()
+
+        dump = 0
+
+        fsck_option = self.fsck_option
+
+        gen = ''
+        if method == 'UUID':
+            gen += '# DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % (self.devname, label or '', uuid)
+        elif method == 'LABEL' and label:
+            gen += '# DEVNAME=%s\tUUID=%s\nLABEL=%s\t\t' % (self.devname, uuid, label)
+        else:
+            gen += '# UUID=%s\tLABEL=%s\n%s\t\t' % (uuid, label or '', self.devname)
+        gen += '%s\t\t%s\t\t%s\t\t%s %s\n\n' % (
+            self.mount_point, self.file_system, options, dump, fsck_option)
+
+        return gen
