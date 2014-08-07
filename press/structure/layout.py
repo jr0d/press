@@ -217,7 +217,11 @@ class Layout(object):
                     self.lvm.lvcreate(lv.extents, volume_group.name, lv.name)
                     log.info(lv.name)
                     device = self.udev.monitor_for_volume(monitor, lv.name)
-                    log.info(device['DEVLINKS'])
+                    lv.devname = device['DEVNAME']
+                    lv.devlinks = device.get('DEVLINKS', '').split()
+                    if lv.file_system:
+                        lv.file_system.create(lv.devname)
+
         self.committed = True
 
     def generate_fstab(self, method='UUID'):
@@ -238,36 +242,18 @@ class Layout(object):
         fstab = ''
 
         for disk in self.allocated:
-            parted = self._get_parted_interface_for_allocated_device(disk)
-            parted.get_table()
-
             partition_table = disk.partition_table
 
             for partition in partition_table.partitions:
-                if not partition.file_system:
-                    continue
+                entry = partition.generate_fstab_entry(method)
+                if entry:
+                    fstab += entry
 
-                uuid = partition.file_system.fs_uuid
-                if not uuid:
-                    continue
-
-                label = partition.file_system.fs_label
-                if (method == 'LABEL') and not label:
-                    log.debug(
-                        'Missing label, offender: %s' % partition.devname)
-
-                options = partition.file_system.generate_mount_options()
-                dump = '0'
-                fsck_option = partition.fsck_option
-
-                if method == 'UUID':
-                    fstab += '# DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % (partition.devname, label or '', uuid)
-                elif method == 'LABEL' and label:
-                    fstab += '# DEVNAME=%s\tUUID=%s\nLABEL=%s\t\t' % (partition.devname, uuid, label)
-                else:
-                    fstab += '# UUID=%s\tLABEL=%s\n%s\t\t' % (uuid, label or '', partition.devname)
-                fstab += '%s\t\t%s\t\t%s\t\t%s %s\n\n' % (
-                    partition.mount_point, partition.file_system, options, dump, fsck_option)
+        for vg in self.volume_groups:
+            for lv in vg.logical_volumes:
+                entry = lv.generate_fstab_entry(method)
+                if entry:
+                    fstab += entry
 
         return header + '\n\n' + fstab
 
