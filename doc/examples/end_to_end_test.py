@@ -6,6 +6,7 @@ from press.logger import setup_logging
 from press import helpers
 
 import logging
+
 setup_logging()
 
 log = logging.getLogger(__name__)
