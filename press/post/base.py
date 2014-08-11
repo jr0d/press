@@ -39,6 +39,7 @@ class Post(object):
             os.fchdir(self.real_root)
             os.chroot('.')
             os.chdir('/')
+        self.__unmount_prefix(prefix='/mnt/press')
 
     @staticmethod
     def __bind_mount(prefix, mount_points):
@@ -52,6 +53,16 @@ class Post(object):
                 mount_point, prefix, mount_point))
             run('mount --rbind %s %s%s' % (mount_point, prefix, mount_point),
                 raise_exception=True)
+
+    @staticmethod
+    def __unmount_prefix(prefix):
+        """
+
+        :param mount_points:
+        :return:
+        """
+        log.debug('Unmounting everything under %s' % prefix)
+        run('umount -l %s' % prefix, raise_exception=True)
 
     def useradd(self, username):
         """
