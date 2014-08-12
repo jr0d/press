@@ -10,7 +10,7 @@ setup_logging()
 
 log = logging.getLogger(__name__)
 
-disk = '/dev/loop0'
+disk = '/dev/sda'
 
 p1 = Partition('primary', '250MiB', file_system=EXT4('BOOT'), boot=True, mount_point='/boot')
 p2 = Partition('primary', '512MiB', file_system=SWAP('SWAP'))
@@ -23,7 +23,7 @@ pm1.add_partitions([p1, p2, p3, p4])
 
 log.debug(pm1.allocated_space)
 
-l1 = Layout(loop_only=True)
+l1 = Layout(loop_only=False)
 
 l1.add_partition_table_from_model(pm1)
 
@@ -68,7 +68,7 @@ post = DebianPost(new_root)
 post.useradd('rack')
 post.passwd('rack', 'password')
 
-post.grub_install('/dev/loop0')
+post.grub_install('/dev/sda')
 
 # After we complete lets delete the Post to call __exit__ function.
 post.__exit__()
