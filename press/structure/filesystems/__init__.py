@@ -3,7 +3,7 @@ import uuid
 
 class FileSystem(object):
     fs_type = ''
-    default_mount_options = ['default']
+    default_mount_options = ['defaults']
 
     def __init__(self, fs_label=None, mount_options=None):
         self.fs_label = fs_label
