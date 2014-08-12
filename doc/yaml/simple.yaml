@@ -37,10 +37,10 @@ network:
   not_yet: ok
 
 layout:
-  options:
-    - use_first_disk  # for omitting explicit disk definition
-    - no_fibre_channel # exclude fibre channel devices
-  subsystem: scsi # any, mpath, etc
+  use_fiber_channel: false
+  disk_association: first
+  default_partition_start: 1048576
+  default_alignment: 1048576
 
   partition_tables:
       -

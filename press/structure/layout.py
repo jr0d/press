@@ -23,7 +23,7 @@ class Layout(object):
     """
 
     def __init__(self,
-                 use_fibre_channel=True, use_loop_devices=True, loop_only=False,
+                 use_fibre_channel=False, loop_only=False,
                  parted_path='/sbin/parted',
                  default_partition_start=1048576, default_alignment=1048576,
                  disk_association='explicit'):
@@ -31,7 +31,6 @@ class Layout(object):
         Docs, maybe later
 
         :param use_fibre_channel:
-        :param use_loop_devices:
         :param loop_only:
         :param parted_path:
         :param default_partition_start:
@@ -47,14 +46,13 @@ class Layout(object):
 
         self.committed = False
         self.fc_enabled = use_fibre_channel
-        self.loop_enabled = use_loop_devices
         self.parted_path = parted_path
         self.default_partition_start = default_partition_start
         self.default_alignment = default_alignment
         self.disk_association = disk_association
         self.udev = UDevHelper()
-        self.udisks = self.udev.discover_valid_storage_devices(self.fc_enabled,
-                                                               self.loop_enabled)
+        self.udisks = self.udev.discover_valid_storage_devices(fc_enabled=self.fc_enabled,
+                                                               loop_enabled=True)
         if loop_only:
             self.udisks = [udisk for udisk in self.udisks if 'loop' in udisk['DEVNAME']]
 
