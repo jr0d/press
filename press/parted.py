@@ -65,6 +65,8 @@ class PartedInterface(object):
                 raise NullDiskException('Cannot get table for uninitialized device')
             elif 'unrecognised disk label' in result.stderr:
                 pass
+            elif 'No media found' in result.stderr:
+                pass
             else:
                 raise PartedException(result.stderr)
         if raw:
