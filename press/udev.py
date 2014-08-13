@@ -64,6 +64,9 @@ class UDevHelper(object):
             if disk.get('MAJOR') == '254':  # Device Mapper (LVM)
                 continue
 
+            if disk.get('ID_VENDOR') == 'iDRAC':
+                continue
+
             pruned.append(disk)
 
         return pruned
