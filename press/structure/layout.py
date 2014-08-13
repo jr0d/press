@@ -2,7 +2,7 @@ import logging
 from collections import OrderedDict
 
 from press import helpers
-from press.parted import PartedInterface, NullDiskException
+from press.parted import PartedInterface, NullDiskException, PartedException
 from press.lvm import LVM
 from press.udev import UDevHelper
 from press.structure.disk import Disk
@@ -74,9 +74,13 @@ class Layout(object):
             device = udisk.get('DEVNAME')
             try:
                 parted = PartedInterface(device, self.parted_path)
-            except NullDiskException:
-                log.debug('NullDiskException for %s' % device)
+            except NullDiskException as e:
+                log.debug('NullDiskException for %s: %s' % (device, e))
                 continue
+            except PartedException as e:
+                log.debug('PartedException for %s: %s' % (device, e))
+                continue
+
             size = parted.get_size()
             disk = Disk(devname=device,
                         devlinks=udisk.get('DEVLINKS'),
