@@ -18,9 +18,6 @@ class FileSystem(object):
         """
         raise NotImplemented('%s base class should not be used.' % self.__name__)
 
-    def __post_create(self, device):
-        self.fs_uuid = get_uuid(device)
-
     def generate_mount_options(self):
         if hasattr(self, 'mount_options'):
             options = self.mount_options

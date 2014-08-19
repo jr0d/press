@@ -23,3 +23,7 @@ class PhysicalDiskException(Exception):
 
 class GeneralValidationException(Exception):
     pass
+
+
+class GeneratorError(Exception):
+    pass

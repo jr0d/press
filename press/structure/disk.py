@@ -178,6 +178,9 @@ class Partition(object):
         if not self.file_system:
             return
 
+        if not self.mount_point:
+            return
+
         uuid = self.file_system.fs_uuid
         if not uuid:
             return

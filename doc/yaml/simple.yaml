@@ -38,14 +38,14 @@ network:
 
 layout:
   use_fiber_channel: false
-  disk_association: first
-  default_partition_start: 1048576
-  default_alignment: 1048576
-
   partition_tables:
+  disk: first
+  partitions:
       -
         name: boot_device
         label: msdos
+        partition_start: 1048576
+        alignment: 1048576
         partitions:
         -
           name: boot
