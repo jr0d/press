@@ -3,21 +3,11 @@ layout:
     - no_fibre_channel # exclude fibre channel devices
   subsystem: scsi # any, mpath, etc
 
-disks:
-  -
-    name: boot_disk
-    path: /dev/sda
-    table: boot_partition_table
-
-  -
-    name: storage_disk
-    path: /dev/sdb
-    table: storage_table
-
 partition_tables:
     -
       name: boot_partition_table
       label: msdos
+      disk: /dev/sda
       partitions:
       -
         name: boot
@@ -29,6 +19,7 @@ partition_tables:
         file_system:
           type: ext4
           label: BOOT
+        fsck_option: 2
 
       -
         name: root_pv
@@ -61,8 +52,7 @@ logical_volumes:
         type: ext4
         label: ROOT
         superuser_reserve: 1%
-        block_size: 4096
-        stripe: 65536
+      fsck_option: 1
 
 
 

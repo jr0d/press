@@ -1,12 +1,14 @@
 import uuid
 
+from press.cli import find_in_path
+
 
 class FileSystem(object):
     fs_type = ''
     default_mount_options = ['defaults']
 
-    def __init__(self, fs_label=None, mount_options=None):
-        self.fs_label = fs_label
+    def __init__(self, label=None, mount_options=None):
+        self.fs_label = label
         self.mount_options = mount_options or self.default_mount_options
         self.fs_uuid = uuid.uuid4()
 
@@ -18,9 +20,6 @@ class FileSystem(object):
         """
         raise NotImplemented('%s base class should not be used.' % self.__name__)
 
-    def __post_create(self, device):
-        self.fs_uuid = get_uuid(device)
-
     def generate_mount_options(self):
         if hasattr(self, 'mount_options'):
             options = self.mount_options
@@ -31,6 +30,10 @@ class FileSystem(object):
 
     def __repr__(self):
         return self.fs_type or 'Undefined'
+
+    @classmethod
+    def locate_command(cls, command_name):
+        return find_in_path(command_name)
 
 
 

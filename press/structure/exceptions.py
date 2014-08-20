@@ -5,6 +5,12 @@ class FileSystemCreateException(Exception):
         self.attr_str = attr_str
 
 
+class FileSystemFindCommandException(Exception):
+    """
+    Raised when FileSystem class cannot discover
+    """
+
+
 class PartitionValidationError(Exception):
     pass
 
@@ -22,4 +28,8 @@ class PhysicalDiskException(Exception):
 
 
 class GeneralValidationException(Exception):
+    pass
+
+
+class GeneratorError(Exception):
     pass

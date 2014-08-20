@@ -1,6 +1,6 @@
 from press.cli import run
 from press.structure.filesystems import FileSystem
-from press.structure.exceptions import FileSystemCreateException
+from press.structure.exceptions import FileSystemCreateException, FileSystemFindCommandException
 
 import logging
 
@@ -9,18 +9,27 @@ log = logging.getLogger(__name__)
 
 class EXT(FileSystem):
     fs_type = ''
-    _default_command_path = ''
+    command_name = ''
 
-    def __init__(self, fs_label=None, superuser_reserve=.03, stride_size=0, stripe_width=0,
-                 command_path='', mount_options=None):
+    # class level defaults
+    _default_superuser_reserve = .03
+    _default_stride_size = 0
+    _default_stripe_width = 0
 
-        super(EXT, self).__init__(fs_label, mount_options)
+    def __init__(self, label=None, mount_options=None, **extra):
 
-        self.superuser_reserve = superuser_reserve
-        self.stride_size = stride_size
-        self.stripe_width = stripe_width
+        super(EXT, self).__init__(label, mount_options)
 
-        self.command_path = command_path or self._default_command_path
+        self.superuser_reserve = extra.get('super_user_reserve', self._default_superuser_reserve)
+        self.stride_size = extra.get('stride_size', self._default_stride_size)
+        self.stripe_width = extra.get('stripe_width', self._default_stripe_width)
+
+        self.command_path = self.locate_command(self.command_name)
+
+        if not self.command_path:
+            raise \
+                FileSystemFindCommandException(
+                    'Cannot locate %s in PATH' % self.command_name)
 
         self.full_command = \
             '{command_path} -U{uuid} -m{superuser_reserve} {extended_options}{label_options} {device}'
@@ -55,10 +64,10 @@ class EXT(FileSystem):
 
 class EXT3(EXT):
     fs_type = 'ext3'
-    _default_command_path = '/usr/bin/mkfs.ext3'
+    command_name = 'mkfs.ext3'
 
 
 class EXT4(EXT):
     fs_type = 'ext4'
-    _default_command_path = '/usr/bin/mkfs.ext4'
+    command_name = 'mkfs.ext4'
 

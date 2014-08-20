@@ -23,38 +23,24 @@ class Layout(object):
     """
 
     def __init__(self,
-                 use_fibre_channel=True, use_loop_devices=True, loop_only=False,
-                 parted_path='/sbin/parted',
-                 default_partition_start=1048576, default_alignment=1048576,
-                 disk_association='explicit'):
+                 use_fibre_channel=False, loop_only=False,
+                 parted_path='/sbin/parted'):
         """
         Docs, maybe later
 
         :param use_fibre_channel:
-        :param use_loop_devices:
         :param loop_only:
         :param parted_path:
-        :param default_partition_start:
-        :param default_alignment:
-        :param disk_association: explicit: path must be associated with Disk object
-                          first: Use only the first available disk, subsequent calls to add_disk
-                            trigger an exception
-                          any: The first available disk is used that can accommodate the
-                            partition table
 
         :ivar self.committed: False on __init__, True after calling apply()
         """
 
         self.committed = False
         self.fc_enabled = use_fibre_channel
-        self.loop_enabled = use_loop_devices
         self.parted_path = parted_path
-        self.default_partition_start = default_partition_start
-        self.default_alignment = default_alignment
-        self.disk_association = disk_association
         self.udev = UDevHelper()
-        self.udisks = self.udev.discover_valid_storage_devices(self.fc_enabled,
-                                                               self.loop_enabled)
+        self.udisks = self.udev.discover_valid_storage_devices(fc_enabled=self.fc_enabled,
+                                                               loop_enabled=True)
         if loop_only:
             self.udisks = [udisk for udisk in self.udisks if 'loop' in udisk['DEVNAME']]
 
@@ -160,8 +146,8 @@ class Layout(object):
                 raise PhysicalDiskException('Could not associate disk, %s was not found' %
                                             partition_table.disk)
 
-        disk.new_partition_table(partition_table.type, partition_start=self.default_partition_start,
-                                 alignment=self.default_alignment)
+        disk.new_partition_table(partition_table.type, partition_start=partition_table.partition_start,
+                                 alignment=partition_table.alignment)
 
         for partition in partition_table.partitions:
             disk.partition_table.add_partition(partition)

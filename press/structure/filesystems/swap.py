@@ -1,6 +1,6 @@
 from press.cli import run
 from . import FileSystem
-from ..exceptions import FileSystemCreateException
+from ..exceptions import FileSystemCreateException, FileSystemFindCommandException
 from press.udev import UDevHelper
 
 import logging
@@ -10,10 +10,20 @@ log = logging.getLogger(__name__)
 
 class SWAP(FileSystem):
     fs_type = 'swap'
+    command_name = 'mkswap'
 
-    def __init__(self, fs_label=None, command_path='/usr/bin/mkswap', mount_options=None):
-        super(SWAP, self).__init__(fs_label, mount_options)
-        self.command_path = command_path
+    def __init__(self, label=None, mount_options=None, **extra):
+        super(SWAP, self).__init__(label, mount_options)
+
+        # SWAP does not require any extra arguments
+        del extra
+
+        self.command_path = self.locate_command(self.command_name)
+
+        if not self.command_path:
+            raise \
+                FileSystemFindCommandException(
+                    'Cannot locate %s in PATH' % self.command_name)
 
         self.command = '{command_path} -U {uuid} {label_option} {device}'
         self.mount_options = mount_options or self.default_mount_options

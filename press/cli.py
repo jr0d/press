@@ -1,3 +1,4 @@
+import os
 import logging
 import shlex
 import subprocess
@@ -5,7 +6,7 @@ import subprocess
 log = logging.getLogger(__name__)
 
 
-class _AttributeString(str):
+class AttributeString(str):
     def __init__(self, x):
         """
         For introspection
@@ -69,8 +70,23 @@ def run(command, bufsize=1048567, dry_run=False, raise_exception=False, ignore_e
         if raise_exception:
             raise CLIException(err)
 
-    attr_string = _AttributeString(out)
+    attr_string = AttributeString(out)
     attr_string.stderr = err
     attr_string.returncode = ret
     attr_string.command = command
     return attr_string
+
+
+def find_in_path(filename):
+    if os.path.isabs(filename):
+        if os.path.exists(filename):
+            return filename
+        else:
+            return None
+
+    for path in os.environ['PATH'].split(os.pathsep):
+        abspath = os.path.join(path, filename)
+        if os.path.exists(abspath):
+            return abspath
+
+

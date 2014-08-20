@@ -10,7 +10,7 @@ class PartitionTableModel(object):
     Mimics PartitionTable structured class but does not contain size attribute.
     Used to stage a partition table prior to knowing physical geometry
     """
-    def __init__(self, table_type, disk='first'):
+    def __init__(self, table_type, disk='first', partition_start=1048576, alignment=1048576):
         """
         :param table_type: (str) gpt or msdos
         :param disk: (str) first, any, devname (/dev/sda), devlink (/dev/disk/by-id/foobar),
@@ -21,6 +21,8 @@ class PartitionTableModel(object):
         log.info('Modeling new Partition Table Model: Type: %s , Disk: %s' % (table_type, disk))
         self.partitions = list()
         self.disk = disk
+        self.partition_start = partition_start
+        self.alignment = alignment
 
         valid_types = ['gpt', 'msdos']
         if table_type not in valid_types:

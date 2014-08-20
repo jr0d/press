@@ -1,7 +1,6 @@
 import logging
-import os
 
-from press.cli import run
+from press.cli import run, find_in_path
 from press.sysfs_info import AlignmentInfo, append_sys
 from press.udev import UDevHelper
 
@@ -11,15 +10,15 @@ log = logging.getLogger(__name__)
 class PartedInterface(object):
     """
     Going to have to work with the parted command line tool due to time
-    consistent. pyparted is not documented and messy.
+    constraint. pyparted is not documented and messy.
 
     Once I can use libparted directly, I will move to that.
     """
 
-    def __init__(self, device, parted_path='/sbin/parted', partition_start=1048576,
+    def __init__(self, device, parted_path='parted', partition_start=1048576,
                  alignment=1048576):
         self.parted_path = parted_path
-        if not os.path.isfile(self.parted_path):
+        if not find_in_path(self.parted_path):
             raise PartedInterfaceException('%s does not exist.' % self.parted_path)
         self.device = device
         self.partition_start = partition_start
