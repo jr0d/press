@@ -73,33 +73,31 @@ network:
 
 layout:
   use_fiber_channel: false
+  loop_only: true
   partition_tables:
-  disk: first
-  partitions:
-      -
-        name: boot_device
-        label: msdos
-        partition_start: 1048576
-        alignment: 1048576
-        partitions:
-        -
-          name: boot
-          options:
-            - primary
-            - boot
-          size: 1GiB
-          mount_point: /boot
-          file_system:
-            type: ext4
-            label: BOOT
-        -
-          name: root_pv
-          options:
-            - logical
-            - lvm
-          size: 100%FREE
+  -
+    disk: /dev/loop0
+    label: msdos
+    partitions:
+    -
+      name: boot
+      options:
+        - primary
+        - boot
+      size: 1GiB
+      mount_point: /boot
+      file_system:
+        type: ext4
+        label: BOOT
+    -
+      name: root_pv
+      options:
+        - logical
+        - lvm
+      size: 2GiB
 
   volume_groups:
+  -
     name: vg_system
     physical_volumes:
       - root_pv
@@ -107,7 +105,7 @@ layout:
     logical_volumes:
         -
           name: lv_swap
-          size: 4GiB
+          size: 1GiB
           file_system:
             type: swap
             label: SWAP
