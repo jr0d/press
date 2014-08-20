@@ -14,6 +14,7 @@ from press.structure.lvm import (
     LogicalVolume
 )
 
+from press.structure.size import PercentString
 from press.structure.filesystems.extended import (
     EXT3,
     EXT4
@@ -92,6 +93,12 @@ def _max_primary(partitions):
     return 4
 
 
+def generate_size(size):
+    if '%' in size:
+        return PercentString(size)
+    return size
+
+
 def generate_file_system(fs_dict):
     fs_type = fs_dict.get('type', 'undefined')
 
@@ -105,8 +112,8 @@ def generate_file_system(fs_dict):
 
 
 def generate_partition(type_or_name, partition_dict):
-    boot = partition_dict['options'].get('boot', False)
-    lvm = partition_dict['options'].get('lvm', False)
+    boot = 'boot' in partition_dict['options'] and True or False
+    lvm = 'lvm' in partition_dict['options'] and True or False
 
     fs_dict = partition_dict.get('file_system')
 
@@ -118,7 +125,7 @@ def generate_partition(type_or_name, partition_dict):
 
     p = Partition(
         type_or_name=type_or_name,
-        size_or_percent=partition_dict['size'],
+        size_or_percent=generate_size(partition_dict['size']),
         boot=boot,
         lvm=lvm,
         file_system=fs_object,
@@ -250,7 +257,7 @@ def generate_volume_group_models(volume_group_dict):
             ref = __pv_linker__.get(pv)
             if not ref:
                 raise GeneratorError('invalid ref: %s' % pv)
-            pvs.append(PhysicalVolume(__pv_linker__[ref]))
+            pvs.append(PhysicalVolume(ref))
         vgm = VolumeGroupModel(vg['name'], pvs)
         lv_dicts = vg.get('logical_volumes')
         lvs = list()
@@ -262,14 +269,14 @@ def generate_volume_group_models(volume_group_dict):
                 else:
                     fs = None
                 lvs.append(LogicalVolume(
-                    name=lv['Name'],
-                    size_or_percent=lv['size'],
+                    name=lv['name'],
+                    size_or_percent=generate_size(lv['size']),
                     file_system=fs,
                     mount_point=lv.get('mount_point'),
                     fsck_option=lv.get('fsck_option')
                 ))
             vgm.add_logical_volumes(lvs)
-        vgs.append(vg)
+        vgs.append(vgm)
     return vgs
 
 
@@ -296,4 +303,6 @@ def layout_from_config(layout_config):
 
         for vg in vg_objects:
             layout.add_volume_group_from_model(vg)
+
+    return layout
 

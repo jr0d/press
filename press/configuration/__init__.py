@@ -7,7 +7,7 @@ class Configuration(object):
 
 
 def configuration_from_yaml(data):
-    return Configuration(yaml.load(data))
+    return yaml.load(data)
 
 
 def configuration_from_file(path, config_type='yaml'):
