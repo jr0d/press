@@ -82,7 +82,7 @@ class VolumeGroup(object):
         volume.extents = extents
         self.logical_volumes.append(volume)
 
-    def add_volumes(self, volumes):
+    def add_logical_volumes(self, volumes):
         for volume in volumes:
             self.add_logical_volume(volume)
 

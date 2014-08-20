@@ -52,8 +52,6 @@ logical_volumes:
         type: ext4
         label: ROOT
         superuser_reserve: 1%
-        block_size: 4096
-        stripe: 65536
       fsck_option: 1
 
 

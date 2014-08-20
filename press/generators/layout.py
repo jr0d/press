@@ -2,8 +2,6 @@ import logging
 
 from press.structure import (
     Layout,
-    Disk,
-    PartitionTable,
     Partition,
 )
 
@@ -13,7 +11,6 @@ from press.structure.exceptions import (
 
 from press.structure.lvm import (
     PhysicalVolume,
-    VolumeGroup,
     LogicalVolume
 )
 
@@ -34,6 +31,8 @@ LOG = logging.getLogger(__name__)
 
 MBR_LOGICAL_MAX = 128
 
+__pv_linker__ = dict()
+
 _layout_defaults = dict(
     # TODO: Possibly load these from a yaml, defaults.yaml
     use_fibre_channel=False,
@@ -48,7 +47,12 @@ _partition_table_defaults = dict(
 )
 
 _partition_defaults = dict(
-    options=list()
+    options=list(),
+    fsck_option=0
+)
+
+_lv_defaults = dict(
+    fsck_option=0
 )
 
 _fs_selector = dict(
@@ -57,13 +61,9 @@ _fs_selector = dict(
     swap=SWAP
 )
 
-
-def index_by_gpt_name():
-    pass
-
-
-def primary_or_logical():
-    pass
+_volume_group_defaults = dict(
+    pe_size='4MiB'
+)
 
 
 def _fill_defaults(d, defaults):
@@ -92,17 +92,51 @@ def _max_primary(partitions):
     return 4
 
 
+def generate_file_system(fs_dict):
+    fs_type = fs_dict.get('type', 'undefined')
+
+    fs_class = _fs_selector.get(fs_type)
+    if not fs_class:
+        raise GeneratorError('%s type is not supported!' % fs_type)
+
+    fs_object = fs_class(**fs_dict)
+
+    return fs_object
+
+
 def generate_partition(type_or_name, partition_dict):
-    pass
+    boot = partition_dict['options'].get('boot', False)
+    lvm = partition_dict['options'].get('lvm', False)
+
+    fs_dict = partition_dict.get('file_system')
+
+    if fs_dict:
+        fs_object = generate_file_system(fs_dict)
+        LOG.info('Adding %s file system' % fs_object)
+    else:
+        fs_object = None
+
+    p = Partition(
+        type_or_name=type_or_name,
+        size_or_percent=partition_dict['size'],
+        boot=boot,
+        lvm=lvm,
+        file_system=fs_object,
+        mount_point=partition_dict.get('mount_point'),
+        fsck_option=partition_dict.get('fsck_option')
+    )
+
+    if p.lvm:
+        # We need to preserve this mapping for generating volume groups
+        __pv_linker__[partition_dict['name']] = p
+
+    return p
 
 
 def _generate_mbr_partitions(partition_dicts):
     """
-    MBR:
-
     There can be four primary partitions unless a logical partition is explicitly
-    defined, in such case, there can be only three primary partitions, leaving room
-    for an extended partition
+    defined, in such cases, there can be only three primary partitions.
 
     If there are more than four partitions defined and neither primary or logical
     is explicitly defined, then there will be three primary, one extended, and up to 128
@@ -141,14 +175,27 @@ def _generate_mbr_partitions(partition_dicts):
     return partitions
 
 
+def _generate_gpt_partitions(partition_dicts):
+    """
+    Use the name field in the configuration or p + count
+    :param partition_dicts:
+    :return: list of Partition objects
+    """
+    count = 0
+    partitions = list()
+    for partition in partition_dicts:
+        partitions.append(generate_partition(partition.get('name', 'p' + str(count)), partition))
+        count += 1
+    return partitions
+
+
 def generate_partitions(table_type, partition_dicts):
     for p in partition_dicts:
         _fill_defaults(p, _partition_defaults)
-
     if table_type == 'msdos':
         return _generate_mbr_partitions(partition_dicts)
     if table_type == 'gpt':
-        pass
+        return _generate_gpt_partitions(partition_dicts)
     else:
         raise GeneratorError('Table type is invalid: %s' % table_type)
 
@@ -166,31 +213,64 @@ def generate_partition_table_model(partition_table_dict):
     Most people don't care if their partitions are primary/logical
     or what their gpt names are, so we'll care for them.
 
-
-    GPT:
-
-    Use the name field in the configuration or p + count
-
-
-
     :param partition_table_dict:
     :return: PartitionTableModel
     """
     _fill_defaults(partition_table_dict, _partition_table_defaults)
     table_type = partition_table_dict['label']
     pm = PartitionTableModel(
-        table_type=partition_table_dict['label'],
+        table_type=table_type,
         disk=partition_table_dict['disk'],
         partition_start=partition_table_dict['partition_start'],
         alignment=partition_table_dict['alignment']
     )
 
-    partitions = partition_table_dict['partitions']
-    if partitions:
-        partition_objects = list()
-        pass
-
+    partition_dicts = partition_table_dict['partitions']
+    if partition_dicts:
+        partitions = generate_partitions(table_type, partition_dicts)
+        pm.add_partitions(partitions)
     return pm
+
+
+def generate_volume_group_models(volume_group_dict):
+    """
+    We use __pv_linker__ to reference partition objects by name
+    :param volume_group_dict:
+    :return:
+    """
+    if not __pv_linker__:
+        raise GeneratorError('__pv_linker__ is null, need to generate Partitions first')
+    vgs = list()
+    for vg in volume_group_dict:
+        _fill_defaults(vg, _volume_group_defaults)
+        pvs = list()
+        if not vg.get('physical_volumes'):
+            raise GeneratorError('No physical volumes are defined')
+        for pv in vg.get('physical_volumes'):
+            ref = __pv_linker__.get(pv)
+            if not ref:
+                raise GeneratorError('invalid ref: %s' % pv)
+            pvs.append(PhysicalVolume(__pv_linker__[ref]))
+        vgm = VolumeGroupModel(vg['name'], pvs)
+        lv_dicts = vg.get('logical_volumes')
+        lvs = list()
+        if lv_dicts:
+            for lv in lv_dicts:
+                _fill_defaults(lv, _lv_defaults)
+                if lv.get('file_system'):
+                    fs = generate_file_system(lv.get('file_system'))
+                else:
+                    fs = None
+                lvs.append(LogicalVolume(
+                    name=lv['Name'],
+                    size_or_percent=lv['size'],
+                    file_system=fs,
+                    mount_point=lv.get('mount_point'),
+                    fsck_option=lv.get('fsck_option')
+                ))
+            vgm.add_logical_volumes(lvs)
+        vgs.append(vg)
+    return vgs
 
 
 def layout_from_config(layout_config):
@@ -201,4 +281,19 @@ def layout_from_config(layout_config):
         loop_only=layout_config['loop_only'],
         parted_path=layout_config['parted_path'],
     )
+
+    partition_tables = layout_config.get('partition_tables')
+    if not partition_tables:
+        raise GeneratorError('No partition tables have been defined')
+
+    for pt in partition_tables:
+        ptm = generate_partition_table_model(pt)
+        layout.add_partition_table_from_model(ptm)
+
+    volume_groups = layout_config.get('volume_groups')
+    if volume_groups:
+        vg_objects = generate_volume_group_models(volume_groups)
+
+        for vg in vg_objects:
+            layout.add_volume_group_from_model(vg)
 

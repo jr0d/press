@@ -13,3 +13,7 @@ class VolumeGroupModel(object):
 
     def add_logical_volume(self, lv):
         self.logical_volumes.append(lv)
+
+    def add_logical_volumes(self, lvs):
+        for lv in lvs:
+            self.add_logical_volume(lv)
