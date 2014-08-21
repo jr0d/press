@@ -79,7 +79,7 @@ config = {'auth':
                              'home': '/home/rack',
                              'password': 'ball$$$$$',
                              'password_options': [{'encrypted': False}],
-                             'shell': '/bin/zsh',
+                             'shell': '/bin/bash',
                              'skel': 'http://blah.rackspace.com/press/skels/users/rack.tar.gz',
                              'uid': 1000},
                     'root': {'authorized_keys': [],
