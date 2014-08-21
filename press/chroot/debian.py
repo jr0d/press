@@ -20,6 +20,8 @@ class DebianChroot(Chroot):
         debconf = 'grub-pc grub-pc/install_devices multiselect %s' % disk
         run('echo "%s" | debconf-set-selections' % debconf,
             raise_exception=True)
+        run("sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT='%s'/g' /etc/default/grub" %
+            self.grub_options, raise_exception=True)
         run('grub-mkconfig -o /boot/grub/grub.cfg', raise_exception=True)
         run('grub-install %s' % disk, raise_exception=True)
 

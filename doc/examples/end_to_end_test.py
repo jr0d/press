@@ -85,7 +85,10 @@ config = {'auth':
                     'root': {'authorized_keys': [],
                              'home': '/root',
                              'password': 'ball$$$$',
-                             'password_options': [{'encrypted': False}]}}}}
+                             'password_options': [{'encrypted': False}]}}},
+          'grub':
+              {'options': 'quiet'}
+        }
 
 chroot = DebianChroot(new_root, config)
 chroot.apply()

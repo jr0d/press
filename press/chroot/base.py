@@ -27,6 +27,10 @@ class Chroot(object):
         self.real_root = os.open('/', os.O_RDONLY)
         os.chroot(newroot)
         os.chdir('/')
+        if self.config.get('grub'):
+            self.grub_options = self.config.get('grub')['options']
+
+
 
     def __exit__(self):
         """
