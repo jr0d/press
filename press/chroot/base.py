@@ -71,7 +71,8 @@ class Chroot(object):
         """
         Creates a group from configuration and build options.
         """
-        log.debug('Adding group %s with gid %s' % (group, gid))
+        command = 'groupadd %s -g %s' % (group, gid)
+        log.debug(command)
         run('groupadd %s -g %s' % (group, gid), raise_exception=True)
 
 
@@ -79,8 +80,9 @@ class Chroot(object):
         """
         Creates a users from configuration and build options.
         """
-        log.debug('Adding user %s' % username)
-        run('useradd %s %s' % (username, options), raise_exception=True)
+        command = 'useradd %s %s' % (username, options)
+        log.debug(command)
+        run(command, raise_exception=True)
 
 
     def __passwd(self, username, password):
