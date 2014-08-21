@@ -87,7 +87,7 @@ config = {'auth':
                              'password': 'ball$$$$',
                              'password_options': [{'encrypted': False}]}}},
           'grub':
-              {'options': 'quiet'}
+              {'options': 'quiet splash'}
         }
 
 chroot = DebianChroot(new_root, config)
