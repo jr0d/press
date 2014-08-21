@@ -10,14 +10,6 @@ log = logging.getLogger(__name__)
 
 class DebianChroot(Chroot):
 
-    def __passwd(self, username, password):
-        """
-        Set the passwords for users using config.
-        """
-        log.debug('Settings password for %s' % username)
-        run('echo %s:%s | chpasswd' % (username, password),
-            raise_exception=True)
-
     def install_bootloader(self, disk):
         """
         Install bootloader on disk.

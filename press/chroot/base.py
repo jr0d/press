@@ -80,7 +80,7 @@ class Chroot(object):
         """
         Creates a users from configuration and build options.
         """
-        command = 'useradd %s %s' % (username, options)
+        command = 'useradd %s -m %s' % (username, options)
         log.debug(command)
         run(command, raise_exception=True)
 
@@ -90,7 +90,7 @@ class Chroot(object):
         Set the passwords for users using config.
         """
         log.debug('Settings password for %s' % username)
-        run('echo %s | passwd %s --stdin' % (password, username),
+        run('echo %s:%s | chpasswd' % (username, password),
             raise_exception=True)
 
     def add_users(self):
