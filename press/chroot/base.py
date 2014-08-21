@@ -2,6 +2,8 @@
 from press.cli import run
 import logging
 import os
+import crypt
+import random
 
 
 log = logging.getLogger(__name__)
@@ -20,6 +22,7 @@ class Chroot(object):
         :parma config: a dict with all our configuration.
         """
         self.config = config
+        self.newroot = newroot
         self.__bind_mount(prefix='/mnt/press')
         self.real_root = os.open('/', os.O_RDONLY)
         os.chroot(newroot)
@@ -60,6 +63,18 @@ class Chroot(object):
         log.debug('Unmounting everything under %s' % prefix)
         run('umount -l %s' % prefix, raise_exception=True)
 
+    @staticmethod
+    def generate_salt512(length=12):
+        pool = [chr(x) for x in range(48, 122) if chr(x).isalnum()]
+        chars = list()
+        while len(chars) < length:
+            chars.append(random.choice(pool))
+        return '$6$%s$' % ''.join(chars)
+
+    @staticmethod
+    def generate_hash(x, salt):
+        return crypt.crypt(x, salt)
+
     def __reboot(self):
         """
         Reboots the system.
@@ -88,8 +103,10 @@ class Chroot(object):
         """
         Set the passwords for users using config.
         """
-        command = "echo '%s:%s' | chpasswd" % (username, password)
-        log.info(command.replace(password, '*********'))
+        log.info('Setting password for %s' % username)
+        salt = self.generate_salt512()
+        encrypted_password = self.generate_hash(password, salt)
+        command = "usermod -p %s %s" % (encrypted_password, username)
         run(command, raise_exception=True)
 
     def add_users(self):
