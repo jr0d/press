@@ -97,42 +97,48 @@ class Chroot(object):
         """
         log.debug('Running add_users')
         options = []
-        try:
-            for user, data in self.config['auth']['users'].items():
 
-                # if this is the root user, lets set password then skip rest.
-                if user == 'root':
-                    if data.get('password'):
-                        self.__passwd('root', data['password'])
-                    continue
+        if 'auth' not in self.config:
+            log.warning('Missing auth section in config.')
+            return
 
-                # check for our useradd options in config.
-                if data.get('home'):
-                    options.append('-d %s' % data['home'])
+        if 'users' not in self.config['auth']:
+            log.warning('Missing users section in config.')
+            return
 
-                if data.get('shell'):
-                    options.append('-s %s' % data['shell'])
+        for user, data in self.config['auth']['users'].items():
 
-                if data.get('uid'):
-                    options.append('-u %s' % data['uid'])
-
-                if data.get('gid'):
-                    self.__groupadd(user, data['gid'])  # create our group.
-                    options.append('-g %s' % data['gid'])
-
-                # time to build all options into a string separated by spaces.
-                options = ' '.join(options)
-
-                # create users with useradd command
-                self.__useradd(user, options)
-
-                # set password with passwd command
-                # TODO use password_options for encrypted passwords.
+            # if this is the root user, lets set password then skip rest.
+            if user == 'root':
                 if data.get('password'):
-                    self.__passwd(user, data['password'])
+                    # TODO use password_options for encrypted passwords.
+                    self.__passwd('root', data['password'])
+                continue
 
-        except KeyError as e:
-            log.warning('Does not appear we have users in config: %s' % e)
+            # check for our useradd options in config.
+            if data.get('home'):
+                options.append('-d %s' % data['home'])
+
+            if data.get('shell'):
+                options.append('-s %s' % data['shell'])
+
+            if data.get('uid'):
+                options.append('-u %s' % data['uid'])
+
+            if data.get('gid'):
+                self.__groupadd(user, data['gid'])  # create our group.
+                options.append('-g %s' % data['gid'])
+
+            # time to build all options into a string separated by spaces.
+            options = ' '.join(options)
+
+            # create users with useradd command
+            self.__useradd(user, options)
+
+            # set password with passwd command
+            # TODO use password_options for encrypted passwords.
+            if data.get('password'):
+                self.__passwd(user, data['password'])
 
     def install_bootloader(self, disk):
         """
