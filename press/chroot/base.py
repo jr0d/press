@@ -117,7 +117,7 @@ class Chroot(object):
                     options.append('-u %s' % data['uid'])
 
                 if data.get('gid'):
-                    self.groupadd(user, data['gid'])  # create our group.
+                    self.__groupadd(user, data['gid'])  # create our group.
                     options.append('-g %s' % data['gid'])
 
                 # time to build all options into a string separated by spaces.
