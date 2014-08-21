@@ -1,5 +1,5 @@
 from press.logger import setup_logging
-from press.post.debian import DebianPost
+from press.chroot.debian import DebianPost
 from press.cli import run
 
 import logging
