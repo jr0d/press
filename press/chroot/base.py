@@ -84,14 +84,13 @@ class Chroot(object):
         log.debug(command)
         run(command, raise_exception=True)
 
-
     def __passwd(self, username, password):
         """
         Set the passwords for users using config.
         """
-        log.debug('Settings password for %s' % username)
-        run('echo %s:%s | chpasswd' % (username, password),
-            raise_exception=True)
+        command = 'echo %s:%s | chpasswd' % (username, password)
+        log.debug(command.replace(password, '*********'))
+        run(command, raise_exception=True)
 
     def add_users(self):
         """
