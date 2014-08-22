@@ -46,9 +46,9 @@ def my_callback(bytes_so_far):
 
 log.info('Starting download of image')
 dl = helpers.download.Download(
-    'http://newdev.kickstart.rackspace.com/press/Debian_7_Dedicated.tar.gz',
+    'http://newdev.kickstart.rackspace.com/press/debian-7-wheezy-amd64.tar.gz',
     hash_method='sha1',
-    expected_hash='be748ca73761a4c2a0d8d72a51fdc8ee53556178',
+    expected_hash='09d2fb15faf22a76ad959371d6b72333956ef407',
     chunk_size=1024 * 1024)
 dl.download(my_callback)
 if dl.can_validate():
