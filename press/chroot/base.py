@@ -38,7 +38,8 @@ class Chroot(object):
             os.chroot('.')
             os.chdir('/')
         self.__unmount_prefix(prefix='/mnt/press')
-        self.__reboot()
+        # commenting out reboot for now to allow review of post before.
+        #self.__reboot()
 
     @staticmethod
     def __bind_mount(prefix, mount_points=('/proc', '/dev', '/sys')):
