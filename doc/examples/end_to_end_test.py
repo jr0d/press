@@ -1,6 +1,6 @@
 from press.models.partition import PartitionTableModel
 from press.structure import EXT4, Partition, PercentString, Layout, SWAP
-from press.post.debian import DebianPost
+from press.chroot.debian import DebianChroot
 from press.cli import run
 from press.logger import setup_logging
 from press import helpers
@@ -13,10 +13,12 @@ log = logging.getLogger(__name__)
 
 disk = '/dev/sda'
 
-p1 = Partition('primary', '250MiB', file_system=EXT4('BOOT'), boot=True, mount_point='/boot')
+p1 = Partition('primary', '250MiB', file_system=EXT4('BOOT'), boot=True,
+               mount_point='/boot')
 p2 = Partition('primary', '512MiB', file_system=SWAP('SWAP'))
 p3 = Partition('logical', '512MiB', file_system=EXT4(), mount_point='/tmp')
-p4 = Partition('logical', PercentString('85%FREE'), file_system=EXT4('ROOT'), mount_point='/')
+p4 = Partition('logical', PercentString('85%FREE'), file_system=EXT4('ROOT'),
+               mount_point='/')
 
 pm1 = PartitionTableModel('msdos', disk=disk)
 
@@ -41,10 +43,13 @@ log.info('Target mount completed!')
 def my_callback(bytes_so_far):
     print('Bytes so far: %d' % bytes_so_far)
 
+
 log.info('Starting download of image')
 dl = helpers.download.Download(
     'http://newdev.kickstart.rackspace.com/ubuntu/testing/debian-7-wheezy-amd64.tar.gz',
-    hash_method='sha1', expected_hash='3a23da7bc7636cb101a27a2f9855b427656f4775', chunk_size=1024*1024)
+    hash_method='sha1',
+    expected_hash='3a23da7bc7636cb101a27a2f9855b427656f4775',
+    chunk_size=1024 * 1024)
 dl.download(my_callback)
 if dl.can_validate():
     print('Can do validation..')
@@ -65,14 +70,26 @@ dl.extract(new_root)
 run('cp /etc/resolv.conf %s/etc/resolv.conf' % new_root)
 run('mv %s/etc/fstab_rs %s/etc/fstab' % (new_root, new_root))
 
-post = DebianPost(new_root)
-post.useradd('rack')
-post.passwd('rack', 'password')
+# A example config
+config = {'auth':
+              {'algorythim': 'sha512',
+               'users':
+                   {'rack': {'gid': 1000,
+                             'group': 'rack',
+                             'home': '/home/rack',
+                             'password': 'ball$$$$$',
+                             'password_options': [{'encrypted': False}],
+                             'shell': '/bin/bash',
+                             'skel': 'http://blah.rackspace.com/press/skels/users/rack.tar.gz',
+                             'uid': 1000},
+                    'root': {'authorized_keys': [],
+                             'home': '/root',
+                             'password': 'ball$$$$',
+                             'password_options': [{'encrypted': False}]}}}}
 
-post.grub_install('/dev/sda')
-
-# After we complete lets delete the Post to call __exit__ function.
-post.__exit__()
+chroot = DebianChroot(new_root, config)
+chroot.apply()
+chroot.__exit__()
 
 log.info('Done!')
 
