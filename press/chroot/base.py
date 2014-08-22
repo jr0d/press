@@ -1,12 +1,35 @@
-
 from press.cli import run
 import logging
 import os
+import string
 import crypt
 import random
 
 
 log = logging.getLogger(__name__)
+
+# Generate a random password for security.
+passwd = ''.join(
+    map(lambda x: random.choice(list(string.ascii_letters)), range(25)))
+
+DEFAULTS = \
+    {'auth':
+         {'algorythim': 'sha512',
+          'users':
+              {'root':
+                   {
+                       'authorized_keys': None,
+                       'home': '/root',
+                       'password': passwd,
+                       'password_options': [
+                           {
+                               'encrypted': False
+                           }
+                       ]
+                   }
+              }
+         }
+    }
 
 
 class Chroot(object):
@@ -21,23 +44,32 @@ class Chroot(object):
         :param newroot: String path to our new root.
         :parma config: a dict with all our configuration.
         """
-        self.config = config
         self.newroot = newroot
-        self.__bind_mount(prefix='/mnt/press')
+        self.config = self.__generate_config(config)
+        log.debug('Setting up networking from configuration: %s' % self.config)
+
+        self.__bind_mount(prefix=newroot)
         self.real_root = os.open('/', os.O_RDONLY)
         os.chroot(newroot)
         os.chdir('/')
+
+    @staticmethod
+    def __generate_config(config):
+        """
+        Generates config by updating DEFAULTS with config.
+        """
+        auth = dict(auth=config.get('auth', {}))
+        DEFAULTS.update(auth)
+        return DEFAULTS
 
     def __exit__(self):
         """
         Exits an active chroot
         """
-        if self.real_root:
-            os.fchdir(self.real_root)
-            os.chroot('.')
-            os.chdir('/')
-        self.__unmount_prefix(prefix='/mnt/press')
-        self.__reboot()
+        os.fchdir(self.real_root)
+        os.chroot('.')
+        os.chdir('/')
+        self.__unmount_prefix(prefix=self.newroot)
 
     @staticmethod
     def __bind_mount(prefix, mount_points=('/proc', '/dev', '/sys')):
@@ -65,6 +97,9 @@ class Chroot(object):
 
     @staticmethod
     def generate_salt512(length=12):
+        """
+        Generate a random salt512
+        """
         pool = [chr(x) for x in range(48, 122) if chr(x).isalnum()]
         chars = list()
         while len(chars) < length:
@@ -73,9 +108,13 @@ class Chroot(object):
 
     @staticmethod
     def generate_hash(x, salt):
+        """
+        Generate a hash using salt
+        """
         return crypt.crypt(x, salt)
 
-    def __reboot(self):
+    @staticmethod
+    def __reboot():
         """
         Reboots the system.
         """
@@ -89,7 +128,6 @@ class Chroot(object):
         command = 'groupadd %s -g %s' % (group, gid)
         log.info(command)
         run('groupadd %s -g %s' % (group, gid), raise_exception=True)
-
 
     def __useradd(self, username, options):
         """
@@ -115,14 +153,6 @@ class Chroot(object):
         """
         log.debug('Running add_users')
         options = []
-
-        if 'auth' not in self.config:
-            log.warning('Missing auth section in config.')
-            return
-
-        if 'users' not in self.config['auth']:
-            log.warning('Missing users section in config.')
-            return
 
         for user, data in self.config['auth']['users'].items():
 
