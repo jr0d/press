@@ -94,7 +94,7 @@ layout:
       options:
         - logical
         - lvm
-      size: 2GiB
+      size: 100%FREE
 
   volume_groups:
   -

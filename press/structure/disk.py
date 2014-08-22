@@ -83,17 +83,26 @@ class PartitionTable(object):
 
     @property
     def current_usage(self):
-        return self.partition_end
+        """
+        Factors in alignment
+        """
+        return self.partition_end + self.alignment - self.partition_end % self.alignment
 
     @property
     def free_space(self):
+        """
+        Calculate free space using standard logic
+        """
         if not self.partitions:
             free = self.size - self.partition_start
         else:
-            free = \
-                self.size - self.partition_end + self.alignment - self.partition_end % self.alignment
+            free = self.size - self.current_usage
+
         if self.type == GPT:
             free -= Size(GPT_BACKUP_SIZE)
+        else:
+            free -= Size(1)
+
         log.debug('Free space: %d' % free.bytes)
         return free
 
@@ -110,6 +119,7 @@ class PartitionTable(object):
         #  Adjust size to conform with parted logic
 
         #  TODO: Make Size operator overloads work with ints
+        # percentage based partitions should NEVER hit this, this is for explicit definitions
         if self.is_gpt \
                 and self.partition_end.bytes + adjusted_size.bytes > self.size.bytes - GPT_BACKUP_SIZE:
             # parted reserves 17408 bytes for a gpt backup at the end of the disk
