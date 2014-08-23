@@ -30,8 +30,8 @@ auth:
         -
           encrypted: False
 
-post:
-  append: debug,console=ttyS01
+grub:
+  options: debug,console=ttyS01
 
 network:
   hostname: 191676-www.kickstart.rackspace.com
