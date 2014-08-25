@@ -122,12 +122,13 @@ class Network(object):
             interface = self.__get_interface(interface_name)
 
             if interface:
+                # TODO need to check ref.type and create file accordingly.
                 value = interface['ref']['value']
                 if value:
                     network['interface'] = value
                     networks.append(network)
                 else:
-                    log.warning('interface configuration missing ref.')
+                    log.warning('interface configuration missing value.')
 
         data = dict(networks=networks)
         blob = self.__render_template('interfaces.template', data)
