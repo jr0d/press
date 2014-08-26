@@ -66,7 +66,7 @@ class Chroot(object):
         Generates config by updating DEFAULTS with config.
         """
         auth = dict(auth=config.get('auth', {}))
-        bootloader = dict(auth=config.get('bootloader', {}))
+        bootloader = dict(bootloader=config.get('bootloader', {}))
         DEFAULTS.update(auth)
         DEFAULTS.update(bootloader)
         return DEFAULTS
