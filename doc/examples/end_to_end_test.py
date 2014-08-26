@@ -114,22 +114,15 @@ config = {'auth': {'algorythim': 'sha512',
  'network': {'dns': {'nameservers': '10.10.1.1 10.10.1.2',
    'search': ['kickstart.rackspace.com']},
   'hostname': '191676-www.kickstart.rackspace.com',
-  'interfaces': [{'name': 'EXNET',
-    'ref': {'type': 'interface', 'value': 'eth1'}},
-   {'name': 'SNET', 'ref': {'type': 'interface', 'value': 'eth2'}}],
-  'networks': [{'gateway': '10.10.22.1',
-    'interface': 'EXNET',
-    'ip_address': '10.10.22.120',
-    'netmask': '255.255.255.0'},
-   {'gateway': '10.22.10.1',
-    'interface': 'SNET',
-    'ip_address': '10.22.10.55',
-    'netmask': '255.255.255.0'}],
-  'routes': {'cidr': '10.22.56.0/25',
-   'gateway': '10.22.56.1',
-   'interface': 'SNET'}},
- 'post': {'append': 'debug,console=ttyS01'},
- 'target': 'debian'}
+  'interfaces': [
+      {'name': 'EXNET','ref': {'type': 'interface', 'value': 'eth0'}}
+  ],
+'networks': [{'gateway': '10.127.29.1',
+'interface': 'EXNET',
+'ip_address': '10.127.29.143',
+'netmask': '255.255.255.0'}]},
+'post': {'append': 'debug,console=ttyS01'},
+'target': 'debian'}
 
 network = Network(new_root, config)
 network.apply()
