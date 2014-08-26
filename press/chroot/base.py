@@ -28,7 +28,13 @@ DEFAULTS = \
                        ]
                    }
               }
-         }
+         },
+    'bootloader':
+         {
+            'type': None,
+            'target': None,
+            'options': None,
+          }
     }
 
 
@@ -46,7 +52,8 @@ class Chroot(object):
         """
         self.newroot = newroot
         self.config = self.__generate_config(config)
-        log.debug('Setting up networking from configuration: %s' % self.config)
+
+        log.debug('Running chroot from configuration: %s' % self.config)
 
         self.__bind_mount(prefix=newroot)
         self.real_root = os.open('/', os.O_RDONLY)
@@ -59,7 +66,9 @@ class Chroot(object):
         Generates config by updating DEFAULTS with config.
         """
         auth = dict(auth=config.get('auth', {}))
+        bootloader = dict(auth=config.get('bootloader', {}))
         DEFAULTS.update(auth)
+        DEFAULTS.update(bootloader)
         return DEFAULTS
 
     def __exit__(self):

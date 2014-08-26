@@ -28,5 +28,9 @@ class DebianChroot(Chroot):
         Run entire Chroot process.
         """
         self.add_users()
-        # TODO figure how we can identify disk for bootloader.
-        self.install_bootloader('/dev/sda')
+        disk = self.config['bootloader']['target']
+        if disk:
+            self.install_bootloader(disk)
+        else:
+            log.warning('bootloader.target not found in config.')
+            log.warning('skipping bootloader install.')

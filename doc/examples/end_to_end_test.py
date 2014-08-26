@@ -122,7 +122,9 @@ config = {'auth': {'algorythim': 'sha512',
 'ip_address': '10.127.29.143',
 'netmask': '255.255.255.0'}]},
 'post': {'append': 'debug,console=ttyS01'},
-'target': 'debian'}
+'target': 'debian',
+'bootloader': {'type': 'grub', 'target': '/dev/sda', 'options': 'debug,console=ttyS01'}
+}
 
 network = Network(new_root, config)
 network.apply()

@@ -30,8 +30,10 @@ auth:
         -
           encrypted: False
 
-post:
-  append: debug,console=ttyS01
+bootloader:
+  type: grub
+  target: /dev/sda
+  options: debug,console=ttyS01
 
 network:
   hostname: 191676-www.kickstart.rackspace.com
