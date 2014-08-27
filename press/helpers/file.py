@@ -41,9 +41,9 @@ def write(filename, data, append=False, mode=0644):
     # Use our append keyword argument to
     # determine our write mode.
     if append:
-        write_mode = 'w'
-    else:
         write_mode = 'a'
+    else:
+        write_mode = 'w'
 
     with open(filename, write_mode) as f:
         f.write(data)

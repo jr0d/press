@@ -30,8 +30,11 @@ auth:
         -
           encrypted: False
 
-post:
-  append: debug,console=ttyS01
+grub:
+bootloader:
+  type: grub
+  target: /dev/sda
+  options: debug,console=ttyS01
 
 network:
   hostname: 191676-www.kickstart.rackspace.com
@@ -59,16 +62,19 @@ network:
     ip_address: 10.10.22.120
     netmask: 255.255.255.0
     gateway: 10.10.22.1
+    routes:
+      -
+        cidr: 10.22.56.0/25
+        gateway: 10.22.56.1
   -
     interface: SNET
     ip_address: 10.22.10.55
     netmask: 255.255.255.0
     gateway: 10.22.10.1
-
-  routes:
-    cidr: 10.22.56.0/25
-    interface: SNET
-    gateway: 10.22.56.1
+    routes:
+      -
+        cidr: 10.22.56.0/25
+        gateway: 10.22.56.1
 
 
 layout:
@@ -94,7 +100,7 @@ layout:
       options:
         - logical
         - lvm
-      size: 2GiB
+      size: 100%FREE
 
   volume_groups:
   -
