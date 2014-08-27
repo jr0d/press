@@ -1,0 +1,8 @@
+This document contains some technical debt items.
+It may also detail some of our aspirations which were too lofty.
+
+* fsck options and mount options are hacks.
+* code duplication between Partition and LogicalVolume, create a base class
+   and make it work.
+* Since we are using jinja in the post install, consider using it for genfstab.
+* Testing with lvm is a pain, build an LVM tear down process.

@@ -33,3 +33,7 @@ class GeneralValidationException(Exception):
 
 class GeneratorError(Exception):
     pass
+
+
+class ConfigurationError(Exception):
+    pass

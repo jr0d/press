@@ -218,3 +218,12 @@ class Partition(object):
             self.mount_point, self.file_system, options, dump, fsck_option)
 
         return gen
+
+    def __repr__(self):
+         return "device: %s, size: %s, fs: %s, mount point: %s, fsck_option: %s" % (
+             self.devname or 'unlinked',
+             self.size or self.percent_string,
+             self.file_system,
+             self.mount_point,
+             self.fsck_option
+         )
