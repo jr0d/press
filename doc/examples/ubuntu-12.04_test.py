@@ -49,7 +49,7 @@ log.info('Starting download of image')
 dl = helpers.download.Download(
     'http://newdev.kickstart.rackspace.com/press/ubuntu-12.04-precise-amd64.tar.gz',
     hash_method='sha1',
-    expected_hash='9fdaea2337c8309c556d06a9950ced2006269a5e',
+    expected_hash='fb609e09423ef395719fc70dcc4898d29c966b2b',
     chunk_size=1024 * 1024)
 dl.download(my_callback)
 if dl.can_validate():
