@@ -29,12 +29,12 @@ DEFAULTS = \
                    }
               }
          },
-    'bootloader':
+     'bootloader':
          {
-            'type': None,
-            'target': None,
-            'options': None,
-          }
+             'type': None,
+             'target': None,
+             'options': None,
+         }
     }
 
 
