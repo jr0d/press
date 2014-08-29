@@ -48,12 +48,7 @@ _partition_table_defaults = dict(
 )
 
 _partition_defaults = dict(
-    options=list(),
-    fsck_option=0
-)
-
-_lv_defaults = dict(
-    fsck_option=0
+    options=list()
 )
 
 _fs_selector = dict(
@@ -93,6 +88,24 @@ def _max_primary(partitions):
     return 4
 
 
+def _fsck_pass(fs_object, lv_or_part, mount_point):
+    if not 'fsck_option' in lv_or_part:
+        if fs_object.require_fsck and mount_point:
+            # root should fsck on pass 1
+            if mount_point == '/':
+                fsck_option = 1
+            # Everything else
+            else:
+                fsck_option = 2
+        else:
+            fsck_option = 0
+    else:
+        # Explicitly defined in configuration
+        fsck_option = lv_or_part['fsck_option']
+
+    return fsck_option
+
+
 def generate_size(size):
     if '%' in size:
         return PercentString(size)
@@ -123,14 +136,18 @@ def generate_partition(type_or_name, partition_dict):
     else:
         fs_object = None
 
+    mount_point = partition_dict.get('mount_point')
+
+    fsck_option = _fsck_pass(fs_object, partition_dict, mount_point)
+
     p = Partition(
         type_or_name=type_or_name,
         size_or_percent=generate_size(partition_dict['size']),
         boot=boot,
         lvm=lvm,
         file_system=fs_object,
-        mount_point=partition_dict.get('mount_point'),
-        fsck_option=partition_dict.get('fsck_option')
+        mount_point=mount_point,
+        fsck_option=fsck_option
     )
 
     if p.lvm:
@@ -263,17 +280,19 @@ def generate_volume_group_models(volume_group_dict):
         lvs = list()
         if lv_dicts:
             for lv in lv_dicts:
-                _fill_defaults(lv, _lv_defaults)
                 if lv.get('file_system'):
                     fs = generate_file_system(lv.get('file_system'))
                 else:
                     fs = None
+                mount_point = lv.get('mount_point')
+
+                fsck_option = _fsck_pass(fs, lv, mount_point)
                 lvs.append(LogicalVolume(
                     name=lv['name'],
                     size_or_percent=generate_size(lv['size']),
                     file_system=fs,
-                    mount_point=lv.get('mount_point'),
-                    fsck_option=lv.get('fsck_option')
+                    mount_point=mount_point,
+                    fsck_option=fsck_option
                 ))
             vgm.add_logical_volumes(lvs)
         vgs.append(vgm)

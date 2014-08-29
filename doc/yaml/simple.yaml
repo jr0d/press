@@ -30,7 +30,6 @@ auth:
         -
           encrypted: False
 
-grub:
 bootloader:
   type: grub
   target: /dev/sda

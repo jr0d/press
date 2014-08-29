@@ -11,6 +11,7 @@ class FileSystem(object):
         self.fs_label = label
         self.mount_options = mount_options or self.default_mount_options
         self.fs_uuid = uuid.uuid4()
+        self.require_fsck = False
 
     def create(self, device):
         """
