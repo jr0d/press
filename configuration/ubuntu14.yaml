@@ -89,8 +89,7 @@ network:
     ref:
       type: interface
       value: eth0
-
-networks:
+  networks:
   -
     gateway: 10.127.29.1
     interface: EXNET,
