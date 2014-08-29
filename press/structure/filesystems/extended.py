@@ -44,6 +44,8 @@ class EXT(FileSystem):
         if self.fs_label:
             self.label_options = ' -L %s' % self.fs_label
 
+        self.require_fsck = True
+
     def create(self, device):
         command = self.full_command.format(
             **dict(
