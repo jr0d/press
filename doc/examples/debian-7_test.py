@@ -111,8 +111,8 @@ config = {'auth': {'algorythim': 'sha512',
     'name': 'vg_system',
     'pe_szie': '4MiB',
     'physical_volumes': ['root_pv']}]},
- 'network': {'dns': {'nameservers': '10.10.1.1 10.10.1.2',
-   'search': ['kickstart.rackspace.com']},
+ 'network': {'dns': {'nameservers': ['10.10.1.1', '10.10.1.2'],
+   'search': 'kickstart.rackspace.com'},
   'hostname': '191676-www.kickstart.rackspace.com',
   'interfaces': [
       {'name': 'EXNET','ref': {'type': 'interface', 'value': 'eth0'}}
