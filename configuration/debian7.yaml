@@ -65,12 +65,12 @@ auth:
       password_options:
       -
         encrypted: False
-      shell: /bin/zsh,
+      shell: /bin/zsh
       skel: http://blah.rackspace.com/press/skels/users/rack.tar.gz
       uid: 1000
     root:
       home: /root,
-      password: ball$$$$,
+      password: ball$$$$
       password_options:
       -
         encrypted: False
@@ -92,8 +92,8 @@ network:
   networks:
   -
     gateway: 10.127.29.1
-    interface: EXNET,
-    ip_address: 10.127.29.143,
+    interface: EXNET
+    ip_address: 10.127.29.143
     netmask: 255.255.255.0
 
 post:

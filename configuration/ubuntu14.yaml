@@ -70,7 +70,7 @@ auth:
       uid: 1000
     root:
       home: /root,
-      password: ball$$$$,
+      password: ball$$$$
       password_options:
       -
         encrypted: False
@@ -93,7 +93,7 @@ network:
   -
     gateway: 10.127.29.1
     interface: EXNET,
-    ip_address: 10.127.29.143,
+    ip_address: 10.127.29.143
     netmask: 255.255.255.0
 
 post:
