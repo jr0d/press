@@ -84,11 +84,13 @@ network:
     search: kickstart.rackspace.com
   hostname: 191676-www.kickstart.rackspace.com
   interfaces:
+  -
     name: EXNET
     ref:
       type: interface
       value: eth0
   networks:
+  -
     gateway: 10.127.29.1
     interface: EXNET
     ip_address: 10.127.29.143
