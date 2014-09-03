@@ -77,13 +77,13 @@ auth:
 
 network:
   dns:
-  nameservers:
-  -
-    10.10.1.1,
-    10.10.1.2
-  search: kickstart.rackspace.com
-  hostname: 191676-www.kickstart.rackspace.com,
-  interfaces:
+    nameservers:
+    -
+      10.10.1.1,
+      10.10.1.2
+    search: kickstart.rackspace.com
+    hostname: 191676-www.kickstart.rackspace.com,
+    interfaces:
   -
     name: EXNET
     ref:
