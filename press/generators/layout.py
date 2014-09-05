@@ -138,7 +138,10 @@ def generate_partition(type_or_name, partition_dict):
 
     mount_point = partition_dict.get('mount_point')
 
-    fsck_option = _fsck_pass(fs_object, partition_dict, mount_point)
+    if fs_object:
+        fsck_option = _fsck_pass(fs_object, partition_dict, mount_point)
+    else:
+        fsck_option = False
 
     p = Partition(
         type_or_name=type_or_name,
