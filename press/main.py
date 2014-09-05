@@ -1,6 +1,7 @@
 import logging
 
 from configuration import configuration_from_file, global_defaults
+from generators.chroot import target_mapping
 from generators.image import downloader_generator
 from generators.layout import layout_from_config
 from network.base import Network
@@ -40,8 +41,20 @@ class Press(object):
         self.image_downloader = downloader_generator(
             self.configuration.get('image'), self.target, self.proxy_info)
 
-        self.network_configuration = self.configuration.get('network')
-        if self.network_configuration:
-            self.network = Network(self.target, self.network_configuration)
+        if 'network' in self.configuration:
+            self.network = Network(self.target, self.configuration)
+        else:
+            self.network = None
+
+        self.chroot_class = target_mapping.get(self.configuration['target'])
+
+    def burn(self):
+        pass
 
 
+if __name__ == '__main__':
+    config = configuration_from_file('doc/yaml/simple.yaml')
+    press = Press(config)
+
+    print press.layout
+    print press.chroot_class.__name__

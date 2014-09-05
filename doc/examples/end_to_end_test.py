@@ -87,7 +87,8 @@ config = {'auth': {'algorythim': 'sha512',
  'image': {'checksum': {'hash': '3a23da7bc7636cb101a27a2f9855b427656f4775',
    'method': 'sha1'},
   'format': 'tgz',
-  'url': 'http://newdev.kickstart.rackspace.com/ubuntu/testing/debian-7-wheezy-amd64.tar.gz'},
+  'url':
+'http://newdev.kickstart.rackspace.com/ubuntu/testing/debian-7-wheezy-amd64.tar.gz'},
  'layout': {'loop_only': True,
   'partition_tables': [{'disk': '/dev/loop0',
     'label': 'msdos',
@@ -123,7 +124,8 @@ config = {'auth': {'algorythim': 'sha512',
 'netmask': '255.255.255.0'}]},
 'post': {'append': 'debug,console=ttyS01'},
 'target': 'debian',
-'bootloader': {'type': 'grub', 'target': '/dev/sda', 'options': 'debug,console=ttyS01'}
+'bootloader': {'type': 'grub', 'target': '/dev/sda', 'options':
+'debug,console=ttyS01'}
 }
 
 network = Network(new_root, config)
@@ -134,4 +136,5 @@ chroot.apply()
 chroot.__exit__()
 
 log.info('Done!')
+
 
