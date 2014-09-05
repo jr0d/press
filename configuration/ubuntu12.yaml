@@ -65,11 +65,11 @@ auth:
       password_options:
       -
         encrypted: False
-      shell: /bin/zsh,
+      shell: /bin/zsh
       skel: http://blah.rackspace.com/press/skels/users/rack.tar.gz
       uid: 1000
     root:
-      home: /root,
+      home: /root
       password: ball$$$$
       password_options:
       -
