@@ -1,4 +1,3 @@
-
 from press.chroot.base import Chroot
 
 from press.cli import run
@@ -9,7 +8,6 @@ log = logging.getLogger(__name__)
 
 
 class DebianChroot(Chroot):
-
     def install_bootloader(self, disk):
         """
         Install bootloader on disk.

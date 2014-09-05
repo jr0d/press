@@ -10,7 +10,7 @@ _default_hash_method = 'sha1'
 def downloader_generator(image_config, target, proxy_info=None):
     checksum_details = image_config.get('checksum')
     if checksum_details:
-        image_hash = checksum_details.get(checksum_details.get('hash'))
+        image_hash = checksum_details.get('hash')
         if not image_hash:
             raise GeneratorError('hash checksum is missing, check configuration')
         hash_method = checksum_details.get('method', _default_hash_method)
