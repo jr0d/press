@@ -2,7 +2,7 @@ target: debian
 
 image:
   checksum:
-    hash: 3a23da7bc7636cb101a27a2f9855b427656f4775
+    hash: 09d2fb15faf22a76ad959371d6b72333956ef407
     method: sha1
   format: tgz
   url: http://newdev.kickstart.rackspace.com/press/debian-7-wheezy-amd64.tar.gz
