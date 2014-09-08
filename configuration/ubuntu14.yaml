@@ -2,7 +2,7 @@ target: debian
 
 image:
   checksum:
-    hash: 71bf8260f646878bc043ff87f3747952f52391d6
+    hash: 22ffaf00bb37a0579a3bb4815ccccfc8366837df
     method: sha1
   format: tgz
   url: http://newdev.kickstart.rackspace.com/press/ubuntu-14.04-trusty-amd64.tar.gz
