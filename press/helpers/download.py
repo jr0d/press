@@ -64,12 +64,12 @@ class Download(object):
             output.append('%s=%s' % (attr_name, attr))
         return 'Download(%s)' % ', '.join(output)
 
-    def download(self, callback_func):
+    def download(self, callback_func=None):
         """Start the download_directory
 
         Downloads the file located at self.url to self.download_directory
 
-        :param callback_func: expected signature is callback_func(total_downloaded)
+        :param callback_func: expected signature is callback_func(total_size, total_downloaded)
 
         Raises an exception on error, otherwise the download was completed(as far as http is concerned)
 
@@ -86,13 +86,17 @@ class Download(object):
         ret = requests.get(self.url, stream=True, proxies=proxies)
         ret.raise_for_status()
 
+        content_length = ret.headers.get('content-length')
+
         with open(self.full_filename, 'wb') as download_file:
             for chunk in ret.iter_content(self.chunk_size):
                 byte_count += len(chunk)
                 self._hash.update(chunk)
                 download_file.write(chunk)
-                callback_func(byte_count)
+                if callback_func:
+                    callback_func(content_length, byte_count)
 
+    @property
     def can_validate(self):
         """Can validate() actually work?
 
