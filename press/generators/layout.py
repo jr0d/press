@@ -235,8 +235,6 @@ def generate_partition_table_model(partition_table_dict):
         1. Device booted in UEFI mode
         2. A disk is larger then 2.2TiB
 
-    The press object will also make some decisions based
-
     Most people don't care if their partitions are primary/logical
     or what their gpt names are, so we'll care for them.
 
@@ -245,6 +243,7 @@ def generate_partition_table_model(partition_table_dict):
     """
     _fill_defaults(partition_table_dict, _partition_table_defaults)
     table_type = partition_table_dict['label']
+
     pm = PartitionTableModel(
         table_type=table_type,
         disk=partition_table_dict['disk'],
@@ -302,15 +301,18 @@ def generate_volume_group_models(volume_group_dict):
     return vgs
 
 
-def layout_from_config(layout_config):
-    LOG.info('Generating Layout')
+def generate_layout_stub(layout_config):
     _fill_defaults(layout_config, _layout_defaults)
-    layout = Layout(
+    return Layout(
         use_fibre_channel=layout_config['use_fibre_channel'],
         loop_only=layout_config['loop_only'],
         parted_path=layout_config['parted_path'],
     )
 
+
+def layout_from_config(layout_config):
+    LOG.info('Generating Layout')
+    layout = generate_layout_stub(layout_config)
     partition_tables = layout_config.get('partition_tables')
     if not partition_tables:
         raise GeneratorError('No partition tables have been defined')

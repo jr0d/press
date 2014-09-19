@@ -41,7 +41,7 @@ log.info('Target mount completed!')
 
 
 # From press.helpers.download.py
-def my_callback(bytes_so_far):
+def my_callback(total_size, bytes_so_far):
     print('Bytes so far: %d' % bytes_so_far)
 
 
@@ -52,7 +52,7 @@ dl = helpers.download.Download(
     expected_hash='3a23da7bc7636cb101a27a2f9855b427656f4775',
     chunk_size=1024 * 1024)
 dl.download(my_callback)
-if dl.can_validate():
+if dl.can_validate:
     print('Can do validation..')
     if dl.validate():
         print('Checksums match up!')

@@ -29,6 +29,9 @@ class Disk(object):
                                               partition_start=partition_start,
                                               alignment=alignment)
 
+    def __repr__(self):
+        return '%s: %s' % (self.devname, self.size.humanize)
+
 
 class PartitionTable(object):
     def __init__(self, table_type, size, partition_start=1048576, alignment=1048576):
