@@ -89,7 +89,7 @@ layout:
       options:
         - primary
         - boot
-      size: 1GiB
+      size: 1073741824
       mount_point: /boot
       file_system:
         type: ext4

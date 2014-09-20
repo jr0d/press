@@ -107,8 +107,9 @@ def _fsck_pass(fs_object, lv_or_part, mount_point):
 
 
 def generate_size(size):
-    if '%' in size:
-        return PercentString(size)
+    if isinstance(size, basestring):
+        if '%' in size:
+            return PercentString(size)
     return size
 
 

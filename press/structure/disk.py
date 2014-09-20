@@ -133,6 +133,10 @@ class PartitionTable(object):
             adjusted_size.bytes -= 1
 
         partition.size = adjusted_size
+        log.info('Adding partition: %s size: %s, boot: %s, lvm: %s ' % (partition.name,
+                                                                        partition.size,
+                                                                        partition.boot,
+                                                                        partition.lvm))
         self._validate_partition(partition)
         self.partitions.append(partition)
         self.partition_end += adjusted_size
