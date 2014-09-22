@@ -14,7 +14,7 @@ passwd = ''.join(
 
 DEFAULTS = \
     {'auth':
-         {'algorythim': 'sha512',
+         {'algorithm': 'sha512',
           'users':
               {'root':
                    {
