@@ -7,10 +7,11 @@ from generators.image import downloader_generator
 from generators.layout import layout_from_config, generate_layout_stub
 from logger import setup_logging
 from network.base import Network
+from plugins import init_plugins
 from structure.exceptions import ConfigurationError
 from structure.size import Size
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('press')
 
 
 class Press(object):
@@ -108,6 +109,7 @@ class Press(object):
 if __name__ == '__main__':
     setup_logging()
     config = configuration_from_file('doc/yaml/simple.yaml')
+    init_plugins(config)
     press = Press(config)
     print press.layout
     print press.chroot_class.__name__

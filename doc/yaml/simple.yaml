@@ -122,7 +122,12 @@ layout:
             type: ext4
             label: ROOT
             superuser_reserve: 1%
+kserver:
+  url: "http://10.66.4.143:9920"
+  object_id: "5421d866c4cf0025a6c2dfa3"
 
+plugins:
+  - kserver
 
 
 

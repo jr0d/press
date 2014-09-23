@@ -1,0 +1,50 @@
+import imp
+import logging
+import os
+
+from press.configuration.global_defaults import plugin_dir
+
+LOG = logging.getLogger('press.plugins')
+
+
+def get_plugin(plugin_name):
+    if not os.path.isdir(plugin_dir):
+        LOG.warn('Plugin directory is missing, or relative path is incorrect.'
+                 'See press.configuration.global_defaults')
+        return
+
+    LOG.debug('Attempting to discover plugin: %s' % plugin_name)
+
+    try:
+        mod_info = imp.find_module(plugin_name,
+                                   [os.path.join(plugin_dir, plugin_name)])
+    except ImportError:
+        LOG.error('Plugin %s module does not exist.' % plugin_name)
+        return
+
+    mod = imp.load_module(plugin_name, *mod_info)
+    if not hasattr(mod, 'plugin_init'):
+        LOG.error('Plugin found but is missing init')
+        return
+
+    LOG.info('%s plugin module discovered' % plugin_name)
+    return mod
+
+
+def init_plugins(configuration):
+    plugins = configuration.get('plugins')
+    if not plugins:
+        return
+
+    for plugin in plugins:
+        mod = get_plugin(plugin)
+        if not mod:
+            continue
+
+        LOG.info('Attempting to initialize %s plugin' % plugin)
+        try:
+            mod.plugin_init(configuration)
+        except Exception as e:
+            LOG.error('Error running %s plugin init: %s' % (plugin, e))
+
+        LOG.info('%s plugin successfully initialized' % plugin)
