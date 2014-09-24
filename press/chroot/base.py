@@ -43,12 +43,13 @@ class Chroot(object):
     Base Post Class.
     """
 
-    def __init__(self, newroot, config):
+    def __init__(self, newroot, config, disks):
         """
         Starts post process.
 
         :param newroot: String path to our new root.
-        :parma config: a dict with all our configuration.
+        :param config: a dict with all our configuration.
+        :param disks: Layout.disks, an OrderedDict containing Disk objects indexed by devname
         """
         self.newroot = newroot
         self.config = self.__generate_config(config)
@@ -57,6 +58,7 @@ class Chroot(object):
 
         self.__bind_mount(prefix=newroot)
         self.real_root = os.open('/', os.O_RDONLY)
+        self.disks = disks
         os.chroot(newroot)
         os.chdir('/')
 

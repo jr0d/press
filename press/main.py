@@ -106,6 +106,10 @@ class Press(object):
         pass
 
 
+def entry():
+    pass
+
+
 if __name__ == '__main__':
     setup_logging()
     config = configuration_from_file('doc/yaml/simple.yaml')

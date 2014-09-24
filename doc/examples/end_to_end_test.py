@@ -129,7 +129,7 @@ config = {'auth': {'algorythim': 'sha512',
 network = Network(new_root, config)
 network.apply()
 
-chroot = DebianChroot(new_root, config)
+chroot = DebianChroot(new_root, config, l1.disks)
 chroot.apply()
 chroot.__exit__()
 

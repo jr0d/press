@@ -90,7 +90,7 @@ config = {'auth':
               {'options': 'quiet splash'}
         }
 
-chroot = DebianChroot(new_root, config)
+chroot = DebianChroot(new_root, config, l1.disks)
 chroot.apply()
 chroot.__exit__()
 
