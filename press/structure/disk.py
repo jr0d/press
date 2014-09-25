@@ -29,6 +29,9 @@ class Disk(object):
                                               partition_start=partition_start,
                                               alignment=alignment)
 
+    def __repr__(self):
+        return '%s: %s' % (self.devname, self.size.humanize)
+
 
 class PartitionTable(object):
     def __init__(self, table_type, size, partition_start=1048576, alignment=1048576):
@@ -83,17 +86,26 @@ class PartitionTable(object):
 
     @property
     def current_usage(self):
-        return self.partition_end
+        """
+        Factors in alignment
+        """
+        return self.partition_end + self.alignment - self.partition_end % self.alignment
 
     @property
     def free_space(self):
+        """
+        Calculate free space using standard logic
+        """
         if not self.partitions:
             free = self.size - self.partition_start
         else:
-            free = \
-                self.size - self.partition_end + self.alignment - self.partition_end % self.alignment
+            free = self.size - self.current_usage
+
         if self.type == GPT:
             free -= Size(GPT_BACKUP_SIZE)
+        else:
+            free -= Size(1)
+
         log.debug('Free space: %d' % free.bytes)
         return free
 
@@ -110,6 +122,7 @@ class PartitionTable(object):
         #  Adjust size to conform with parted logic
 
         #  TODO: Make Size operator overloads work with ints
+        # percentage based partitions should NEVER hit this, this is for explicit definitions
         if self.is_gpt \
                 and self.partition_end.bytes + adjusted_size.bytes > self.size.bytes - GPT_BACKUP_SIZE:
             # parted reserves 17408 bytes for a gpt backup at the end of the disk
@@ -120,6 +133,10 @@ class PartitionTable(object):
             adjusted_size.bytes -= 1
 
         partition.size = adjusted_size
+        log.info('Adding partition: %s size: %s, boot: %s, lvm: %s ' % (partition.name,
+                                                                        partition.size,
+                                                                        partition.boot,
+                                                                        partition.lvm))
         self._validate_partition(partition)
         self.partitions.append(partition)
         self.partition_end += adjusted_size
@@ -178,9 +195,6 @@ class Partition(object):
         if not self.file_system:
             return
 
-        if not self.mount_point:
-            return
-
         uuid = self.file_system.fs_uuid
         if not uuid:
             return
@@ -205,6 +219,15 @@ class Partition(object):
         else:
             gen += '# UUID=%s\tLABEL=%s\n%s\t\t' % (uuid, label or '', self.devname)
         gen += '%s\t\t%s\t\t%s\t\t%s %s\n\n' % (
-            self.mount_point, self.file_system, options, dump, fsck_option)
+            self.mount_point or 'none', self.file_system, options, dump, fsck_option)
 
         return gen
+
+    def __repr__(self):
+         return "device: %s, size: %s, fs: %s, mount point: %s, fsck_option: %s" % (
+             self.devname or 'unlinked',
+             self.size or self.percent_string,
+             self.file_system,
+             self.mount_point,
+             self.fsck_option
+         )

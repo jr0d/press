@@ -19,7 +19,8 @@ setup(name='press',
       install_requires=[
           'pyudev',
           'requests',
-          'pyyaml'
+          'pyyaml',
+          'jinja2'
       ],
       entry_points="""
       # -*- Entry points: -*-

@@ -1,6 +1,7 @@
 from press.models.partition import PartitionTableModel
 from press.structure import EXT4, Partition, PercentString, Layout, SWAP
-from press.post.debian import DebianPost
+from press.chroot.debian import DebianChroot
+from press.network.base import Network
 from press.cli import run
 from press.logger import setup_logging
 from press import helpers
@@ -13,10 +14,12 @@ log = logging.getLogger(__name__)
 
 disk = '/dev/sda'
 
-p1 = Partition('primary', '250MiB', file_system=EXT4('BOOT'), boot=True, mount_point='/boot')
+p1 = Partition('primary', '250MiB', file_system=EXT4('BOOT'), boot=True,
+               mount_point='/boot')
 p2 = Partition('primary', '512MiB', file_system=SWAP('SWAP'))
 p3 = Partition('logical', '512MiB', file_system=EXT4(), mount_point='/tmp')
-p4 = Partition('logical', PercentString('85%FREE'), file_system=EXT4('ROOT'), mount_point='/')
+p4 = Partition('logical', PercentString('85%FREE'), file_system=EXT4('ROOT'),
+               mount_point='/')
 
 pm1 = PartitionTableModel('msdos', disk=disk)
 
@@ -38,15 +41,18 @@ log.info('Target mount completed!')
 
 
 # From press.helpers.download.py
-def my_callback(bytes_so_far):
+def my_callback(total_size, bytes_so_far):
     print('Bytes so far: %d' % bytes_so_far)
+
 
 log.info('Starting download of image')
 dl = helpers.download.Download(
     'http://newdev.kickstart.rackspace.com/ubuntu/testing/debian-7-wheezy-amd64.tar.gz',
-    hash_method='sha1', expected_hash='3a23da7bc7636cb101a27a2f9855b427656f4775', chunk_size=1024*1024)
+    hash_method='sha1',
+    expected_hash='3a23da7bc7636cb101a27a2f9855b427656f4775',
+    chunk_size=1024 * 1024)
 dl.download(my_callback)
-if dl.can_validate():
+if dl.can_validate:
     print('Can do validation..')
     if dl.validate():
         print('Checksums match up!')
@@ -65,14 +71,70 @@ dl.extract(new_root)
 run('cp /etc/resolv.conf %s/etc/resolv.conf' % new_root)
 run('mv %s/etc/fstab_rs %s/etc/fstab' % (new_root, new_root))
 
-post = DebianPost(new_root)
-post.useradd('rack')
-post.passwd('rack', 'password')
+# A example config
+config = {'auth': {'algorythim': 'sha512',
+  'users': {'rack': {'gid': 1000,
+    'group': 'rack',
+    'home': '/home/rack',
+    'password': 'ball$$$$$',
+    'password_options': [{'encrypted': False}],
+    'shell': '/bin/zsh',
+    'skel': 'http://blah.rackspace.com/press/skels/users/rack.tar.gz',
+    'uid': 1000},
+   'root': {'home': '/root',
+    'password': 'ball$$$$',
+    'password_options': [{'encrypted': False}]}}},
+ 'image': {'checksum': {'hash': '3a23da7bc7636cb101a27a2f9855b427656f4775',
+   'method': 'sha1'},
+  'format': 'tgz',
+  'url':
+'http://newdev.kickstart.rackspace.com/ubuntu/testing/debian-7-wheezy-amd64.tar.gz'},
+ 'layout': {'loop_only': True,
+  'partition_tables': [{'disk': '/dev/loop0',
+    'label': 'msdos',
+    'partitions': [{'file_system': {'label': 'BOOT', 'type': 'ext4'},
+      'mount_point': '/boot',
+      'name': 'boot',
+      'options': ['primary', 'boot'],
+      'size': '1GiB'},
+     {'name': 'root_pv', 'options': ['logical', 'lvm'], 'size': '2GiB'}]}],
+  'use_fiber_channel': False,
+  'volume_groups': [{'logical_volumes': [{'file_system': {'label': 'SWAP',
+       'type': 'swap'},
+      'name': 'lv_swap',
+      'size': '1GiB'},
+     {'file_system': {'label': 'ROOT',
+       'superuser_reserve': '1%',
+       'type': 'ext4'},
+      'mount_point': '/',
+      'name': 'lv_root',
+      'size': '75%FREE'}],
+    'name': 'vg_system',
+    'pe_szie': '4MiB',
+    'physical_volumes': ['root_pv']}]},
+ 'network': {'dns': {'nameservers': '10.10.1.1 10.10.1.2',
+   'search': ['kickstart.rackspace.com']},
+  'hostname': '191676-www.kickstart.rackspace.com',
+  'interfaces': [
+      {'name': 'EXNET','ref': {'type': 'interface', 'value': 'eth0'}}
+  ],
+'networks': [{'gateway': '10.127.29.1',
+'interface': 'EXNET',
+'ip_address': '10.127.29.143',
+'netmask': '255.255.255.0'}]},
+'post': {'append': 'debug,console=ttyS01'},
+'target': 'debian',
+'bootloader': {'type': 'grub', 'target': '/dev/sda', 'options':
+'debug,console=ttyS01'}
+}
 
-post.grub_install('/dev/sda')
+network = Network(new_root, config)
+network.apply()
 
-# After we complete lets delete the Post to call __exit__ function.
-post.__exit__()
+chroot = DebianChroot(new_root, config, l1.disks)
+chroot.apply()
+chroot.__exit__()
 
 log.info('Done!')
+
 

@@ -174,3 +174,13 @@ class LogicalVolume(object):
             self.mount_point, self.file_system, options, dump, fsck_option)
 
         return gen
+
+    def __repr__(self):
+         return "device: %s, name: %s, size: %s, fs: %s, mount point: %s, fsck_option: %s" % (
+             self.devlinks and self.devlinks[-1] or 'unlinked',
+             self.name,
+             self.size or self.percent_string,
+             self.file_system,
+             self.mount_point,
+             self.fsck_option
+         )

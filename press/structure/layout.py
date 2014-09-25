@@ -298,3 +298,30 @@ class Layout(object):
         helpers.file.write(base_dir + '/etc/fstab_rs', self.generate_fstab())
 
         log.info("Drive is mounted and ready for OS image.")
+
+    @property
+    def partitions(self):
+        li = list()
+        for disk in self.disks:
+            partition_table = self.disks[disk].partition_table
+            if partition_table:
+                li += partition_table.partitions
+        return li
+
+    @property
+    def logical_volumes(self):
+        li = list()
+        for volume_group in self.volume_groups:
+            li += volume_group.logical_volumes
+        return li
+
+    @property
+    def devname_index(self):
+        index = dict()
+        for partition in self.partitions:
+            if partition.devname:
+                index[partition.devname] = partition
+        for volume in self.logical_volumes:
+            if volume.devlinks:
+                index[volume.devlinks[-1]] = volume
+        return index

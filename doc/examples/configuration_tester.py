@@ -1,4 +1,3 @@
-from pprint import pprint
 from press.configuration import configuration_from_file
 from press.generators.layout import layout_from_config
 from press.logger import setup_logging
@@ -11,7 +10,8 @@ configuration = configuration_from_file(config_file)
 
 layout_config = configuration['layout']
 
-pprint(layout_config)
 layout = layout_from_config(layout_config)
-#
-print layout
+
+layout.apply()
+
+print layout.generate_fstab()

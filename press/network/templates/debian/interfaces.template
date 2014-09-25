@@ -1,0 +1,21 @@
+#
+# https://wiki.debian.org/NetworkConfiguration
+#
+
+# The loopback network interface.
+auto lo
+iface lo inet loopback
+
+# Additional network interfaces go below.
+{% for network in networks %}
+auto {{ network.interface }}
+    iface {{ network.interface }} inet static
+        address {{ network.ip_address }}
+        netmask {{ network.netmask }}
+        gateway {{ network.gateway }}
+        {% for route in network.routes %}
+            post-up route add -net {{ route.cidr }} gw {{ route.gateway }}
+            post-down route del -net {{ route.cidr }} gw {{ route.gateway }}
+        {% endfor %}
+
+{% endfor %}
