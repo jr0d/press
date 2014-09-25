@@ -28,7 +28,7 @@ handlers:
 
 loggers:
     press.cli:
-        level: DEBUG
+        level: INFO
         handlers: [cli]
         propagate: yes
 

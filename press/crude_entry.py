@@ -1,6 +1,12 @@
+## File is a POC
+
 import logging
 import pprint
+import sys
 
+from traceback import format_exception
+
+# Press imports
 from configuration import configuration_from_file, global_defaults
 from generators.chroot import target_mapping
 from generators.image import downloader_generator
@@ -8,7 +14,7 @@ from generators.layout import layout_from_config, generate_layout_stub
 from logger import setup_logging
 from network.base import Network
 from plugins import init_plugins
-from structure.exceptions import ConfigurationError
+from structure.exceptions import ConfigurationError, PressCriticalException
 from structure.size import Size
 
 log = logging.getLogger('press')
@@ -66,7 +72,7 @@ class Press(object):
         self.configuration = press_configuration
         self.target = global_defaults.press_target
 
-        log.info('Press initializing')
+        log.info('Press initializing', extra={'press_event': 'initializing'})
 
         layout_config = self.configuration.get('layout')
         if not layout_config:
@@ -93,27 +99,89 @@ class Press(object):
         else:
             self.network = None
 
-        self.chroot_class = target_mapping.get(self.configuration['target'])
+        self.image_target = self.configuration['target']
 
-    def download_and_verify_image(self):
-        pass
+        self.chroot_class = target_mapping.get(self.image_target)
 
-    def burn(self):
+    def burn_layout(self):
         """
-        Got time.
         :return:
         """
-        pass
+        log.info('Applying layout to disk')
+        self.layout.apply()
+
+    def mount_file_systems(self):
+        log.info('Mounting filesystems')
+        self.layout.mount_disk(base_dir=self.target)
+
+    def download_and_validate_image(self):
+        def our_callback(total, done):
+            log.info('Downloading: %.1f%%' % (float(done) / float(total) * 100))
+        self.image_downloader.download(our_callback)
+        log.info('done')
+        if self.image_downloader.can_validate:
+            log.info('Validating image')
+            if not self.image_downloader.validate():
+                raise PressCriticalException('Checksum validation error on image')
+            log.info('Image validated')
+        else:
+            log.info('Checksum validation on image is not possible')
+
+    def extract_image(self):
+        log.info('Extracting image...')
+        self.image_downloader.extract(target_path=self.target)
+        log.info('done')
+
+    def configure_network(self):
+        if self.network:
+            log.info('Configuring network')
+            self.network.apply()
+        else:
+            log.warning('Network configuration is missing')
+
+    def run_chroot(self):
+        if self.chroot_class:
+            log.info('Running chroot operations')
+            obj = self.chroot_class(self.target, self.configuration, self.layout.disks)
+            obj.apply()
+            obj.__exit__()
+        else:
+            log.warning('%s target is not currently supported. Sorry, Sam.' % self.image_target)
+
+    def crash_and_burn(self):
+        """
+        Place your head between your legs... and relax. You paid for the ticket,
+        now take the damn ride.
+        :return:
+        """
+        log.info('Installation is starting', extra={'press_event': 'deploying'})
+        self.burn_layout()
+        self.mount_file_systems()
+        log.info('Downloading image', extra={'press_event': 'downloading'})
+        self.download_and_validate_image()
+        self.extract_image()
+        log.info('Configuring image', extra={'press_event': 'configuring'})
+        self.configure_network()
+        self.run_chroot()
+        log.info('Deployment completed', extra={'press_event': 'complete'})
 
 
-def entry():
-    pass
-
-
-if __name__ == '__main__':
+def entry_main(configuration, plugin_dir=None):
     setup_logging()
-    config = configuration_from_file('doc/yaml/simple.yaml')
-    init_plugins(config)
-    press = Press(config)
-    print press.layout
-    print press.chroot_class.__name__
+    log.debug('Logger initialized')
+    init_plugins(configuration, plugin_dir)
+    log.debug('Plugins initialized')
+    try:
+        press = Press(configuration)
+    except Exception as e:
+        traceback = format_exception(*sys.exc_info())
+        log.error('Critical Error, %s, during initialization' % e, extra=dict(traceback=traceback,
+                                                                              press_event='critical'))
+        raise
+    try:
+        press.crash_and_burn()
+    except Exception as e:
+        traceback = format_exception(*sys.exc_info())
+        log.error('Critical Error, %s, during deployment' % e, extra=dict(traceback=traceback,
+                                                                          press_event='critical'))
+        raise

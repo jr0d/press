@@ -86,7 +86,7 @@ class Download(object):
         ret = requests.get(self.url, stream=True, proxies=proxies)
         ret.raise_for_status()
 
-        content_length = ret.headers.get('content-length')
+        content_length = int(ret.headers.get('content-length', '0'))
 
         with open(self.full_filename, 'wb') as download_file:
             for chunk in ret.iter_content(self.chunk_size):

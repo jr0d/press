@@ -2,12 +2,14 @@ import imp
 import logging
 import os
 
-from press.configuration.global_defaults import plugin_dir
+from press.configuration import global_defaults
 
 LOG = logging.getLogger('press.plugins')
 
 
-def get_plugin(plugin_name):
+def get_plugin(plugin_name, plugin_dir=None):
+    if not plugin_dir:
+        plugin_dir = global_defaults.plugin_dir
     if not os.path.isdir(plugin_dir):
         LOG.warn('Plugin directory is missing, or relative path is incorrect.'
                  'See press.configuration.global_defaults')
@@ -31,13 +33,13 @@ def get_plugin(plugin_name):
     return mod
 
 
-def init_plugins(configuration):
+def init_plugins(configuration, plugin_dir=None):
     plugins = configuration.get('plugins')
     if not plugins:
         return
 
     for plugin in plugins:
-        mod = get_plugin(plugin)
+        mod = get_plugin(plugin, plugin_dir)
         if not mod:
             continue
 

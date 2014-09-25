@@ -37,3 +37,7 @@ class GeneratorError(Exception):
 
 class ConfigurationError(Exception):
     pass
+
+
+class PressCriticalException(Exception):
+    pass

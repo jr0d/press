@@ -77,7 +77,7 @@ class Chroot(object):
         """
         Exits an active chroot
         """
-        os.fchdir(self.real_root.fileno())
+        os.fchdir(self.real_root)
         os.chroot('.')
         os.chdir('/')
         self.__unmount_prefix(prefix=self.newroot)
