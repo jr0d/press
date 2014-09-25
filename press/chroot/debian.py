@@ -26,9 +26,13 @@ class DebianChroot(Chroot):
         Run entire Chroot process.
         """
         self.add_users()
-        disk = self.config['bootloader']['target']
-        if disk:
-            self.install_bootloader(disk)
+        bootloader_config = self.config.get('bootloader')
+        if not bootloader_config:
+            log.warning('Bootloader configuration is missing')
+            return
+
+        disk = self.config['bootloader'].get('target', 'first')
+        if disk == 'first':
+            self.install_bootloader(self.disks.keys()[0])
         else:
-            log.warning('bootloader.target not found in config.')
-            log.warning('skipping bootloader install.')
+            self.install_bootloader(disk)

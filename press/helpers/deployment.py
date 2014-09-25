@@ -11,7 +11,7 @@ def mount_root():
 
 
 def mkdir(directory):
-    run('mkdir %s' % directory )
+    run('mkdir -p %s' % directory)
     pass
 
 

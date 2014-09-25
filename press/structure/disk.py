@@ -29,6 +29,9 @@ class Disk(object):
                                               partition_start=partition_start,
                                               alignment=alignment)
 
+    def __repr__(self):
+        return '%s: %s' % (self.devname, self.size.humanize)
+
 
 class PartitionTable(object):
     def __init__(self, table_type, size, partition_start=1048576, alignment=1048576):
@@ -130,6 +133,10 @@ class PartitionTable(object):
             adjusted_size.bytes -= 1
 
         partition.size = adjusted_size
+        log.info('Adding partition: %s size: %s, boot: %s, lvm: %s ' % (partition.name,
+                                                                        partition.size,
+                                                                        partition.boot,
+                                                                        partition.lvm))
         self._validate_partition(partition)
         self.partitions.append(partition)
         self.partition_end += adjusted_size
