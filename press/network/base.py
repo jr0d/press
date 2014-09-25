@@ -7,7 +7,7 @@ from jinja2 import Environment, FileSystemLoader
 log = logging.getLogger(__name__)
 
 DEFAULTS = \
-    {'network':
+    {'networking':
          {
              'dns': {},
              'hostname': None,
@@ -44,7 +44,7 @@ class Network(object):
         """
         Generates config by updating DEFAULTS with config.
         """
-        network = dict(network=config.get('network', {}))
+        network = dict(network=config.get('networking', {}))
         DEFAULTS.update(network)
         return DEFAULTS
 
@@ -78,7 +78,7 @@ class Network(object):
         Writes hostname.
         """
         log.debug('Running set_hostname')
-        hostname = self.config['network']['hostname']
+        hostname = self.config['networking']['hostname']
         if hostname:
             log.info('Updating /etc/hostname "%s"' % hostname)
             old = self.get_hostname()
@@ -98,7 +98,7 @@ class Network(object):
         """
         Get a interface object by name.
         """
-        for interface in self.config['network']['interfaces']:
+        for interface in self.config['networking']['interfaces']:
             if interface.get('name') == name:
                 return interface
         log.warning('Unable to find interface by name "%s"' % name)
@@ -117,7 +117,7 @@ class Network(object):
         """
         log.debug('Running set_interfaces')
         networks = []
-        for network in self.config['network']['networks']:
+        for network in self.config['networking']['networks']:
             interface_name = network.get('interface')
             interface = self.__get_interface(interface_name)
 
