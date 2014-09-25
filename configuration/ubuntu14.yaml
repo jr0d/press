@@ -2,7 +2,7 @@ target: debian
 
 image:
   checksum:
-    hash: ac1364e2161e003667765b49c4124835420252bc
+    hash: 22ffaf00bb37a0579a3bb4815ccccfc8366837df
     method: sha1
   format: tgz
   url: http://newdev.kickstart.rackspace.com/press/ubuntu-14.04-trusty-amd64.tar.gz
@@ -65,11 +65,11 @@ auth:
       password_options:
       -
         encrypted: False
-      shell: /bin/zsh,
+      shell: /bin/zsh
       skel: http://blah.rackspace.com/press/skels/users/rack.tar.gz
       uid: 1000
     root:
-      home: /root,
+      home: /root
       password: ball$$$$
       password_options:
       -
@@ -91,7 +91,7 @@ network:
   networks:
   -
     gateway: 10.127.29.1
-    interface: EXNET,
+    interface: EXNET
     ip_address: 10.127.29.143
     netmask: 255.255.255.0
 

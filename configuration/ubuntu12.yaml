@@ -2,7 +2,7 @@ target: debian
 
 image:
   checksum:
-    hash: fb609e09423ef395719fc70dcc4898d29c966b2b
+    hash: 2239c7855c5c552e9963cc891b2057a6d159bd9d
     method: sha1
   format: tgz
   url: http://newdev.kickstart.rackspace.com/press/ubuntu-12.04-precise-amd64.tar.gz
@@ -65,11 +65,11 @@ auth:
       password_options:
       -
         encrypted: False
-      shell: /bin/zsh,
+      shell: /bin/zsh
       skel: http://blah.rackspace.com/press/skels/users/rack.tar.gz
       uid: 1000
     root:
-      home: /root,
+      home: /root
       password: ball$$$$
       password_options:
       -

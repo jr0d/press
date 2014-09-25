@@ -18,7 +18,7 @@ class PartitionTableModel(object):
             first: The first available disk, regardless of size will be used
             any: Any disk that can accommodate the static allocation of the partitions
         """
-        log.info('Modeling new Partition Table Model: Type: %s , Disk: %s' % (table_type, disk))
+        log.debug('Modeling new Partition Table Model: Type: %s , Disk: %s' % (table_type, disk))
         self.partitions = list()
         self.disk = disk
         self.partition_start = partition_start
@@ -34,7 +34,7 @@ class PartitionTableModel(object):
         """
         :param partition: (Partition) should be compatible with a structure.disk.Partition object
         """
-        log.info(
+        log.debug(
             'Modeling new partition: %s : %s, size: %s / %d, fs: %s, mount_point: %s' % (
                 self.type == 'gpt' and 'name' or 'type',
                 partition.name,
