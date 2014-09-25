@@ -1,27 +1,15 @@
 from press.models.partition import PartitionTableModel
 from press.structure import EXT4, Partition, PercentString, Layout, SWAP
 from press.chroot.debian import DebianChroot
-from press.network.base import Network
 from press.cli import run
 from press.logger import setup_logging
 from press import helpers
 
-import yaml
 import logging
-import sys
-
-try:
-    yaml_file = str(sys.argv[1])
-except:
-    print 'Please pass a path to a configuration file to run.'
-    print "ex. python2.7 doc/examples/end_to_end_test.py configuration/debian7.yaml"
-    sys.exit()
 
 setup_logging()
 
 log = logging.getLogger(__name__)
-
-
 
 disk = '/dev/sda'
 
@@ -50,24 +38,19 @@ log.info('Apply completed!')
 l1.mount_disk()
 log.info('Target mount completed!')
 
-f = open(yaml_file, 'rt')
-config = yaml.load(f.read())
 
 # From press.helpers.download.py
 def my_callback(bytes_so_far):
     print('Bytes so far: %d' % bytes_so_far)
 
-image_details = config.get('image')
 
-url = image_details.get('url')
-hash_method = image_details.get('checksum')['method']
-expected_hash = image_details.get('checksum')['hash']
-
-log.info('Starting download of image %s' % url)
-
-dl = helpers.download.Download(url, hash_method, expected_hash, chunk_size=1024 * 1024)
+log.info('Starting download of image')
+dl = helpers.download.Download(
+    'http://newdev.kickstart.rackspace.com/press/ubuntu-12.04-precise-amd64.tar.gz',
+    hash_method='sha1',
+    expected_hash='9fdaea2337c8309c556d06a9950ced2006269a5e',
+    chunk_size=1024 * 1024)
 dl.download(my_callback)
-
 if dl.can_validate():
     print('Can do validation..')
     if dl.validate():
@@ -84,11 +67,28 @@ new_root = '/mnt/press'
 dl.extract(new_root)
 
 # Nessy adding some POST action
+run('cp /etc/resolv.conf %s/etc/resolv.conf' % new_root)
 run('mv %s/etc/fstab_rs %s/etc/fstab' % (new_root, new_root))
 
-
-network = Network(new_root, config)
-network.apply()
+# A example config
+config = {'auth':
+              {'algorythim': 'sha512',
+               'users':
+                   {'rack': {'gid': 1000,
+                             'group': 'rack',
+                             'home': '/home/rack',
+                             'password': 'ball$$$$$',
+                             'password_options': [{'encrypted': False}],
+                             'shell': '/bin/bash',
+                             'skel': 'http://blah.rackspace.com/press/skels/users/rack.tar.gz',
+                             'uid': 1000},
+                    'root': {'authorized_keys': [],
+                             'home': '/root',
+                             'password': 'ball$$$$',
+                             'password_options': [{'encrypted': False}]}}},
+          'grub':
+              {'options': 'quiet splash'}
+        }
 
 chroot = DebianChroot(new_root, config, l1.disks)
 chroot.apply()

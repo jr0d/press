@@ -114,6 +114,12 @@ class Size(object):
         raise SizeObjectValError('Something very strange has happened.')
 
     @property
+    def over_2t(self):
+        if self.bytes >= self.tebibyte * 2:
+            return True
+        return False
+
+    @property
     def megabytes(self):
         return Decimal(self.bytes) / self.megabyte
 
