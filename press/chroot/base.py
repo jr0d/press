@@ -37,7 +37,6 @@ DEFAULTS = \
          }
     }
 
-
 class Chroot(object):
     """
     Base Post Class.
@@ -56,7 +55,6 @@ class Chroot(object):
 
         log.debug('Running chroot from configuration: %s' % self.config)
 
-        self.__bind_mount(prefix=newroot)
         self.real_root = os.open('/', os.O_RDONLY)
         self.disks = disks
         os.chroot(newroot)
@@ -80,31 +78,6 @@ class Chroot(object):
         os.fchdir(self.real_root)
         os.chroot('.')
         os.chdir('/')
-        self.__unmount_prefix(prefix=self.newroot)
-
-    @staticmethod
-    def __bind_mount(prefix, mount_points=('/proc', '/dev', '/sys')):
-        """
-        Bind mounts the base locations to prefix
-
-        :parma prefix: The prefix on where we wish to bind mount.
-        :param mount_points: a list/tuple of mount_points to bind on prefix.
-        """
-        for mount_point in mount_points:
-            log.debug('Bind mounting %s to %s%s' % (
-                mount_point, prefix, mount_point))
-            run('mount --rbind %s %s%s' % (mount_point, prefix, mount_point),
-                raise_exception=True)
-
-    @staticmethod
-    def __unmount_prefix(prefix):
-        """
-        Use lazy unmount to remove everything under prefix.
-
-        :parma prefix: The prefix on where we wish to unmount.
-        """
-        log.debug('Unmounting everything under %s' % prefix)
-        run('umount -l %s' % prefix, raise_exception=True)
 
     @staticmethod
     def generate_salt512(length=12):
