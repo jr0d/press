@@ -297,14 +297,14 @@ class MountHandler(object):
     def __init__(self, target, layout):
         self.target = target
         self.mount_points = OrderedDict()
-        if not layout.commited():
+        if not layout.committed:
             raise GeneralValidationException('Layout has not been applied')
         mount_point_index = layout.mount_point_index
         mp_list = mount_point_index.keys()
         idx = mp_list.index('/')
         if idx == -1:
             raise GeneralValidationException('root mount point is missing')
-        root_device = mount_point_index.get('/')['device']
+        root_device = mount_point_index.get('/').devname
         if not root_device:
             raise GeneralValidationException('root partition is not linked to a physical device')
 
@@ -314,7 +314,7 @@ class MountHandler(object):
                                                    device=root_device)
         mp_list.sort(key=lambda s: s.count('/'))
         for mp in mp_list:
-            device = mount_point_index.get('mp')['device']
+            device = mount_point_index.get(mp).devname
             if not device:
                 raise GeneralValidationException('%s is missing physical device' % mp)
             self.mount_points[mp] = dict(mount_point=mp,
@@ -366,21 +366,25 @@ class MountHandler(object):
         run(command, raise_exception=True)
         log.info('Unmounted %s' % full_path)
 
+    @property
+    def levels(self):
+        return set([self.mount_points[d]['level'] for d in self.mount_points])
+
+    def get_level(self, level):
+        return [self.mount_points[d] for d in self.mount_points if self.mount_points[d]['level'] == level]
+
     @staticmethod
     def create_directory(full_path):
         if helpers.deployment.recursive_makedir(full_path):
             log.info('Created directory %s' % full_path)
 
-    def create_directories(self):
-        for mp in self.mount_points:
-            full_path = self.join(mp)
-            self.create_directory(full_path)
-
     def mount_physical(self):
         log.info('Mounting partitions and volumes')
-        self.create_directories()
-        for mp in self.mount_points:
-            self.mount(self.join(mp), device=self.mount_points[mp]['device'])
+        for level in self.levels:
+            for mp in self.get_level(level):
+                self.create_directory(self.join(mp['mount_point']))
+                self.mount(mp['mount_point'], mp['device'])
+                self.mount_points[mp['mount_point']]['mounted'] = True
 
     def mount_pseudo(self):
         log.info('Mounting pseudo file systems')
