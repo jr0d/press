@@ -364,6 +364,7 @@ class MountHandler(object):
         full_path = self.join(path)
         command = 'umount %s' % full_path
         run(command, raise_exception=True)
+        self.mount_points[path]['mounted'] = True
         log.info('Unmounted %s' % full_path)
 
     @property
@@ -390,10 +391,12 @@ class MountHandler(object):
         log.info('Mounting pseudo file systems')
         self.mount_proc()
         self.mount_sys()
+        self.bind_dev()
 
     def teardown(self):
         mount_points = \
             OrderedDict(reversed(sorted(self.mount_points.iteritems(), key=lambda d: d[1]['level'])))
         log.info('Unmounting everything')
         for mp in mount_points:
-            self.umount(self.join(mp))
+            if mount_points[mp]['mounted']:
+                self.umount(mp)

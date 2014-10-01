@@ -120,6 +120,9 @@ class Press(object):
     def mount_pseudo_file_systems(self):
         self.mount_handler.mount_pseudo()
 
+    def teardown(self):
+        self.mount_handler.teardown()
+
     def download_and_validate_image(self):
         def our_callback(total, done):
             log.info('Downloading: %.1f%%' % (float(done) / float(total) * 100))
@@ -172,6 +175,7 @@ class Press(object):
         self.configure_network()
         self.mount_pseudo_file_systems()
         self.run_chroot()
+        self.teardown()
         log.info('Deployment completed', extra={'press_event': 'complete'})
 
 
@@ -193,4 +197,7 @@ def entry_main(configuration, plugin_dir=None):
         traceback = format_exception(*sys.exc_info())
         log.error('Critical Error, %s, during deployment' % e, extra=dict(traceback=traceback,
                                                                           press_event='critical'))
+        if press.layout.committed:
+            press.teardown()
         raise
+
