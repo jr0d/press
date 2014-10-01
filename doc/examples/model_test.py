@@ -18,7 +18,7 @@ p2 = Partition('primary', '512MiB', file_system=SWAP('SWAP'), mount_point='none'
 p3 = Partition('logical', '512MiB',
                file_system=EXT4('TMP', mount_options=['default', 'nosuid', 'noexec', 'nodev']),
                mount_point='/tmp', fsck_option=2)
-p4 = Partition('logical', PercentString('100%FREE'), lvm=True)
+p4 = Partition('logical', PercentString('99%FREE'), lvm=True)
 
 pm1 = PartitionTableModel('msdos', disk=disk)
 
@@ -28,7 +28,7 @@ log.debug(pm1.allocated_space)
 
 pv1 = PhysicalVolume(p4)
 vg1 = VolumeGroupModel('vg_test', [pv1])
-lv1 = LogicalVolume('lv_test1', PercentString('100%FREE'),
+lv1 = LogicalVolume('lv_test1', PercentString('99%FREE'),
                     file_system=EXT4('ROOT_LV'), mount_point='/',
                     fsck_option=1)
 vg1.add_logical_volume(lv1)
@@ -50,4 +50,6 @@ log.debug(l1.disks[disk].partition_table)
 
 l1.apply()
 log.info('Apply completed!')
-print l1.generate_fstab()
+
+from pprint import pprint
+pprint(l1.mount_point_index)

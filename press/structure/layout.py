@@ -1,7 +1,9 @@
+import os
 import logging
 from collections import OrderedDict
 
 from press import helpers
+from press.cli import run
 from press.parted import PartedInterface, NullDiskException, PartedException
 from press.lvm import LVM
 from press.udev import UDevHelper
@@ -54,6 +56,8 @@ class Layout(object):
 
         self.volume_groups = list()
         self.lvm = LVM()
+
+        self.mount_handler = None
 
     def __populate_disks(self):
         for udisk in self.udisks:
@@ -247,58 +251,6 @@ class Layout(object):
 
         return header + '\n\n' + fstab
 
-    def parse_partitions(self):
-        mounts = dict()
-        for disk in self.allocated:
-
-            partitions = disk.partition_table.partitions
-
-            logical_volumes = list()
-            for vg in self.volume_groups:
-                for lv in vg.logical_volumes:
-                    logical_volumes.append(lv)
-
-            containers = partitions + logical_volumes
-
-            for container in containers:
-                if container.mount_point and '/' in container.mount_point:
-                    tree_depth = self.find_tree_depth(container.mount_point)
-                    if mounts.get(tree_depth):
-                        mounts[tree_depth] += [(container.devname, container.mount_point)]
-                    else:
-                        mounts[tree_depth] = [(container.devname, container.mount_point)]
-
-            return mounts
-
-    def find_tree_depth(self, mount_point, depth=1):
-        if mount_point == '/':
-            return 0
-        if mount_point[1:].find('/') == -1:
-            return depth
-        else:
-            depth += 1
-            mount_point = mount_point[mount_point[1:].find('/') + 1:]
-            return self.find_tree_depth(mount_point, depth)
-
-    def mount_disk(self, base_dir='/mnt/press'):
-
-        mounts = self.parse_partitions()
-
-        for depth in sorted(mounts):
-            for mount in mounts[depth]:
-                devname = mount[0]
-                mount_point = mount[1]
-                log.info('Making directory %s' % base_dir + mount_point)
-                helpers.deployment.mkdir(base_dir + mount_point)
-                log.info('Mounting %s on %s' % (devname, base_dir + mount_point))
-                helpers.deployment.mount('%s %s' % (devname, base_dir + mount_point))
-
-        log.info('Creating and placing fstab in /etc/fstab_rs')
-        helpers.deployment.mkdir(base_dir + '/etc')
-        helpers.file.write(base_dir + '/etc/fstab_rs', self.generate_fstab())
-
-        log.info("Drive is mounted and ready for OS image.")
-
     @property
     def partitions(self):
         li = list()
@@ -325,3 +277,126 @@ class Layout(object):
             if volume.devlinks:
                 index[volume.devlinks[-1]] = volume
         return index
+
+    @property
+    def mount_point_index(self):
+        index = dict()
+        for partition in self.partitions:
+            if partition.mount_point:
+                index[partition.mount_point] = partition
+        for volume in self.logical_volumes:
+            if volume.mount_point:
+                index[volume.mount_point] = volume
+        return index
+
+
+class MountHandler(object):
+    """
+    mount_points is an OrderedDict
+    """
+    def __init__(self, target, layout):
+        self.target = target
+        self.mount_points = OrderedDict()
+        if not layout.committed:
+            raise GeneralValidationException('Layout has not been applied')
+        mount_point_index = layout.mount_point_index
+        mp_list = mount_point_index.keys()
+        idx = mp_list.index('/')
+        if idx == -1:
+            raise GeneralValidationException('root mount point is missing')
+        root_device = mount_point_index.get('/').devname
+        if not root_device:
+            raise GeneralValidationException('root partition is not linked to a physical device')
+
+        self.mount_points[mp_list.pop(idx)] = dict(mount_point='/',
+                                                   level=1,
+                                                   mounted=False,
+                                                   device=root_device)
+        mp_list.sort(key=lambda s: s.count('/'))
+        for mp in mp_list:
+            device = mount_point_index.get(mp).devname
+            if not device:
+                raise GeneralValidationException('%s is missing physical device' % mp)
+            self.mount_points[mp] = dict(mount_point=mp,
+                                         level=mp.count('/'),
+                                         mounted=False,
+                                         device=device)
+
+    def join(self, path):
+        return os.path.join(self.target, path.lstrip('/'))
+
+    def mount(self, path, device='none', bind=False, mount_type=''):
+        full_path = self.join(path)
+        command = 'mount %s%s%s %s' % (bind and '--bind ' or '',
+                                       mount_type and '-t %s ' % mount_type or '',
+                                       device,
+                                       full_path)
+        run(command, raise_exception=True)
+        self.mount_points[path]['mounted'] = True
+        log.info('Mounted %s' % full_path)
+
+    def mount_proc(self):
+        self.create_directory(self.join('/proc'))
+        self.mount_points['/proc'] = dict(mount_point='/proc',
+                                          level=1,
+                                          mounted=False,
+                                          device=None)
+        self.mount('/proc', mount_type='proc')
+
+    def mount_sys(self):
+        ## mounting sys may not be needed
+        self.create_directory(self.join('/sys'))
+        self.mount_points['/sys'] = dict(mount_point='/sys',
+                                         level=1,
+                                         mounted=False,
+                                         device=None)
+        self.mount('/sys', mount_type='sysfs')
+
+    def bind_dev(self):
+        self.create_directory(self.join('/dev'))
+        self.mount_points['/dev'] = dict(mount_point='/dev',
+                                         level=1,
+                                         mounted=False,
+                                         device=None)
+        self.mount('/dev', '/dev', bind=True)
+
+    def umount(self, path):
+        full_path = self.join(path)
+        command = 'umount %s' % full_path
+        run(command, raise_exception=True)
+        self.mount_points[path]['mounted'] = True
+        log.info('Unmounted %s' % full_path)
+
+    @property
+    def levels(self):
+        return set([self.mount_points[d]['level'] for d in self.mount_points])
+
+    def get_level(self, level):
+        return [self.mount_points[d] for d in self.mount_points if self.mount_points[d]['level'] == level]
+
+    @staticmethod
+    def create_directory(full_path):
+        if helpers.deployment.recursive_makedir(full_path):
+            log.info('Created directory %s' % full_path)
+
+    def mount_physical(self):
+        log.info('Mounting partitions and volumes')
+        for level in self.levels:
+            for mp in self.get_level(level):
+                self.create_directory(self.join(mp['mount_point']))
+                self.mount(mp['mount_point'], mp['device'])
+                self.mount_points[mp['mount_point']]['mounted'] = True
+
+    def mount_pseudo(self):
+        log.info('Mounting pseudo file systems')
+        self.mount_proc()
+        self.mount_sys()
+        self.bind_dev()
+
+    def teardown(self):
+        mount_points = \
+            OrderedDict(reversed(sorted(self.mount_points.iteritems(), key=lambda d: d[1]['level'])))
+        log.info('Unmounting everything')
+        for mp in mount_points:
+            if mount_points[mp]['mounted']:
+                self.umount(mp)

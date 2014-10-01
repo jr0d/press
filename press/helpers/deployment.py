@@ -1,3 +1,4 @@
+import os
 from press.cli import run
 
 
@@ -18,3 +19,13 @@ def mkdir(directory):
 def mount_disk():
     pass
 
+
+def recursive_makedir(path, mode=0775):
+    if os.path.isdir(path):
+        return False
+
+    if os.path.exists(path):
+        raise IOError('%s exists but is NOT a directory' % path)
+
+    os.makedirs(path, mode)
+    return True
