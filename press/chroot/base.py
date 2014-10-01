@@ -121,13 +121,16 @@ class Chroot(object):
         log.info(command)
         run(command, raise_exception=True)
 
-    def __passwd(self, username, password):
+    def __passwd(self, username, password, encrypted=False):
         """
         Set the passwords for users using config.
         """
         log.info('Setting password for %s' % username)
-        salt = self.generate_salt512()
-        encrypted_password = self.generate_hash(password, salt)
+        if not encrypted:
+            salt = self.generate_salt512()
+            encrypted_password = self.generate_hash(password, salt)
+        else:
+            encrypted_password = password
         command = "usermod -p %s %s" % (encrypted_password, username)
         run(command, raise_exception=True)
 
@@ -136,15 +139,15 @@ class Chroot(object):
         Add users from configuration.
         """
         log.debug('Running add_users')
-        options = []
 
         for user, data in self.config['auth']['users'].items():
-
+            options = list()
             # if this is the root user, lets set password then skip rest.
             if user == 'root':
                 if data.get('password'):
-                    # TODO use password_options for encrypted passwords.
-                    self.__passwd('root', data['password'])
+                    self.__passwd('root',
+                                  data['password'],
+                                  data.get('password_options', dict()).get('encrypted') or False)
                 continue
 
             # check for our useradd options in config.
@@ -168,9 +171,10 @@ class Chroot(object):
             self.__useradd(user, options)
 
             # set password with passwd command
-            # TODO use password_options for encrypted passwords.
             if data.get('password'):
-                self.__passwd(user, data['password'])
+                self.__passwd(user,
+                              data['password'],
+                              data.get('password_options', dict()).get('encrypted') or False)
 
     def install_bootloader(self, disk):
         """
