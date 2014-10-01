@@ -95,7 +95,7 @@ class Press(object):
         self.image_downloader = downloader_generator(
             self.configuration.get('image'), self.target, self.proxy_info)
 
-        if 'network' in self.configuration:
+        if 'networking' in self.configuration:
             self.network = Network(self.target, self.configuration)
         else:
             self.network = None
