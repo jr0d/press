@@ -1,5 +1,8 @@
+import os
 import logging
+import yaml
 
+from press.configuration import global_defaults
 from press.structure import (
     Layout,
     Partition,
@@ -31,8 +34,22 @@ from press.models.partition import PartitionTableModel
 LOG = logging.getLogger(__name__)
 
 MBR_LOGICAL_MAX = 128
+PARTED_PATH = 'parted'
 
 __pv_linker__ = dict()
+
+
+def __get_parted_path():
+    config_dir = global_defaults.configuration_dir
+    if not os.path.isdir(config_dir):
+        return PARTED_PATH
+    paths_yaml = os.path.join(config_dir, 'paths.yaml')
+    if not os.path.isfile(paths_yaml):
+        return PARTED_PATH
+    with open(paths_yaml) as fp:
+        data = fp.read()
+    paths = yaml.load(data)
+    return paths.get('parted') or PARTED_PATH
 
 _layout_defaults = dict(
     # TODO: Possibly load these from a yaml, defaults.yaml

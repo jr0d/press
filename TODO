@@ -1,6 +1,12 @@
 This document contains some technical debt items.
 It may also detail some of our aspirations which were too lofty.
 
+* standardize press system configuration (not user configuration)
+    * Find logging, path, and other configurations in
+        - /etc/press
+        - ./.press
+        - ~/.press
+        - if a directory called plugins is found, it should be scanned for plugins
 * fsck options and mount options are hacks.
 * code duplication between Partition and LogicalVolume, create a base class
    and make it work.

@@ -7,7 +7,7 @@ import sys
 from traceback import format_exception
 
 # Press imports
-from configuration import configuration_from_file, global_defaults
+from configuration import global_defaults
 from generators.chroot import target_mapping
 from generators.image import downloader_generator
 from generators.layout import layout_from_config, generate_layout_stub
@@ -15,6 +15,7 @@ from logger import setup_logging
 from network.base import Network
 from plugins import init_plugins
 from structure.exceptions import ConfigurationError, PressCriticalException
+from structure.layout import MountHandler
 from structure.size import Size
 
 log = logging.getLogger('press')
@@ -103,6 +104,8 @@ class Press(object):
 
         self.chroot_class = target_mapping.get(self.image_target)
 
+        self.mount_handler = None
+
     def burn_layout(self):
         """
         :return:
@@ -111,12 +114,19 @@ class Press(object):
         self.layout.apply()
 
     def mount_file_systems(self):
-        log.info('Mounting filesystems')
-        self.layout.mount_disk(base_dir=self.target)
+        self.mount_handler = MountHandler(self.target, self.layout)
+        self.mount_handler.mount_physical()
+
+    def mount_pseudo_file_systems(self):
+        self.mount_handler.mount_pseudo()
+
+    def teardown(self):
+        self.mount_handler.teardown()
 
     def download_and_validate_image(self):
         def our_callback(total, done):
             log.info('Downloading: %.1f%%' % (float(done) / float(total) * 100))
+
         self.image_downloader.download(our_callback)
         log.info('done')
         if self.image_downloader.can_validate:
@@ -130,7 +140,8 @@ class Press(object):
     def extract_image(self):
         log.info('Extracting image...')
         self.image_downloader.extract(target_path=self.target)
-        log.info('done')
+        log.info('Removing image archive')
+        self.image_downloader.cleanup()
 
     def configure_network(self):
         if self.network:
@@ -157,12 +168,14 @@ class Press(object):
         log.info('Installation is starting', extra={'press_event': 'deploying'})
         self.burn_layout()
         self.mount_file_systems()
-        log.info('Downloading image', extra={'press_event': 'downloading'})
+        log.info('Fetching image at %s' % self.image_downloader.url, extra={'press_event': 'downloading'})
         self.download_and_validate_image()
         self.extract_image()
         log.info('Configuring image', extra={'press_event': 'configuring'})
         self.configure_network()
+        self.mount_pseudo_file_systems()
         self.run_chroot()
+        self.teardown()
         log.info('Deployment completed', extra={'press_event': 'complete'})
 
 
@@ -184,4 +197,7 @@ def entry_main(configuration, plugin_dir=None):
         traceback = format_exception(*sys.exc_info())
         log.error('Critical Error, %s, during deployment' % e, extra=dict(traceback=traceback,
                                                                           press_event='critical'))
+        if press.layout.committed:
+            press.teardown()
         raise
+
