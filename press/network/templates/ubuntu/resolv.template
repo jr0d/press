@@ -1,12 +1,8 @@
-#
-#
-
 {% if networking.dns.search %}
-search {{ networking.dns.search }}
-{% endif %}
-
-{% if networking.dns.search %}
-domain {{ networking.dns.search }}
+{% for search in networking.dns.search %}
+search {{ search }}
+domain {{ search }}
+{% endfor %}
 {% endif %}
 
 {% for nameserver in networking.dns.nameservers %}

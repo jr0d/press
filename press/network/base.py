@@ -1,24 +1,10 @@
 import logging
 import os
-from press.helpers.file import read, write
+from press.helpers.file import write
 
 from jinja2 import Environment, FileSystemLoader
 
 log = logging.getLogger(__name__)
-
-DEFAULTS = \
-    {'networking':
-         {
-             'dns': {},
-             'hostname': None,
-             'networks': [
-                 {}
-             ],
-             'interfaces': [
-                 {}
-             ],
-         }
-    }
 
 
 class Network(object):
@@ -44,9 +30,8 @@ class Network(object):
         """
         Generates config by updating DEFAULTS with config.
         """
-        network = dict(network=config.get('networking', {}))
-        DEFAULTS.update(network)
-        return DEFAULTS
+        networking = dict(networking=config.get('networking', {}))
+        return networking
 
     def __render_template(self, filename, data):
         """
@@ -67,11 +52,10 @@ class Network(object):
         """
         return self.config.get('target')
 
-    def get_hostname(self):
-        """
-        Gets the hostname from file.
-        """
-        return read('%s/etc/hostname' % self.newroot).strip()
+    def get_primary_ip(self):
+        networks = self.config['networking']['networks']
+        if networks:
+            return networks[0].get('ip_address')
 
     def set_hostname(self):
         """
@@ -80,19 +64,23 @@ class Network(object):
         log.debug('Running set_hostname')
         hostname = self.config['networking']['hostname']
         if hostname:
-            log.info('Updating /etc/hostname "%s"' % hostname)
-            old = self.get_hostname()
-            write('%s/etc/hostname' % self.newroot, hostname)
-            self.__update_hosts(old, hostname)
+            log.info('Setting hostname: %s' % hostname)
+            write('%s/etc/hostname' % self.newroot, hostname + '\n')
 
-    def __update_hosts(self, old, new):
+    def update_etc_hosts(self):
         """
-        Updates /etc/hosts with a new hostname
+        Updates /etc/hosts with a new hostname and ip
         """
-        log.info('Replacing %s with %s in /etc/hosts' % (old, new))
-        hosts = read('%s/etc/hostname' % self.newroot)
-        hosts.replace(old, new)
-        write('%s/etc/hosts' % self.newroot, hosts)
+        hostname = self.config['networking']['hostname']
+        primary_ip = self.get_primary_ip()
+        if hostname and primary_ip:
+            log.info('Updating /etc/hosts')
+            path = os.path.join(self.newroot, 'etc/hosts')
+            hostname_short = hostname.split('.')[0]
+            entry = '\n# Hostname resolver\n%s %s %s\n' % (primary_ip, hostname, hostname_short)
+            write(path, entry, append=True)
+        else:
+            log.info('Could not determine hostname or primary ip, skipping /etc/hosts')
 
     def __get_interface(self, name):
         """
@@ -140,5 +128,6 @@ class Network(object):
         """
         log.debug('Configuring network from configuration: %s' % self.config)
         self.set_hostname()
+        self.update_etc_hosts()
         self.set_resolve()
         self.set_interfaces()

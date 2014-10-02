@@ -91,7 +91,7 @@ class Press(object):
 
         self.image_configuration = self.configuration.get('image')
         if not self.image_configuration:
-            raise ConfigurationError('The is no image defined, I have nothing to deploy')
+            raise ConfigurationError('There is no image defined, I have nothing to deploy')
 
         self.image_downloader = downloader_generator(
             self.configuration.get('image'), self.target, self.proxy_info)
@@ -126,8 +126,8 @@ class Press(object):
 
     def download_and_validate_image(self):
         def our_callback(total, done):
-            log.info('Downloading: %.1f%%' % (float(done) / float(total) * 100))
-
+            log.debug('Downloading: %.1f%%' % (float(done) / float(total) * 100))
+        log.info('Starting download...')
         self.image_downloader.download(our_callback)
         log.info('done')
         if self.image_downloader.can_validate:
