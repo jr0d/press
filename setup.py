@@ -1,11 +1,12 @@
 from setuptools import setup, find_packages
 
-version = '0.1.3'
+version = '0.2.1a'
 
 setup(name='press',
       version=version,
       description="Automated partitioning, file systems, and image deployment.",
       long_description="""\
+              ALPHA RELEASE
 """,
       classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       keywords='',
