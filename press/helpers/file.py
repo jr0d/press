@@ -47,7 +47,6 @@ def write(filename, data, append=False, mode=0644):
 
     with open(filename, write_mode) as f:
         f.write(data)
-    f.close()
 
     # Last step lets change the file mode to specified mode
     os.chmod(filename, mode)

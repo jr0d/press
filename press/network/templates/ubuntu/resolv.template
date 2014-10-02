@@ -1,0 +1,14 @@
+#
+#
+
+{% if networking.dns.search %}
+search {{ networking.dns.search }}
+{% endif %}
+
+{% if networking.dns.search %}
+domain {{ networking.dns.search }}
+{% endif %}
+
+{% for nameserver in networking.dns.nameservers %}
+nameserver {{ nameserver }}
+{% endfor %}

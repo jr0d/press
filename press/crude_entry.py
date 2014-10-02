@@ -13,6 +13,7 @@ from generators.image import downloader_generator
 from generators.layout import layout_from_config, generate_layout_stub
 from logger import setup_logging
 from network.base import Network
+from post.common import create_fstab
 from plugins import init_plugins
 from structure.exceptions import ConfigurationError, PressCriticalException
 from structure.layout import MountHandler
@@ -143,6 +144,10 @@ class Press(object):
         log.info('Removing image archive')
         self.image_downloader.cleanup()
 
+    def write_fstab(self):
+        log.info('Writing fstab')
+        create_fstab(self.layout.generate_fstab(), self.target)
+
     def configure_network(self):
         if self.network:
             log.info('Configuring network')
@@ -172,11 +177,12 @@ class Press(object):
         self.download_and_validate_image()
         self.extract_image()
         log.info('Configuring image', extra={'press_event': 'configuring'})
+        self.write_fstab()
         self.configure_network()
         self.mount_pseudo_file_systems()
         self.run_chroot()
         self.teardown()
-        log.info('Deployment completed', extra={'press_event': 'complete'})
+        log.info('Finished', extra={'press_event': 'complete'})
 
 
 def entry_main(configuration, plugin_dir=None):
