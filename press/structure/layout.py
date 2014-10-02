@@ -282,7 +282,7 @@ class Layout(object):
     def mount_point_index(self):
         index = dict()
         for partition in self.partitions:
-            if partition.mount_point:
+            if partition.mount_point and partition.mount_point != 'swap':
                 index[partition.mount_point] = partition
         for volume in self.logical_volumes:
             if volume.mount_point:

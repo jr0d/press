@@ -184,7 +184,7 @@ class PartedInterface(object):
             raise PartedException('Could not create filesystem label')
 
     def set_name(self, number, name):
-        self.run_parted('set %d %s' % (number, name))
+        self.run_parted('name %d %s' % (number, name))
 
     def set_boot_flag(self, number):
         self.run_parted('set %d boot on' % number)
