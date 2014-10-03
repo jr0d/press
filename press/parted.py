@@ -186,8 +186,12 @@ class PartedInterface(object):
     def set_name(self, number, name):
         self.run_parted('name %d %s' % (number, name))
 
-    def set_boot_flag(self, number):
-        self.run_parted('set %d boot on' % number)
+    def set_boot_flag(self, number, label):
+        if label == 'gpt':
+            log.info('Setting bios_grub flag (BIOS boot disk')
+            self.run_parted('set %d bios_grub on')
+        else:
+            self.run_parted('set %d boot on' % number)
 
     def set_lvm_flag(self, number):
         self.run_parted('set %d lvm on' % number)
@@ -244,7 +248,7 @@ class PartedInterface(object):
             self.set_name(partition_number, type_or_name)
 
         if boot_flag:
-            self.set_boot_flag(partition_number)
+            self.set_boot_flag(partition_number, label)
 
         if lvm_flag:
             self.set_lvm_flag(partition_number)
