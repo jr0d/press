@@ -81,6 +81,20 @@ class UDevHelper(object):
                 if device.get('UDISKS_PARTITION_NUMBER') == str(partition_id):
                     return str(device['DEVNAME'])
 
+    def get_network_devices(self):
+        """ Returns a list of all network(ethernet/type 1] devices found on the system. """
+
+        result = []
+
+        for candidate in self.context.list_devices(subsystem='net'):
+            if 'type' in candidate.attributes:
+                if candidate.attributes.asint('type') == 1:
+                    result.append(candidate)
+
+        # let's go ahead and return it sorted..
+        result.sort(key=lambda dev: dev.sys_name)
+        return result
+
     @staticmethod
     def monitor_for_volume(monitor, lv_name):
         monitor.filter_by('block')
