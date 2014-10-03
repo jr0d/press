@@ -1,6 +1,7 @@
 import logging
 import os
 from press.helpers.file import write
+from press.udev import UDevHelper
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -23,6 +24,7 @@ class Network(object):
 
         self.newroot = newroot
         self.config = self.__generate_config(config)
+        self.udev_helper = UDevHelper()
         log.debug('Setting up networking from configuration: %s' % self.config)
 
     @staticmethod
@@ -122,6 +124,21 @@ class Network(object):
         blob = self.__render_template('interfaces.template', data)
         write('%s/etc/network/interfaces' % self.newroot, blob)
 
+    def set_udev_net_rules(self):
+        """
+        Generates /etc/udev/rules.d/##-persistent-net.rules file
+        """
+        log.debug("Running set_udev_net_rules")
+
+        devices = self.udev_helper.get_network_devices()
+        if not devices:
+            log.warning("Couldn't find any ethernet devices")
+            return
+
+        blob = self.__render_template("persistent-net.rules.template", dict(devices=devices))
+        write('%s/etc/udev/rules.d/70-persistent-net.rules' % self.newroot, blob)
+        log.info("%d network interfaces were written to persistent-net.rules" % (len(devices),))
+
     def apply(self):
         """
         Apply network from config
@@ -131,3 +148,4 @@ class Network(object):
         self.update_etc_hosts()
         self.set_resolve()
         self.set_interfaces()
+        self.set_udev_net_rules()

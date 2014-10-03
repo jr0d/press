@@ -1,0 +1,3 @@
+{% for device in devices %}
+SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", SYSFS{address}=="{{device.sys_name}}", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="eth*", NAME="{{device.attributes.get('address')}}"
+{% endfor %}
