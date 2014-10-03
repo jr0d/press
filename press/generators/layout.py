@@ -55,7 +55,6 @@ _layout_defaults = dict(
     # TODO: Possibly load these from a yaml, defaults.yaml
     use_fibre_channel=False,
     loop_only=False,
-    parted_path='parted'
 )
 
 _partition_table_defaults = dict(
@@ -321,10 +320,12 @@ def generate_volume_group_models(volume_group_dict):
 
 def generate_layout_stub(layout_config):
     _fill_defaults(layout_config, _layout_defaults)
+    parted_path = __get_parted_path()
+    LOG.debug('Using parted at: %s' % parted_path)
     return Layout(
         use_fibre_channel=layout_config['use_fibre_channel'],
         loop_only=layout_config['loop_only'],
-        parted_path=layout_config['parted_path'],
+        parted_path=parted_path,
     )
 
 
