@@ -188,8 +188,8 @@ class PartedInterface(object):
 
     def set_boot_flag(self, number, label):
         if label == 'gpt':
-            log.info('Setting bios_grub flag (BIOS boot disk')
-            self.run_parted('set %d bios_grub on')
+            log.info('Setting bios_grub flag (BIOS boot disk)')
+            self.run_parted('set %d bios_grub on' % number)
         else:
             self.run_parted('set %d boot on' % number)
 
