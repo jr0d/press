@@ -285,7 +285,7 @@ class Layout(object):
             if partition.mount_point and partition.mount_point != 'swap':
                 index[partition.mount_point] = partition
         for volume in self.logical_volumes:
-            if volume.mount_point:
+            if volume.mount_point and volume.mount_point != 'swap':
                 index[volume.mount_point] = volume
         return index
 
