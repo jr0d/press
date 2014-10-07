@@ -1,14 +1,13 @@
 import logging
 
-from .size import Size, PercentString
-from .exceptions import PartitionValidationError
-
-log = logging.getLogger(__name__)
-
+from press.structure.exceptions import PartitionValidationError
+from press.structure.size import Size, PercentString
 
 GPT = 'gpt'
 MSDOS = 'msdos'
 GPT_BACKUP_SIZE = 17408
+
+log = logging.getLogger(__name__)
 
 
 class Disk(object):
@@ -133,10 +132,9 @@ class PartitionTable(object):
             adjusted_size.bytes -= 1
 
         partition.size = adjusted_size
-        log.info('Adding partition: %s size: %s, boot: %s, lvm: %s ' % (partition.name,
-                                                                        partition.size,
-                                                                        partition.boot,
-                                                                        partition.lvm))
+        log.info('Adding partition: %s size: %s, flags: %s' % (partition.name,
+                                                               partition.size,
+                                                               partition.flags))
         self._validate_partition(partition)
         self.partitions.append(partition)
         self.partition_end += adjusted_size
@@ -163,15 +161,13 @@ class Partition(object):
     enumerate the /dev/link
     """
 
-    def __init__(self, type_or_name, size_or_percent, boot=False,
-                 lvm=False, file_system=None, mount_point=None, fsck_option=0):
+    def __init__(self, type_or_name, size_or_percent, flags=None,
+                 file_system=None, mount_point=None, fsck_option=0):
         """
         Constructor:
 
         size: a Size compatible value (see Size object documentation)..
-        boot: set the boot flag on this partition when it is writen to disk
-        lvm: set the lvm flag on this partition when it is written to disk
-             Layout will consider this a physical volume
+        flags: list()
         name: the name of the partition, valid only on gpt partition tables
         """
         if isinstance(size_or_percent, PercentString):
@@ -181,8 +177,7 @@ class Partition(object):
             self.size = Size(size_or_percent)
             self.percent_string = None
 
-        self.boot = boot
-        self.lvm = lvm
+        self.flags = flags or list()
         self.name = type_or_name
         self.file_system = file_system
         self.mount_point = mount_point
@@ -224,10 +219,11 @@ class Partition(object):
         return gen
 
     def __repr__(self):
-         return "device: %s, size: %s, fs: %s, mount point: %s, fsck_option: %s" % (
-             self.devname or 'unlinked',
-             self.size or self.percent_string,
-             self.file_system,
-             self.mount_point,
-             self.fsck_option
-         )
+        return "device: %s, size: %s, fs: %s, mount point: %s, fsck_option: %s" % \
+            (
+                self.devname or 'unlinked',
+                self.size or self.percent_string,
+                self.file_system,
+                self.mount_point,
+                self.fsck_option
+            )

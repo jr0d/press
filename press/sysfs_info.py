@@ -51,3 +51,11 @@ class AlignmentInfo(object):
     @property
     def optimal_io_size(self):
         return self.__magic_set_attr('optimal_io_size')
+
+
+def has_efi():
+    """
+    Should be True if booting in EFI mode, False otherwise
+    :return: bool
+    """
+    return False

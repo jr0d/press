@@ -184,10 +184,11 @@ class Layout(object):
             for partition in partition_table.partitions:
                 partition_id = parted.create_partition(partition.name,
                                                        partition.size.bytes,
-                                                       boot_flag=partition.boot,
-                                                       lvm_flag=partition.lvm)
+                                                       flags=partition.flags)
 
+                log.debug('Monitoring for devname')
                 partition.devname = self.udev.monitor_partition_by_devname(partition_id)
+                log.debug('Found %s' % partition.devname)
                 partition.partition_id = partition_id
 
                 if not partition.devname:
@@ -209,9 +210,11 @@ class Layout(object):
                 self.lvm.vgcreate(volume_group.name, devnames, volume_group.pe_size.bytes)
                 for lv in volume_group.logical_volumes:
                     self.lvm.lvcreate(lv.extents, volume_group.name, lv.name)
-                    log.info(lv.name)
+                    log.debug(lv.name)
+                    log.debug('Monitoring for devname')
                     device = self.udev.monitor_for_volume(monitor, lv.name)
                     lv.devname = device['DEVNAME']
+                    log.debug('Found %s' % lv.devname)
                     lv.devlinks = device.get('DEVLINKS', '').split()
                     if lv.file_system:
                         lv.file_system.create(lv.devname)

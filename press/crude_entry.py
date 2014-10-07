@@ -134,7 +134,6 @@ class Press(object):
             log.info('Validating image')
             if not self.image_downloader.validate():
                 raise PressCriticalException('Checksum validation error on image')
-            log.info('Image validated')
         else:
             log.info('Checksum validation on image is not possible')
 

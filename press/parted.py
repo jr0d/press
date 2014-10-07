@@ -186,15 +186,9 @@ class PartedInterface(object):
     def set_name(self, number, name):
         self.run_parted('name %d %s' % (number, name))
 
-    def set_boot_flag(self, number, label):
-        if label == 'gpt':
-            log.info('Setting bios_grub flag (BIOS boot disk)')
-            self.run_parted('set %d bios_grub on' % number)
-        else:
-            self.run_parted('set %d boot on' % number)
-
-    def set_lvm_flag(self, number):
-        self.run_parted('set %d lvm on' % number)
+    def set_flag(self, number, flag):
+        log.info('Setting %s on partition #%d' % (flag, number))
+        self.run_parted('set %d %s on' % (number, flag))
 
     @property
     def has_label(self):
@@ -203,7 +197,7 @@ class PartedInterface(object):
             return False
         return True
 
-    def create_partition(self, type_or_name, part_size, boot_flag=False, lvm_flag=False):
+    def create_partition(self, type_or_name, part_size, flags=None):
         """
 
         :rtype : int
@@ -222,6 +216,8 @@ class PartedInterface(object):
         partition_number = 1
 
         last_partition = self.last_partition
+
+        flags = flags or list()
 
         if last_partition:
             aligned = \
@@ -247,11 +243,8 @@ class PartedInterface(object):
             # obviously we need to determine the new partition's id.
             self.set_name(partition_number, type_or_name)
 
-        if boot_flag:
-            self.set_boot_flag(partition_number, label)
-
-        if lvm_flag:
-            self.set_lvm_flag(partition_number)
+        for flag in flags:
+            self.set_flag(partition_number, flag)
 
         return partition_number
 
