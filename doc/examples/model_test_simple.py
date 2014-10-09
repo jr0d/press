@@ -12,13 +12,13 @@ log = logging.getLogger(__name__)
 
 disk = '/dev/loop0'
 
-p1 = Partition('primary', '1MiB', mount_point='/boot')
-p2 = Partition('primary', '1MiB')
-p3 = Partition('primary', '512MiB')
+p1 = Partition('fist part', '1MiB', mount_point='/boot')
+p2 = Partition('second part', '1MiB')
+p3 = Partition('third_part', '512MiB')
 
-p4 = Partition('logical', PercentString('100%FREE'))
+p4 = Partition('last_part', PercentString('100%FREE'))
 
-pm1 = PartitionTableModel('msdos', disk=disk)
+pm1 = PartitionTableModel('gpt', disk=disk)
 
 pm1.add_partitions([p1, p2, p3, p4])
 

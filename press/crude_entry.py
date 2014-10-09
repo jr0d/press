@@ -18,6 +18,7 @@ from plugins import init_plugins
 from structure.exceptions import ConfigurationError, PressCriticalException
 from structure.layout import MountHandler
 from structure.size import Size
+from sysfs_info import has_efi
 
 log = logging.getLogger('press')
 
@@ -26,6 +27,23 @@ class Press(object):
     """
     The main orchestrator class, for v1
     """
+    @staticmethod
+    def __add_bios_boot_partition(partition_table):
+        """
+        Hack. We meed to use a BIOS boot partition for booting gpt from BIOS.
+        This will insert a 1MiB partition and flag the partition bios_grub.
+        :return: Modified partition table structure
+        """
+        partitions = partition_table['partitions']
+        if partitions:
+            if not 'bios_grub' in partitions[0].get('flags', list()):
+                log.info('Automatically inserting a BIOS boot partition')
+                bios_boot_partition = dict(name='BIOS boot partition', size='1MiB', flags=['bios_grub'])
+                partitions.insert(0, bios_boot_partition)
+            else:
+                log.info('BIOS boot partition seems to already be present, kudos!')
+        partition_table['partitions'] = partitions
+        return partition_table
 
     def __associate_disk_labels(self):
         """
@@ -53,12 +71,20 @@ class Press(object):
             else:
                 disk = temp_layout.find_device_by_ref(partition_tables[idx]['disk'])
 
-            if disk.size.over_2t:
-                log.info('%s is over 2.2TiB, using gpt' % disk.devname)
-                label = 'gpt'
+            if not has_efi():
+                if disk.size.over_2t:
+                    log.info('%s is over 2.2TiB, using gpt' % disk.devname)
+                    label = 'gpt'
+                    if not layout_configuration.get('no_bios_boot_partition'):
+                        # am I the first, possibly boot, disk?
+                        if temp_layout.disks.keys().index(disk.devname) == 0:
+                            partition_tables[idx] = self.__add_bios_boot_partition(partition_tables[idx])
+                else:
+                    log.info('%s is under 2.2TiB, using msdos' % disk.devname)
+                    label = 'msdos'
             else:
-                log.info('%s is under 2.2TiB, using msdos' % disk.devname)
-                label = 'msdos'
+                log.info('Booting in UEFI mode, using gpt partition table')
+                label = 'gpt'
 
             partition_tables[idx]['label'] = label
 

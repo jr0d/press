@@ -159,7 +159,7 @@ def generate_partition(type_or_name, partition_dict):
         fsck_option=fsck_option
     )
 
-    if p.lvm:
+    if 'lvm' in p.flags:
         # We need to preserve this mapping for generating volume groups
         __pv_linker__[partition_dict['name']] = p
 

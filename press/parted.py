@@ -49,7 +49,7 @@ class PartedInterface(object):
 
     def make_partition(self, type_or_name, start, end):
         log.info("Creating partition type %s, start %d, end %d" % (type_or_name, start, end))
-        command = 'mkpart %s %d %d' % (type_or_name, start, end)
+        command = 'mkpart \"%s\" %d %d' % (type_or_name, start, end)
         return self.run_parted(command)
 
     def get_table(self, raw=False):
@@ -184,7 +184,7 @@ class PartedInterface(object):
             raise PartedException('Could not create filesystem label')
 
     def set_name(self, number, name):
-        self.run_parted('name %d %s' % (number, name))
+        self.run_parted('name %d \"%s\"' % (number, name))
 
     def set_flag(self, number, flag):
         log.info('Setting %s on partition #%d' % (flag, number))
