@@ -86,9 +86,9 @@ layout:
     partitions:
     -
       name: boot
-      options:
-        - primary
+      flags:
         - boot
+      mbr_type: primary
       size: 1073741824
       mount_point: /boot
       file_system:
@@ -96,9 +96,9 @@ layout:
         label: BOOT
     -
       name: root_pv
-      options:
-        - logical
+      flags:
         - lvm
+      mbr_type: logical
       size: 100%FREE
 
   volume_groups:

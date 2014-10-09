@@ -64,7 +64,7 @@ _partition_table_defaults = dict(
 )
 
 _partition_defaults = dict(
-    options=list()
+    flags=list()
 )
 
 _fs_selector = dict(
@@ -84,16 +84,9 @@ def _fill_defaults(d, defaults):
             d[k] = defaults[k]
 
 
-def _primary_or_logical(p):
-    if 'primary' in p['options']:
-        return 'primary'
-    if 'logical' in p['options']:
-        return 'logical'
-
-
 def _has_logical(partitions):
     for partition in partitions:
-        if _primary_or_logical(partition) == 'logical':
+        if partition.get('mbr_type') == 'logical':
             return True
     return False
 
@@ -142,9 +135,6 @@ def generate_file_system(fs_dict):
 
 
 def generate_partition(type_or_name, partition_dict):
-    boot = 'boot' in partition_dict['options'] and True or False
-    lvm = 'lvm' in partition_dict['options'] and True or False
-
     fs_dict = partition_dict.get('file_system')
 
     if fs_dict:
@@ -163,14 +153,13 @@ def generate_partition(type_or_name, partition_dict):
     p = Partition(
         type_or_name=type_or_name,
         size_or_percent=generate_size(partition_dict['size']),
-        boot=boot,
-        lvm=lvm,
+        flags=partition_dict.get('flags'),
         file_system=fs_object,
         mount_point=mount_point,
         fsck_option=fsck_option
     )
 
-    if p.lvm:
+    if 'lvm' in p.flags:
         # We need to preserve this mapping for generating volume groups
         __pv_linker__[partition_dict['name']] = p
 
@@ -194,7 +183,7 @@ def _generate_mbr_partitions(partition_dicts):
     partitions = list()
 
     for partition in partition_dicts:
-        explicit_name = _primary_or_logical(partition)
+        explicit_name = partition.get('mbr_type')
         if explicit_name:
             if explicit_name == 'primary':
                 if primary_count >= max_primary:

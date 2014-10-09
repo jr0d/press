@@ -1,18 +1,18 @@
 import logging
 
-from .size import Size, PercentString
-from .exceptions import PartitionValidationError
-
-log = logging.getLogger(__name__)
-
+from press.structure.exceptions import PartitionValidationError
+from press.structure.size import Size, PercentString
 
 GPT = 'gpt'
 MSDOS = 'msdos'
 GPT_BACKUP_SIZE = 17408
 
+log = logging.getLogger(__name__)
+
 
 class Disk(object):
-    def __init__(self, devname=None, devlinks=None, devpath=None, partition_table=None, size=0):
+    def __init__(self, devname=None, devlinks=None, devpath=None, partition_table=None, size=0,
+                 sector_size=512):
         """
         """
         self.devname = devname
@@ -20,6 +20,7 @@ class Disk(object):
         self.devpath = devpath
         self.size = Size(size)
         self.partition_table = partition_table
+        self.sector_size = sector_size
 
     def new_partition_table(self, table_type, partition_start=1048576, alignment=1048576):
         """Instantiate and link a PartitionTable object to Disk instance
@@ -27,14 +28,15 @@ class Disk(object):
         self.partition_table = PartitionTable(table_type,
                                               self.size.bytes,
                                               partition_start=partition_start,
-                                              alignment=alignment)
+                                              alignment=alignment,
+                                              sector_size=self.sector_size)
 
     def __repr__(self):
         return '%s: %s' % (self.devname, self.size.humanize)
 
 
 class PartitionTable(object):
-    def __init__(self, table_type, size, partition_start=1048576, alignment=1048576):
+    def __init__(self, table_type, size, partition_start=1048576, alignment=1048576, sector_size=512):
         """Logical representation of a partition
         """
 
@@ -45,6 +47,7 @@ class PartitionTable(object):
         self.size = Size(size)
         self.partition_start = Size(partition_start)
         self.alignment = Size(alignment)
+        self.sector_size = Size(sector_size)
 
         # This variable is used to store a pointer to the end of the partition
         # structure + (alignment - ( end % alignment ) )
@@ -71,8 +74,10 @@ class PartitionTable(object):
         """
         if isinstance(size, PercentString):
             if size.free:
+                log.debug('Calculating percentage of free space')
                 size = self.get_percentage_of_free_space(size.value)
             else:
+                log.debug('Calculating percentage of total space')
                 size = self.get_percentage_of_usable_space(size.value)
         return size
 
@@ -89,7 +94,12 @@ class PartitionTable(object):
         """
         Factors in alignment
         """
-        return self.partition_end + self.alignment - self.partition_end % self.alignment
+        if not self.partitions:
+            return self.partition_start
+        usage = self.partition_start
+        for partition in self.partitions:
+            usage += partition.size + (self.alignment - partition.size % self.alignment)
+        return usage
 
     @property
     def free_space(self):
@@ -111,7 +121,7 @@ class PartitionTable(object):
 
     @property
     def physical_volumes(self):
-        return [partition for partition in self.partitions if partition.lvm]
+        return [partition for partition in self.partitions if 'lvm' in partition.flags]
 
     def add_partition(self, partition):
         if partition.percent_string:
@@ -119,7 +129,13 @@ class PartitionTable(object):
         else:
             adjusted_size = self.calculate_total_size(partition.size)
 
-        #  Adjust size to conform with parted logic
+        # Adjust size to conform with parted logic
+
+        if not adjusted_size.bytes % self.sector_size.bytes:
+            # We've landed on a sector boundary, increase the size of the partition to the next
+            # sector boundary - 1 ( parted does this )
+            log.debug('Landed on sector boundary, growing by one sector - 1')
+            adjusted_size + self.sector_size - Size(1)
 
         #  TODO: Make Size operator overloads work with ints
         # percentage based partitions should NEVER hit this, this is for explicit definitions
@@ -133,17 +149,23 @@ class PartitionTable(object):
             adjusted_size.bytes -= 1
 
         partition.size = adjusted_size
-        log.info('Adding partition: %s size: %s, boot: %s, lvm: %s ' % (partition.name,
-                                                                        partition.size,
-                                                                        partition.boot,
-                                                                        partition.lvm))
+        log.info('Adding partition: %s size: %d, flags: %s' % (partition.name,
+                                                               partition.size.bytes,
+                                                               partition.flags))
         self._validate_partition(partition)
         self.partitions.append(partition)
         self.partition_end += adjusted_size
-        # update partition size
+        log.debug('Partition end: %d, table size %d' % (self.partition_end.bytes,
+                                                        self.size.bytes))
+        if self.size < self.partition_end:
+            raise PartitionValidationError('Logic is wrong, this is too big')
+            # update partition size
 
     def get_percentage_of_free_space(self, percent):
-        return Size(self.free_space.bytes * percent)
+        free_space = self.free_space.bytes
+        result = free_space * percent
+        log.debug('%d * %f = %d' % (free_space, percent, result))
+        return Size(result)
 
     def get_percentage_of_usable_space(self, percent):
         return Size((self.size - self.partition_start).bytes * percent)
@@ -163,15 +185,13 @@ class Partition(object):
     enumerate the /dev/link
     """
 
-    def __init__(self, type_or_name, size_or_percent, boot=False,
-                 lvm=False, file_system=None, mount_point=None, fsck_option=0):
+    def __init__(self, type_or_name, size_or_percent, flags=None,
+                 file_system=None, mount_point=None, fsck_option=0):
         """
         Constructor:
 
         size: a Size compatible value (see Size object documentation)..
-        boot: set the boot flag on this partition when it is writen to disk
-        lvm: set the lvm flag on this partition when it is written to disk
-             Layout will consider this a physical volume
+        flags: list()
         name: the name of the partition, valid only on gpt partition tables
         """
         if isinstance(size_or_percent, PercentString):
@@ -181,8 +201,7 @@ class Partition(object):
             self.size = Size(size_or_percent)
             self.percent_string = None
 
-        self.boot = boot
-        self.lvm = lvm
+        self.flags = flags or list()
         self.name = type_or_name
         self.file_system = file_system
         self.mount_point = mount_point
@@ -224,10 +243,11 @@ class Partition(object):
         return gen
 
     def __repr__(self):
-         return "device: %s, size: %s, fs: %s, mount point: %s, fsck_option: %s" % (
-             self.devname or 'unlinked',
-             self.size or self.percent_string,
-             self.file_system,
-             self.mount_point,
-             self.fsck_option
-         )
+        return "device: %s, size: %s, fs: %s, mount point: %s, fsck_option: %s" % \
+               (
+                   self.devname or 'unlinked',
+                   self.size or self.percent_string,
+                   self.file_system,
+                   self.mount_point,
+                   self.fsck_option
+               )

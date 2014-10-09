@@ -47,9 +47,9 @@ class PartedInterface(object):
             raise PartedException(result.stderr)
         return result
 
-    def make_partition(self, type, start, end):
-        log.info("Creating partition type %s, start %d, end %d" % (type, start, end))
-        command = 'mkpart %s %d %d' % (type, start, end)
+    def make_partition(self, type_or_name, start, end):
+        log.info("Creating partition type %s, start %d, end %d" % (type_or_name, start, end))
+        command = 'mkpart %s %d %d' % (type_or_name, start, end)
         return self.run_parted(command)
 
     def get_table(self, raw=False):
@@ -184,17 +184,19 @@ class PartedInterface(object):
             raise PartedException('Could not create filesystem label')
 
     def set_name(self, number, name):
-        self.run_parted('name %d %s' % (number, name))
+        """
+        :param number:
+        :param name:
+        :return:
+        """
+        # The --script command line parser does not work properly, making it necessary to do some
+        # silly escaping in order to support gpt partition names with spaces
+        # name: BIOS boot partition becomes \'BIOS\ boot\ partition\', like I said, it is silly
+        self.run_parted('name %d \\\'%s\\\'' % (number, name.replace(' ', '\\ ')))
 
-    def set_boot_flag(self, number, label):
-        if label == 'gpt':
-            log.info('Setting bios_grub flag (BIOS boot disk')
-            self.run_parted('set %d bios_grub on')
-        else:
-            self.run_parted('set %d boot on' % number)
-
-    def set_lvm_flag(self, number):
-        self.run_parted('set %d lvm on' % number)
+    def set_flag(self, number, flag):
+        log.info('Setting %s on partition #%d' % (flag, number))
+        self.run_parted('set %d %s on' % (number, flag))
 
     @property
     def has_label(self):
@@ -203,14 +205,13 @@ class PartedInterface(object):
             return False
         return True
 
-    def create_partition(self, type_or_name, part_size, boot_flag=False, lvm_flag=False):
+    def create_partition(self, type_or_name, part_size, flags=None):
         """
 
         :rtype : int
         :param type_or_name:
         :param part_size:
-        :param boot_flag:
-        :param lvm_flag:
+        :param flags: list of partition flags
         """
 
         table_size = self.get_size()
@@ -223,7 +224,10 @@ class PartedInterface(object):
 
         last_partition = self.last_partition
 
+        flags = flags or list()
+
         if last_partition:
+            log.debug('Partition end (unmodified): %d' % last_partition['end'])
             aligned = \
                 last_partition['end'] + (self.alignment - (last_partition['end'] % self.alignment))
             start = aligned
@@ -231,9 +235,15 @@ class PartedInterface(object):
 
         end = start + part_size
 
+        log.debug('Partition start: %d, partition size: %d, end: %d, table size: %d' % (start,
+                                                                                        part_size,
+                                                                                        end,
+                                                                                        table_size))
         if end > table_size:
             #  Should be >= for msdos and end >= table_size - 34 sectors for gpt
-            raise PartedInterfaceException('The partition is too big. %d > %d' % (end, table_size))
+            raise PartedInterfaceException('The partition is too big. %d > %d (%d bytes)' % (end,
+                                                                                             table_size,
+                                                                                             end - table_size))
 
         if type_or_name == 'logical' and label == 'msdos':
             if not self.extended_partition:
@@ -241,17 +251,27 @@ class PartedInterface(object):
                 start += self.partition_start
                 partition_number = 5
 
-        self.make_partition(type_or_name, start, end)
+        if label == 'gpt':
+            # Parted command line parser and gpt support are crude bolt ons.
+            # from parted source:
+            #          /* The undocumented feature that mkpart sometimes takes a
+            # partition name is next to useless, at least with a dvh
+            # partition table, since it makes the "mkpart" command
+            # fail unconditionally for a primary partition.  E.g.,
+            # mkpart primary any-name xfs 4096s 5000s
+            # requires the name, yet always fails, saying that only
+            # logical partitions may have names.
+            # If you want a name, use parted's separate "name" command.  */
+            self.make_partition('unused', start, end)
+        else:
+            self.make_partition(type_or_name, start, end)
 
         if label == 'gpt':
             # obviously we need to determine the new partition's id.
             self.set_name(partition_number, type_or_name)
 
-        if boot_flag:
-            self.set_boot_flag(partition_number, label)
-
-        if lvm_flag:
-            self.set_lvm_flag(partition_number)
+        for flag in flags:
+            self.set_flag(partition_number, flag)
 
         return partition_number
 
