@@ -47,9 +47,9 @@ class PartedInterface(object):
             raise PartedException(result.stderr)
         return result
 
-    def make_partition(self, type, start, end):
-        log.info("Creating partition type %s, start %d, end %d" % (type, start, end))
-        command = 'mkpart %s %d %d' % (type, start, end)
+    def make_partition(self, type_or_name, start, end):
+        log.info("Creating partition type %s, start %d, end %d" % (type_or_name, start, end))
+        command = 'mkpart %s %d %d' % (type_or_name, start, end)
         return self.run_parted(command)
 
     def get_table(self, raw=False):
@@ -203,8 +203,7 @@ class PartedInterface(object):
         :rtype : int
         :param type_or_name:
         :param part_size:
-        :param boot_flag:
-        :param lvm_flag:
+        :param flags: list of partition flags
         """
 
         table_size = self.get_size()
@@ -220,6 +219,7 @@ class PartedInterface(object):
         flags = flags or list()
 
         if last_partition:
+            log.debug('Partition end (unmodified): %d' % last_partition['end'])
             aligned = \
                 last_partition['end'] + (self.alignment - (last_partition['end'] % self.alignment))
             start = aligned
@@ -227,9 +227,15 @@ class PartedInterface(object):
 
         end = start + part_size
 
+        log.debug('Partition start: %d, partition size: %d, end: %d, table size: %d' % (start,
+                                                                                        part_size,
+                                                                                        end,
+                                                                                        table_size))
         if end > table_size:
             #  Should be >= for msdos and end >= table_size - 34 sectors for gpt
-            raise PartedInterfaceException('The partition is too big. %d > %d' % (end, table_size))
+            raise PartedInterfaceException('The partition is too big. %d > %d (%d bytes)' % (end,
+                                                                                             table_size,
+                                                                                             end - table_size))
 
         if type_or_name == 'logical' and label == 'msdos':
             if not self.extended_partition:

@@ -12,13 +12,13 @@ log = logging.getLogger(__name__)
 
 disk = '/dev/loop0'
 
-p1 = Partition('primary', '2GiB', file_system=EXT4('BOOT'), boot=True, mount_point='/boot',
+p1 = Partition('primary', '2GiB', file_system=EXT4('BOOT'), flags=['boot'], mount_point='/boot',
                fsck_option=2)
-p2 = Partition('primary', '512MiB', file_system=SWAP('SWAP'), mount_point='none')
-p3 = Partition('logical', '512MiB',
-               file_system=EXT4('TMP', mount_options=['default', 'nosuid', 'noexec', 'nodev']),
+p2 = Partition('primary', '512MiB', file_system=SWAP('SWAP'), mount_point='swap')
+p3 = Partition('primary', '512MiB',
+               file_system=EXT4('TMP', mount_options=['defaults', 'nosuid', 'noexec', 'nodev']),
                mount_point='/tmp', fsck_option=2)
-p4 = Partition('logical', PercentString('99%FREE'), lvm=True)
+p4 = Partition('primary', PercentString('100%FREE'), flags=['lvm'])
 
 pm1 = PartitionTableModel('msdos', disk=disk)
 

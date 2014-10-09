@@ -74,7 +74,9 @@ class Layout(object):
             size = parted.get_size()
             disk = Disk(devname=device,
                         devlinks=udisk.get('DEVLINKS'),
-                        devpath=udisk.get('DEVPATH'), size=size)
+                        devpath=udisk.get('DEVPATH'),
+                        size=size,
+                        sector_size=parted.sector_size.get('logical', 512))
             self.disks[device] = disk
 
     def find_device_by_ref(self, ref):
@@ -165,7 +167,7 @@ class Layout(object):
 
     def add_volume_group_from_model(self, model_vg):
         for pv in model_vg.physical_volumes:
-            if not pv.reference.lvm:
+            if not 'lvm' in pv.reference.flags:
                 raise LayoutValidationError('Reference partition is not flagged for LVM use')
             if not isinstance(pv.reference.size, Size) and not pv.size.bytes:
                 raise LayoutValidationError('Reference partition has not be allocated')
