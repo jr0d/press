@@ -20,7 +20,7 @@ print pi.wipe_table()
 
 pi.set_label('msdos')
 
-print pi.create_partition('primary', Size('25MiB').bytes, boot_flag=True)
+print pi.create_partition('primary', Size('25MiB').bytes, flags=['boot'])
 print pi.create_partition('primary', Size('25MiB').bytes)
 print pi.create_partition('primary', Size('25MiB').bytes)
 print pi.create_partition('logical', Size('25MiB').bytes)
@@ -34,7 +34,7 @@ print pi.wipe_table()
 
 pi.set_label('gpt')
 
-print pi.create_partition('p1', Size('25MiB').bytes, boot_flag=True)
+print pi.create_partition('p1', Size('25MiB').bytes, flags=['boot'])
 print pi.create_partition('p2', Size('25MiB').bytes)
 print pi.create_partition('p3', Size('25MiB').bytes)
 print pi.create_partition('p4', Size('25MB').bytes)
