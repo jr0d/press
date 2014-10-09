@@ -49,7 +49,7 @@ class PartedInterface(object):
 
     def make_partition(self, type_or_name, start, end):
         log.info("Creating partition type %s, start %d, end %d" % (type_or_name, start, end))
-        command = 'mkpart \"%s\" %d %d' % (type_or_name, start, end)
+        command = 'mkpart %s %d %d' % (type_or_name, start, end)
         return self.run_parted(command)
 
     def get_table(self, raw=False):
@@ -184,7 +184,15 @@ class PartedInterface(object):
             raise PartedException('Could not create filesystem label')
 
     def set_name(self, number, name):
-        self.run_parted('name %d \"%s\"' % (number, name))
+        """
+        :param number:
+        :param name:
+        :return:
+        """
+        # The --script command line parser does not work properly, making it necessary to do some
+        # silly escaping in order to support gpt partition names with spaces
+        # name: BIOS boot partition becomes \'BIOS\ boot\ partition\', like I said, it is silly
+        self.run_parted('name %d \\\'%s\\\'' % (number, name.replace(' ', '\\ ')))
 
     def set_flag(self, number, flag):
         log.info('Setting %s on partition #%d' % (flag, number))
@@ -243,7 +251,20 @@ class PartedInterface(object):
                 start += self.partition_start
                 partition_number = 5
 
-        self.make_partition(type_or_name, start, end)
+        if label == 'gpt':
+            # Parted command line parser and gpt support are crude bolt ons.
+            # from parted source:
+            #          /* The undocumented feature that mkpart sometimes takes a
+            # partition name is next to useless, at least with a dvh
+            # partition table, since it makes the "mkpart" command
+            # fail unconditionally for a primary partition.  E.g.,
+            # mkpart primary any-name xfs 4096s 5000s
+            # requires the name, yet always fails, saying that only
+            # logical partitions may have names.
+            # If you want a name, use parted's separate "name" command.  */
+            self.make_partition('unused', start, end)
+        else:
+            self.make_partition(type_or_name, start, end)
 
         if label == 'gpt':
             # obviously we need to determine the new partition's id.
