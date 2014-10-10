@@ -1,13 +1,17 @@
-from press.chroot.base import Chroot
+import logging
 
 from press.cli import run
-import logging
+
+from press.chroot.base import Chroot
+from press.helpers.file import read, replace_file
 
 
 log = logging.getLogger(__name__)
 
 
 class DebianChroot(Chroot):
+    grub_default_path = '/etc/default/grub'
+
     def install_bootloader(self, disk):
         """
         Install bootloader on disk.
@@ -20,6 +24,49 @@ class DebianChroot(Chroot):
             raise_exception=True)
         run('grub-mkconfig -o /boot/grub/grub.cfg', raise_exception=True)
         run('grub-install %s' % disk, raise_exception=True)
+
+    @staticmethod
+    def __modify_default_grub(data, appending, omitting):
+        data = data.splitlines()
+
+        # Backwards compatibility
+        if isinstance(appending, (str, unicode)):
+            appending = appending.split()
+        if isinstance(omitting, (str, unicode)):
+            omitting = omitting.split()
+
+        for idx in xrange(len(data)):
+            line = data[idx]
+            if 'GRUB_CMDLINE_LINUX_DEFAULT=' in line:
+                var, options = tuple(line.split('=', 1))
+                options = options.strip('\"').split()
+                options = [o for o in options if o not in omitting]
+                options += appending
+                data[idx] = '%s=\"%s\"' % (var, ' '.join(options))
+                break
+        return '\n'.join(data) + '\n'
+
+    def update_grub_cmdline(self):
+
+        bootloader_config = self.config.get('bootloader')
+        cmdline_append = bootloader_config.get('cmdline_append')
+        cmdline_omit = bootloader_config.get('cmdline_omit')
+        if not (cmdline_append and cmdline_omit):
+            log.debug('not updating linux cmdline, nothing to update')
+            return
+        log.info('Updating ')
+        log.debug('Adding: %s, Removing: %s' % (cmdline_append, cmdline_omit))
+
+        replace_file(self.grub_default_path,
+                     self.__modify_default_grub(read(self.grub_default_path),
+                                                cmdline_append,
+                                                cmdline_omit))
+        self.update_grub()
+
+    @staticmethod
+    def update_grub():
+        log.info('Running update-grub')
+        run('update-grub', raise_exception=True)
 
     def apply(self):
         """
@@ -36,3 +83,5 @@ class DebianChroot(Chroot):
             self.install_bootloader(self.disks.keys()[0])
         else:
             self.install_bootloader(disk)
+
+        self.update_grub_cmdline()
