@@ -7,10 +7,6 @@ def mount(argument):
     pass
 
 
-def mount_root():
-    run('mount -T /mnt/press_fstab /mnt/press')
-
-
 def mkdir(directory):
     run('mkdir -p %s' % directory)
     pass
