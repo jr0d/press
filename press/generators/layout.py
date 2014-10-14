@@ -139,7 +139,7 @@ def generate_partition(type_or_name, partition_dict):
 
     if fs_dict:
         fs_object = generate_file_system(fs_dict)
-        LOG.info('Adding %s file system' % fs_object)
+        LOG.debug('Adding %s file system' % fs_object)
     else:
         fs_object = None
 

@@ -68,6 +68,11 @@ class DebianChroot(Chroot):
         log.info('Running update-grub')
         run('update-grub', raise_exception=True)
 
+    @staticmethod
+    def generate_host_keys(self):
+        log.info('Rebuilding SSH host keys')
+        run('dpkg-reconfigure openssh-server', raise_exception=True)
+
     def apply(self):
         """
         Run entire Chroot process.
@@ -85,3 +90,4 @@ class DebianChroot(Chroot):
             self.install_bootloader(disk)
 
         self.update_grub_cmdline()
+        self.generate_host_keys()

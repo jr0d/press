@@ -95,17 +95,18 @@ class Network(object):
 
     def set_resolve(self):
         """
-        Generate /etc/resolve with data from config.network.dns
+        This is now debian specific.
         """
-        log.debug('Running set_resolve')
+        path = os.path.join(self.newroot, 'etc/resolvconf/resolv.conf.d/base')
+        log.info('Writing %s' % path)
         blob = self.__render_template('resolv.template', self.config)
-        write('%s/etc/resolv.conf' % self.newroot, blob)
+        write(path, blob)
 
     def set_interfaces(self):
         """
         Generates /etc/network/interfaces with data from config.networks
         """
-        log.debug('Running set_interfaces')
+        log.info('Creating interface files')
         networks = []
         for network in self.config['networking']['networks']:
             interface_name = network.get('interface')

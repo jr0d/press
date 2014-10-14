@@ -62,8 +62,8 @@ class VolumeGroup(object):
         if not isinstance(volume, LogicalVolume):
             return ValueError('Expected LogicalVolume instance')
         if self.free_space < volume.size:
-            raise LVMValidationError('There is not enough space for volume: avail: %s, size: %s' % (
-                self.free_space, volume.size))
+            raise LVMValidationError('There is not enough space for volume: avail: %d, size: %d' % (
+                self.free_space.bytes, volume.size.bytes))
 
     def add_logical_volume(self, volume):
         if volume.percent_string:
