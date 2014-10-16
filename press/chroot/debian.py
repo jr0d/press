@@ -70,7 +70,7 @@ class DebianChroot(Chroot):
     @staticmethod
     def generate_host_keys():
         log.info('Rebuilding SSH host keys')
-        run('dpkg-reconfigure openssh-server', raise_exception=True)
+        run('dpkg-reconfigure openssh-server', raise_exception=False)
 
     @staticmethod
     def remove_resolvconf():
