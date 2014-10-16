@@ -74,8 +74,8 @@ class UDevHelper(object):
             if disk.get('MAJOR') == '254':  # Device Mapper (LVM)
                 yield disk
 
-    def monitor_partition_by_devname(self, partition_id):
-        monitor = self.get_monitor()
+    @staticmethod
+    def monitor_partition_by_devname(monitor, partition_id):
         monitor.filter_by('block', device_type="partition")
         for _, device in monitor:
                 if device.get('UDISKS_PARTITION_NUMBER') == str(partition_id):
