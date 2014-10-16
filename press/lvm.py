@@ -5,6 +5,7 @@ Original Author: Jeff Ness
 import logging
 import subprocess
 
+from press.cli import run
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ class LVM(object):
             'pvcreate', 'pvremove', 'pvdisplay',
             'vgcreate', 'vgremove', 'vgdisplay',
             'lvcreate', 'lvremove', 'lvdisplay',
-            'vgchange'
+            'vgchange', 'pvs', 'vgs'
         ]
 
         self.__verify_binaries(self.binaries)
@@ -56,18 +57,11 @@ class LVM(object):
         code and log either stdout or stderror to the logger.
         """
         log.debug('Running: %s' % command)
-        process = subprocess.Popen(command,
-                                   shell=True,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-        return_code = process.wait()
-        response = process.communicate()
-
-        if return_code > 0:
-            log.error('stderr: %s' % response[1])
-            raise LVMError('Return code: %s' % return_code)
-
-        return response[0]
+        res = run(command)
+        if res.returncode:
+            log.error('stdout: %s, stderr: %s' % (res, res.stderr))
+            raise LVMError('Return code: %s' % res.returncode)
+        return res
 
     @staticmethod
     def __to_dict(stdout):
@@ -103,7 +97,7 @@ class LVM(object):
         Delete a physical volume using pvcreate command line tool.
         """
         log.info('running pvremove')
-        command = 'pvremove %s' % physical_volume
+        command = 'pvremove --force %s' % physical_volume
         return self.__execute(command)
 
     def pvdisplay(self, physical_volume=''):
@@ -135,7 +129,7 @@ class LVM(object):
         Delete a volume group by label using vgremove command line tool.
         """
         log.info('running vgremove')
-        command = 'vgremove -f %s' % group_label
+        command = 'vgremove --force %s' % group_label
         return self.__execute(command)
 
     def vgdisplay(self, group_label=''):
@@ -156,8 +150,10 @@ class LVM(object):
         2 Gigabytes.
         """
         log.info('Creating Volume Group: %s, Extents: %s, VG: %s' % (lv_name, extents, vg_name))
-        command = 'lvcreate --extents %s -n %s %s' % (extents, lv_name, vg_name)
-        return self.__execute(command)
+        create_command = 'lvcreate --yes --extents %s -n %s %s' % (extents, lv_name, vg_name)
+        self.__execute(create_command)
+        # activate_command = 'lvchange -ay %s/%s' % (vg_name, lv_name)
+        # self.__execute(activate_command)
 
     def lvdisplay(self, combined_label=''):
         """
@@ -182,5 +178,32 @@ class LVM(object):
 
     def activate_volume(self, volume_group):
         return self.vgchange('-a y %s' % volume_group)
+
+    @staticmethod
+    def get_volume_groups():
+        """
+        :return: A list of volume group names
+        """
+        command = 'vgs --noheadings --rows -o vg_name'
+        out = run(command, raise_exception=False)
+        if out.returncode:
+            return list()
+        if not out.stdout:
+            return list()
+        return [vg.strip() for vg in out.splitlines()]
+
+    @staticmethod
+    def get_physical_volumes():
+        """
+
+        :return: A list of physical volume names
+        """
+        command = 'pvs --noheadings --rows -o pv_name'
+        out = run(command, raise_exception=False)
+        if out.returncode:
+            return list()
+        if not out.stdout:
+            return list()
+        return [pv.strip() for pv in out.splitlines()]
 
 
