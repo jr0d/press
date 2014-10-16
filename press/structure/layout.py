@@ -179,6 +179,8 @@ class Layout(object):
     def apply(self):
         """Lots of logging here
         """
+        log.info('Clearing the device mapper')
+        run('dmsetup remove_all')
         for disk in self.allocated:
             parted = self._get_parted_interface_for_allocated_device(disk)
             partition_table = disk.partition_table
@@ -199,6 +201,19 @@ class Layout(object):
 
                 if partition.file_system:
                     partition.file_system.create(partition.devname)
+
+            # If we are recreating the same partition table, we will need to nuke any
+            # lvm metadata which is still present on the disk
+
+            old_vgs = self.lvm.get_volume_groups()
+            old_pvs = self.lvm.get_physical_volumes()
+            log.debug('Discovered resident lvm data, pvs: %s, lvs: %s' % (old_vgs, old_pvs))
+            for vg in old_vgs:
+                log.info('Removing old vg: %s' % vg)
+                self.lvm.vgremove(vg)
+            for pv in old_pvs:
+                log.info('Removing old pv: %s' % pv)
+                self.lvm.pvremove(pv)
 
             for volume_group in self.volume_groups:
                 devnames = list()

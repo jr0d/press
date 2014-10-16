@@ -69,7 +69,7 @@ class DebianChroot(Chroot):
         run('update-grub', raise_exception=True)
 
     @staticmethod
-    def generate_host_keys(self):
+    def generate_host_keys():
         log.info('Rebuilding SSH host keys')
         run('dpkg-reconfigure openssh-server', raise_exception=True)
 
