@@ -30,7 +30,7 @@ class CLIException(Exception):
 
 
 def run(command, bufsize=1048567, dry_run=False, raise_exception=False, ignore_error=False,
-        quiet=False):
+        quiet=False, env=None):
     """Runs a command and stores the important bits in an attribute string.
 
     :param command: Command to execute.
@@ -47,12 +47,15 @@ def run(command, bufsize=1048567, dry_run=False, raise_exception=False, ignore_e
     """
     if not quiet:
         log.debug('Running: %s' % command)
+    our_env = os.environ.copy()
+    our_env.update(env or dict())
     cmd = shlex.split(str(command))
     if not dry_run:
         p = subprocess.Popen(cmd,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
-                             bufsize=bufsize)
+                             bufsize=bufsize,
+                             env=our_env)
         out, err = p.communicate()
         ret = p.returncode
     else:
