@@ -47,7 +47,6 @@ class DebianChroot(Chroot):
         return '\n'.join(data) + '\n'
 
     def update_grub_cmdline(self):
-
         bootloader_config = self.config.get('bootloader')
         cmdline_append = bootloader_config.get('cmdline_append')
         cmdline_omit = bootloader_config.get('cmdline_omit')
@@ -69,9 +68,15 @@ class DebianChroot(Chroot):
         run('update-grub', raise_exception=True)
 
     @staticmethod
-    def generate_host_keys(self):
+    def generate_host_keys():
         log.info('Rebuilding SSH host keys')
         run('dpkg-reconfigure openssh-server', raise_exception=True)
+
+    @staticmethod
+    def remove_resolvconf():
+        log.info('Removing resolvconf package')
+        run('apt-get remove resolvconf -y', raise_exception=False,
+            env={'DEBIAN_FRONTEND': 'noninteractive'})
 
     def apply(self):
         """
@@ -79,15 +84,15 @@ class DebianChroot(Chroot):
         """
         self.add_users()
         bootloader_config = self.config.get('bootloader')
-        if not bootloader_config:
-            log.warning('Bootloader configuration is missing')
-            return
-
-        disk = self.config['bootloader'].get('target', 'first')
-        if disk == 'first':
-            self.install_bootloader(self.disks.keys()[0])
+        if bootloader_config:
+            disk = self.config['bootloader'].get('target', 'first')
+            if disk == 'first':
+                self.install_bootloader(self.disks.keys()[0])
+            else:
+                self.install_bootloader(disk)
         else:
-            self.install_bootloader(disk)
+            log.warning('Bootloader configuration is missing')
 
         self.update_grub_cmdline()
         self.generate_host_keys()
+        self.remove_resolvconf()

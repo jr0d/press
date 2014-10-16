@@ -93,11 +93,13 @@ class Network(object):
                 return interface
         log.warning('Unable to find interface by name "%s"' % name)
 
-    def set_resolve(self):
+    def set_resolv(self):
         """
-        This is now debian specific.
+
         """
-        path = os.path.join(self.newroot, 'etc/resolvconf/resolv.conf.d/base')
+        path = os.path.join(self.newroot, 'etc/resolv.conf')
+        if os.path.islink(path):
+            os.unlink(path)
         log.info('Writing %s' % path)
         blob = self.__render_template('resolv.template', self.config)
         write(path, blob)
@@ -147,6 +149,6 @@ class Network(object):
         log.debug('Configuring network from configuration: %s' % self.config)
         self.set_hostname()
         self.update_etc_hosts()
-        self.set_resolve()
+        self.set_resolv()
         self.set_interfaces()
         self.set_udev_net_rules()

@@ -206,7 +206,6 @@ class Press(object):
         self.configure_network()
         self.mount_pseudo_file_systems()
         self.run_chroot()
-        self.teardown()
         log.info('Finished', extra={'press_event': 'complete'})
 
 
@@ -228,7 +227,9 @@ def entry_main(configuration, plugin_dir=None):
         traceback = format_exception(*sys.exc_info())
         log.error('Critical Error, %s, during deployment' % e, extra=dict(traceback=traceback,
                                                                           press_event='critical'))
+        raise
+    finally:
         if press.layout.committed:
             press.teardown()
-        raise
+
 
