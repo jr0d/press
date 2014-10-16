@@ -5,8 +5,10 @@ From the pyudev docs:
 
 pyudev can be kind of silly, but I certainly don't feel like wrapping my own.
 """
-
+import logging
 import pyudev
+
+log = logging.getLogger(__name__)
 
 
 class UDevHelper(object):
@@ -78,8 +80,9 @@ class UDevHelper(object):
     def monitor_partition_by_devname(monitor, partition_id):
         monitor.filter_by('block', device_type="partition")
         for _, device in monitor:
-                if device.get('UDISKS_PARTITION_NUMBER') == str(partition_id):
-                    return str(device['DEVNAME'])
+            log.debug('Seen: %s' % device.items())
+            if device.get('UDISKS_PARTITION_NUMBER') == str(partition_id):
+                return str(device['DEVNAME'])
 
     def get_network_devices(self):
         """ Returns a list of all network(ethernet/type 1] devices found on the system. """

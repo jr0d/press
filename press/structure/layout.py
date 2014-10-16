@@ -1,5 +1,7 @@
 import os
 import logging
+import time
+
 from collections import OrderedDict
 
 from press import helpers
@@ -187,10 +189,14 @@ class Layout(object):
             parted.set_label(partition_table.type)
             for partition in partition_table.partitions:
                 monitor = self.udev.get_monitor()
+                monitor.start()
+                log.debug(str(type(monitor)))
                 partition_id = parted.create_partition(partition.name,
                                                        partition.size.bytes,
                                                        flags=partition.flags)
-
+                # Dirty race condition hack, need to re-write udev monitor to make it more stable
+                time.sleep(.5)
+                # end hack
                 log.debug('Monitoring for devname')
                 partition.devname = self.udev.monitor_partition_by_devname(monitor, partition_id)
                 log.debug('Found %s' % partition.devname)
