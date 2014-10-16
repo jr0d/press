@@ -3,7 +3,6 @@ Original Author: Jeff Ness
 """
 
 import logging
-import subprocess
 
 from press.cli import run
 
@@ -144,16 +143,10 @@ class LVM(object):
     def lvcreate(self, extents, vg_name, lv_name):
         """
         Create a logical volume using lvcreate command line tool.
-
-        Size should be a size with appended size type, for example:
-        100MB would represent 100 Megabytes, while 2GB would represent
-        2 Gigabytes.
         """
         log.info('Creating Volume Group: %s, Extents: %s, VG: %s' % (lv_name, extents, vg_name))
         create_command = 'lvcreate --yes --extents %s -n %s %s' % (extents, lv_name, vg_name)
         self.__execute(create_command)
-        # activate_command = 'lvchange -ay %s/%s' % (vg_name, lv_name)
-        # self.__execute(activate_command)
 
     def lvdisplay(self, combined_label=''):
         """
