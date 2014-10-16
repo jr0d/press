@@ -184,8 +184,13 @@ class Press(object):
         if self.chroot_class:
             log.info('Running chroot operations')
             obj = self.chroot_class(self.target, self.configuration, self.layout.disks)
-            obj.apply()
-            obj.__exit__()
+            try:
+                obj.apply()
+            except:
+                raise
+            finally:
+                if obj.init_completed:
+                    obj.__exit__()
         else:
             log.warning('%s target is not currently supported. Sorry, Sam.' % self.image_target)
 
