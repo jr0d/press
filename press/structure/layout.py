@@ -186,12 +186,13 @@ class Layout(object):
             partition_table = disk.partition_table
             parted.set_label(partition_table.type)
             for partition in partition_table.partitions:
+                monitor = self.udev.get_monitor()
                 partition_id = parted.create_partition(partition.name,
                                                        partition.size.bytes,
                                                        flags=partition.flags)
 
                 log.debug('Monitoring for devname')
-                partition.devname = self.udev.monitor_partition_by_devname(partition_id)
+                partition.devname = self.udev.monitor_partition_by_devname(monitor, partition_id)
                 log.debug('Found %s' % partition.devname)
                 partition.partition_id = partition_id
 

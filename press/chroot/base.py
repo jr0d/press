@@ -37,6 +37,7 @@ DEFAULTS = \
          }
     }
 
+
 class Chroot(object):
     """
     Base Post Class.
@@ -50,6 +51,7 @@ class Chroot(object):
         :param config: a dict with all our configuration.
         :param disks: Layout.disks, an OrderedDict containing Disk objects indexed by devname
         """
+        self.init_completed = False
         self.newroot = newroot
         self.config = self.__generate_config(config)
 
@@ -59,6 +61,7 @@ class Chroot(object):
         self.disks = disks
         os.chroot(newroot)
         os.chdir('/')
+        self.init_completed = True
 
     @staticmethod
     def __generate_config(config):
@@ -139,7 +142,6 @@ class Chroot(object):
         Add users from configuration.
         """
         log.debug('Running add_users')
-
         for user, data in self.config['auth']['users'].items():
             options = list()
             # if this is the root user, lets set password then skip rest.
