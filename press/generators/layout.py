@@ -19,6 +19,7 @@ from press.structure.lvm import (
 
 from press.structure.size import PercentString
 from press.structure.filesystems.extended import (
+    EXT2,
     EXT3,
     EXT4
 )
@@ -68,6 +69,7 @@ _partition_defaults = dict(
 )
 
 _fs_selector = dict(
+    ext2=EXT2,
     ext3=EXT3,
     ext4=EXT4,
     swap=SWAP
@@ -271,7 +273,7 @@ def generate_volume_group_models(volume_group_dict):
     :return:
     """
     if not __pv_linker__:
-        raise GeneratorError('__pv_linker__ is null, need to generate Partitions first')
+        raise GeneratorError('__pv_linker__ is null, have you flagged any partitions with LVM?')
     vgs = list()
     for vg in volume_group_dict:
         _fill_defaults(vg, _volume_group_defaults)

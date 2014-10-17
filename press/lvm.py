@@ -38,17 +38,6 @@ class LVM(object):
             'vgchange', 'pvs', 'vgs'
         ]
 
-        self.__verify_binaries(self.binaries)
-
-    def __verify_binaries(self, binaries):
-        """
-        Make sure all binaries are on system.
-        """
-        for binary in binaries:
-            check = self.__execute('which %s' % binary)
-            if not check[0]:
-                raise LVMError('Missing required binary "%s"' % binary)
-
     @staticmethod
     def __execute(command):
         """

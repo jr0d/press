@@ -64,6 +64,11 @@ class EXT(FileSystem):
             raise FileSystemCreateException(self.fs_label, command, result)
 
 
+class EXT2(EXT):
+    fs_type = 'ext2'
+    command_name = 'mkfs.ext2'
+
+
 class EXT3(EXT):
     fs_type = 'ext3'
     command_name = 'mkfs.ext3'
