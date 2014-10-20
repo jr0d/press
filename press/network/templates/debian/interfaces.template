@@ -12,7 +12,7 @@ auto {{ network.interface }}
     iface {{ network.interface }} inet static
         address {{ network.ip_address }}
         netmask {{ network.netmask }}
-        gateway {{ network.gateway }}
+        {% if network.gateway %}gateway {{ network.gateway }}{% endif %}
         {% for route in network.routes %}
             post-up route add -net {{ route.cidr }} gw {{ route.gateway }}
             post-down route del -net {{ route.cidr }} gw {{ route.gateway }}
