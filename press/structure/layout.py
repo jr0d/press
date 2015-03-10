@@ -1,23 +1,22 @@
 import os
 import logging
 import time
-
 from collections import OrderedDict
 
 from press import helpers
-from press.cli import run
+from press.helpers.cli import run
 from press.parted import PartedInterface, NullDiskException, PartedException
 from press.lvm import LVM
 from press.udev import UDevHelper
 from press.structure.disk import Disk
 from press.structure.lvm import VolumeGroup
 from press.structure.size import Size
-
 from press.structure.exceptions import (
     PhysicalDiskException,
     LayoutValidationError,
     GeneralValidationException
 )
+
 
 log = logging.getLogger(__name__)
 
@@ -427,3 +426,7 @@ class MountHandler(object):
         for mp in mount_points:
             if mount_points[mp]['mounted']:
                 self.umount(mp)
+
+    def dsdsd
+
+            dsds

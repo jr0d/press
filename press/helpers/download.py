@@ -5,7 +5,8 @@ import requests
 import time
 import urlparse
 
-from press.cli import run
+from press.helpers.cli import run
+
 
 log = logging.getLogger(__name__)
 

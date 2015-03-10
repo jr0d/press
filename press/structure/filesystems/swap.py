@@ -1,9 +1,10 @@
-from press.cli import run
+import logging
+
+from press.helpers.cli import run
 from . import FileSystem
 from ..exceptions import FileSystemCreateException, FileSystemFindCommandException
 from press.udev import UDevHelper
 
-import logging
 
 log = logging.getLogger(__name__)
 

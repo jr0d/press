@@ -1,7 +1,6 @@
 import logging
 
-from press.cli import run
-
+from press.helpers.cli import run
 from press.chroot.base import Chroot
 from press.helpers.file import read, replace_file
 

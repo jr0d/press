@@ -1,11 +1,12 @@
+import logging
+
 from press.models.partition import PartitionTableModel
 from press.structure import EXT4, Partition, PercentString, Layout, SWAP
 from press.chroot.debian import DebianChroot
-from press.cli import run
+from press.helpers.cli import run
 from press.logger import setup_logging
 from press import helpers
 
-import logging
 
 setup_logging()
 
