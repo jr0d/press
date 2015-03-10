@@ -28,6 +28,9 @@ def plugin_init(configuration):
     kserver_data = configuration.get('kserver')
     # suppress requests logging messages
     logging.getLogger('requests').setLevel(logging.WARNING)
+    from requests.packages import urllib3
+    urllib3.disable_warnings()
+
     if not kserver_data:
         LOG.info('kserver data missing from configuration, doing nothing')
         return
