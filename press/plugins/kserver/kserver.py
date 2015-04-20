@@ -2,6 +2,9 @@ import json
 import logging
 import requests
 
+# Disabled pesky warnings
+requests.packages.urllib3.disable_warnings()
+
 LOG = logging.getLogger('')
 
 

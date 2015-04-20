@@ -10,7 +10,7 @@
         - Plugins can be downloaded and loaded at runtime
     * Seriously stable partitioning operations
     * Clean up structure/models/generators so they make more sense
-    * Full end user configuration documentation
+    * Full "end user" configuration documentation
 
 ## TODO
     * standardize press system configuration (not user configuration)

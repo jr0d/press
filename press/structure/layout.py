@@ -197,7 +197,7 @@ class Layout(object):
                 time.sleep(.5)
                 # end hack
                 log.debug('Monitoring for devname')
-                partition.devname = self.udev.monitor_partition_by_devname(monitor, partition_id)
+                partition.devname = self.udev.monitor_partition_by_devname(monitor, partition_id, action='add')
                 log.debug('Found %s' % partition.devname)
                 partition.partition_id = partition_id
 
