@@ -52,7 +52,26 @@ class Size(object):
         's': sector
     }
 
-    def __init__(self, value):
+    iec_symbol_converter = {
+        'k': 'KiB',
+        'kB': 'KiB',
+        'M': 'MiB',
+        'MB': 'MiB',
+        'G': 'GiB',
+        'GB': 'GiB',
+        'T': 'TiB',
+        'TB': 'TiB',
+        'PB': 'PiB'  # We'll top here... because yolo
+    }
+
+    def __init__(self, value, force_iec_values=False):
+        """
+
+        :param value:
+        :param force_iec_values: Force IEC values even when the user enters Metric/JDEC notations
+        :return:
+        """
+        self.force_iec_values = force_iec_values
         self.bytes = self._convert(value)
 
     def _convert(self, value):
@@ -98,6 +117,8 @@ class Size(object):
                 'Value is not in a format I can understand. '
                 'Could not convert value to int')
 
+        if self.force_iec_values:
+            suffix = self.iec_symbol_converter.get(suffix, suffix)
         return int(round(val * self.symbols[suffix]))
 
     @property
