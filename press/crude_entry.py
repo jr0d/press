@@ -11,6 +11,7 @@ from configuration import global_defaults
 from generators.chroot import target_mapping
 from generators.image import downloader_generator
 from generators.layout import layout_from_config, generate_layout_stub
+from helpers import deployment
 from logger import setup_logging
 from network.base import Network
 from post.common import create_fstab
@@ -36,7 +37,7 @@ class Press(object):
         """
         partitions = partition_table['partitions']
         if partitions:
-            if not 'bios_grub' in partitions[0].get('flags', list()):
+            if 'bios_grub' not in partitions[0].get('flags', list()):
                 log.info('Automatically inserting a BIOS boot partition')
                 bios_boot_partition = dict(name='BIOS boot partition', size='1MiB', flags=['bios_grub'])
                 partitions.insert(0, bios_boot_partition)
@@ -194,6 +195,18 @@ class Press(object):
         else:
             log.warning('%s target is not currently supported. Sorry, Sam.' % self.image_target)
 
+    @staticmethod
+    def __join_staging_dir():
+        return global_defaults.press_target.rstrip('/') + '/' + global_defaults.staging_dir.lstrip('/')
+
+    @staticmethod
+    def create_staging_dir():
+        deployment.recursive_makedir(Press.__join_staging_dir())
+
+    @staticmethod
+    def remove_staging_dir():
+        deployment.recursive_remove(Press.__join_staging_dir())
+
     def crash_and_burn(self):
         """
         Place your head between your legs... and relax. You paid for the ticket,
@@ -210,7 +223,9 @@ class Press(object):
         self.write_fstab()
         self.configure_network()
         self.mount_pseudo_file_systems()
+        self.create_staging_dir()
         self.run_chroot()
+        self.remove_staging_dir()
         log.info('Finished', extra={'press_event': 'complete'})
 
 

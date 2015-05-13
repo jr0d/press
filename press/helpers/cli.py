@@ -2,6 +2,7 @@ import os
 import logging
 import shlex
 import subprocess
+import tempfile
 
 log = logging.getLogger(__name__)
 
@@ -93,3 +94,31 @@ def find_in_path(filename):
             return abspath
 
 
+def run_chroot(command,
+               root='/mnt/press',
+               staging_dir='/.press_staging',
+               bufsize=1048567,
+               dry_run=False,
+               raise_exception=False,
+               ignore_error=False,
+               quiet=False,
+               env=None,
+               unlink=True):
+
+    abs_path = os.path.join(root, staging_dir.lstrip('/'))
+    f = tempfile.NamedTemporaryFile(suffix='.sh', prefix='press', dir=abs_path, delete=False)
+    f.write('#!/bin/bash\n%s\n' % command.strip())
+    f.flush()
+    f.close()
+    os.chmod(f.name, 0700)
+    script_path = os.path.join(staging_dir, os.path.split(f.name)[1])
+    cmd = 'chroot %s %s' % (root, script_path)
+    r = run(cmd, bufsize, dry_run, raise_exception, ignore_error, quiet, env)
+    if unlink:
+        os.unlink(script_path)
+    return r
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    run_chroot('ls -la', root='root', staging_dir='/staging', unlink=False)
