@@ -46,3 +46,19 @@ configure: auth, networking, bootloader, and configuration management software.
 
 Common libraries for dealing with common systems: SYSV init, upstart, systemd ??
 Options for consistent interface naming: udev, biosdevname, net.ifnames
+
+----
+
+Fast forward a year or so:
+
+The post install target class hierarchy will be traversed at runtime all classes will be registered. After image
+deployment, press will iterate over all registered classes attempting to match Target.name with
+press_configuration[target]. If target is specified and no post install target is matched, an error will be raised.
+If press_configuration[target] is None, press will will run each classes probe method and return the last class where
+Target.probe is True. For instance, if Linux.probe and redhat.probe are True and rhel6/7, fedora, centos are all false,
+target redhat will be used.
+
+Extending:
+Plugins may import a base class, override, and extend methods and then call register_target. Plugin registered targets
+will be scanned by press after supported target classes, ensuring that the plugin classes have priority
+

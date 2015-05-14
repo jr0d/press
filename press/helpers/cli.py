@@ -105,20 +105,17 @@ def run_chroot(command,
                env=None,
                unlink=True):
 
+    _default_path='export PATH=\"/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin\"'
     abs_path = os.path.join(root, staging_dir.lstrip('/'))
-    f = tempfile.NamedTemporaryFile(suffix='.sh', prefix='press', dir=abs_path, delete=False)
-    f.write('#!/bin/bash\n%s\n' % command.strip())
+    f = tempfile.NamedTemporaryFile(suffix='.sh', prefix='press-', dir=abs_path, delete=False)
+    f.write('#!/bin/bash\n%s\n%s\n' % (_default_path, command.strip()))
     f.flush()
     f.close()
     os.chmod(f.name, 0700)
     script_path = os.path.join(staging_dir, os.path.split(f.name)[1])
+    log.info('chroot: %s' % command)
     cmd = 'chroot %s %s' % (root, script_path)
     r = run(cmd, bufsize, dry_run, raise_exception, ignore_error, quiet, env)
     if unlink:
-        os.unlink(script_path)
+        os.unlink(f.name)
     return r
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    run_chroot('ls -la', root='root', staging_dir='/staging', unlink=False)

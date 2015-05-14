@@ -1,3 +1,4 @@
+import cli
 import logging
 import os
 import shutil
@@ -32,7 +33,7 @@ def recursive_remove(path):
     shutil.rmtree(path)
 
 
-def read(filename):
+def read(filename, splitlines=False):
     """
     Reads a file by absolute path and returns it's content.
 
@@ -44,6 +45,8 @@ def read(filename):
     """
     with open(filename, 'r') as f:
         read_data = f.read()
+    if splitlines:
+        return read_data.splitlines()
     return read_data
 
 
@@ -108,3 +111,47 @@ def replace_file(path, data):
     os.unlink(path)
     shutil.copy(temp_path, path)
     os.unlink(temp_path)
+
+
+def replace_line_matching(data, match, newline):
+    lines = data.splitlines()
+    for idx in xrange(len(lines)):
+        if match in lines[idx]:
+            lines[idx] = newline
+    return '\n'.join(lines)
+
+
+def create_symlink(src, link_name, remove_existing_link=False):
+    if os.path.exists(link_name):
+        if os.path.islink(link_name):
+            if remove_existing_link:
+                os.unlink(link_name)
+                log.warning('Removing existing link')
+            else:
+                log.warning('symbolic link %s already exists' % link_name)
+                return
+        log.error('File already exists at target: %s' % link_name)
+        return
+
+    os.symlink(src, link_name)
+
+
+def remove_file(path):
+    if not os.path.exists(path):
+        return
+    if os.path.isdir(path):
+        log.error('Path is a directory, use recursive_remove')
+        return
+
+    os.unlink(path)
+
+
+def tar_extract(archive_path, chdir=''):
+    bzip_extensions = ('bz2', 'tbz', 'tbz2')
+    compress_method = 'z'
+    use_bzip = bool([i for i in bzip_extensions if archive_path.endswith(i)])
+    if use_bzip:
+        compress_method = 'j'
+
+    return cli.run('tar -%sxf %s%s' % (compress_method, archive_path,
+                                       chdir and ' -C %s' % chdir or ''))

@@ -426,7 +426,3 @@ class MountHandler(object):
         for mp in mount_points:
             if mount_points[mp]['mounted']:
                 self.umount(mp)
-
-    def dsdsd
-
-            dsds
