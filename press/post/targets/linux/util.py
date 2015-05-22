@@ -74,4 +74,4 @@ def format_change_password(name, p, is_encrypted=True):
         hashed_password = crypt.crypt(p, salt)
     else:
         hashed_password = p
-    return 'usermod --password %s %s' % (hashed_password, name)
+    return 'usermod --password \'%s\' %s' % (hashed_password, name)

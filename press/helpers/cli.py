@@ -105,9 +105,11 @@ def run_chroot(command,
                env=None,
                unlink=True):
 
-    _default_path='export PATH=\"/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin\"'
+    _default_path = \
+        'export PATH=\"/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin\"'
     abs_path = os.path.join(root, staging_dir.lstrip('/'))
-    f = tempfile.NamedTemporaryFile(suffix='.sh', prefix='press-', dir=abs_path, delete=False)
+    f = tempfile.NamedTemporaryFile(suffix='.sh', prefix='press-',
+                                    dir=abs_path, delete=False)
     f.write('#!/bin/bash\n%s\n%s\n' % (_default_path, command.strip()))
     f.flush()
     f.close()

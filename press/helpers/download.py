@@ -92,7 +92,8 @@ class Download(object):
         with open(self.full_filename, 'wb') as download_file:
             for chunk in ret.iter_content(self.chunk_size):
                 byte_count += len(chunk)
-                self._hash.update(chunk)
+                if self._hash is not None:
+                    self._hash.update(chunk)
                 download_file.write(chunk)
                 if callback_func:
                     callback_func(content_length, byte_count)
