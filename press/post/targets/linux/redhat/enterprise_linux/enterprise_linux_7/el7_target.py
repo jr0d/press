@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 class EL7Target(EnterpriseLinuxTarget):
     name = 'el7'
 
-    grub_cmdline_config_path = '/etc/sysconfig/grub'
+    grub_cmdline_config_path = '/etc/default/grub'
 
     def update_kernel_parameters(self, kernel_parameters):
         """
@@ -49,31 +49,21 @@ class EL7Target(EnterpriseLinuxTarget):
 
             return '%s=\"%s\"' % (var, ' '.join(options))
 
-        mod_count = 0
+        modified = False
         for idx in xrange(len(data)):
             line = data[idx]
             line = line.strip()
 
-            if mod_count >= 2:
-                break
-
             if line and line[0] == '#':
                 continue
-            # Remove cmdline_omit from default options, if they exist
-            if 'GRUB_CMDLINE_LINUX_DEFAULT=' in line:
-                data[idx] = modifier(line, add=False)
-                log.debug('%s > %s' % (line, data[idx]))
-                mod_count += 1
-                continue
 
-            # Add and omit from custom cmdline options
             if 'GRUB_CMDLINE_LINUX=' in line:
                 data[idx] = modifier(line, add=True)
                 log.debug('%s > %s' % (line, data[idx]))
-                mod_count += 1
+                modified = True
                 continue
 
-        if mod_count:
+        if modified:
             log.info('Updating %s' % self.grub_cmdline_config_path)
             deployment.replace_file(full_path, '\n'.join(data) + '\n')
         else:
@@ -105,7 +95,20 @@ class EL7Target(EnterpriseLinuxTarget):
         log.info('Installing grub on %s' % disk)
         self.chroot('grub2-install --target=i386-pc --recheck --debug %s' % disk)
 
+    def rebuild_initramfs(self):
+        if not self.package_exists('dracut-config-generic'):
+            self.install_package('dracut-config-generic')
+
+        kernels = os.listdir(self.join_root('/usr/lib/modules'))
+        for kernel in kernels:
+            initramfs_path = '/boot/initramfs-%s.img' % kernel
+            if os.path.exists(self.join_root(initramfs_path)):
+                log.info('Rebuilding %s' % initramfs_path)
+                self.chroot('dracut -v -f %s %s' % (initramfs_path, kernel))
+
     def run(self):
         super(EL7Target, self).run()
+        self.rebuild_initramfs()
         self.install_grub2()
+
 
