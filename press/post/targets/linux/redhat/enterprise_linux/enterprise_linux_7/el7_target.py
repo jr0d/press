@@ -1,10 +1,14 @@
 import logging
 import os
 import shlex
+
+from press.sysfs_info import NetDeviceInfo
 from press.helpers import deployment
 from press.post.targets import GeneralPostTargetError
 from press.post.targets.linux.redhat.enterprise_linux.enterprise_linux_target \
     import EnterpriseLinuxTarget
+from press.post.targets.linux.redhat.enterprise_linux.enterprise_linux_7 \
+    import networking
 
 log = logging.getLogger(__name__)
 
@@ -13,6 +17,7 @@ class EL7Target(EnterpriseLinuxTarget):
     name = 'el7'
 
     grub_cmdline_config_path = '/etc/default/grub'
+    network_scripts_path = '/etc/sysconfig/network-scripts'
 
     def update_kernel_parameters(self, kernel_parameters):
         """
