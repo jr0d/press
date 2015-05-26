@@ -131,7 +131,7 @@ class EL7Target(EnterpriseLinuxTarget):
         deployment.write(script_path, networking.generate_routes(routes))
 
     def configure_networks(self):
-        network_configuration = self.press_configuration.get('network')
+        network_configuration = self.press_configuration.get('networking')
         if not network_configuration:
             log.warn('Network configuration is missing')
             return
