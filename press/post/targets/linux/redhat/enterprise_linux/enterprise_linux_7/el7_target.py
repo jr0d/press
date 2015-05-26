@@ -153,4 +153,5 @@ class EL7Target(EnterpriseLinuxTarget):
         self.rebuild_initramfs()
         self.install_grub2()
         self.configure_networks()
+        self.write_resolvconf()
 
