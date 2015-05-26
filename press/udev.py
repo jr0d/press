@@ -77,10 +77,13 @@ class UDevHelper(object):
                 yield disk
 
     @staticmethod
-    def monitor_partition_by_devname(monitor, partition_id):
+    def monitor_partition_by_devname(monitor, partition_id, action=None):
         monitor.filter_by('block', device_type="partition")
         for _, device in monitor:
             log.debug('Seen: %s' % device.items())
+            if action and device.get('ACTION') != action:
+                log.debug('Action, %s, does not match %s' % (action, device.get('ACTION')))
+                continue
             if device.get('UDISKS_PARTITION_NUMBER') == str(partition_id):
                 return str(device['DEVNAME'])
 

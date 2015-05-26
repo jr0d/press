@@ -1,6 +1,6 @@
 import logging
 import os
-from press.helpers.file import write
+from press.helpers.deployment import write
 from press.udev import UDevHelper
 
 from jinja2 import Environment, FileSystemLoader

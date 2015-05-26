@@ -5,7 +5,8 @@ import requests
 import time
 import urlparse
 
-from press.cli import run
+from press.helpers.deployment import tar_extract
+
 
 log = logging.getLogger(__name__)
 
@@ -91,7 +92,8 @@ class Download(object):
         with open(self.full_filename, 'wb') as download_file:
             for chunk in ret.iter_content(self.chunk_size):
                 byte_count += len(chunk)
-                self._hash.update(chunk)
+                if self._hash is not None:
+                    self._hash.update(chunk)
                 download_file.write(chunk)
                 if callback_func:
                     callback_func(content_length, byte_count)
@@ -127,12 +129,7 @@ class Download(object):
         """
 
         # This is some ghetto crap to ensure that older versions of gnu-tar don't belly ache when it encounters a bz2.
-        force_bzip_extensions = ('bz2', 'tbz', 'tbz2')
-        compress_method = 'z'
-        use_bzip = bool([i for i in force_bzip_extensions if self.filename.endswith(i)])
-        if use_bzip:
-            compress_method = 'j'
-        return run('tar -C %s -%sxf %s' % (target_path, compress_method, self.full_filename))
+        return tar_extract(self.full_filename, chdir=target_path)
 
     def cleanup(self):
         """Deletes downloaded file in this version

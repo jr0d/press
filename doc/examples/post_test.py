@@ -1,8 +1,9 @@
+import logging
+
 from press.logger import setup_logging
 from press.chroot.debian import DebianPost
-from press.cli import run
+from press.helpers.cli import run
 
-import logging
 setup_logging()
 
 log = logging.getLogger(__name__)

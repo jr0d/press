@@ -1,9 +1,10 @@
-from press.cli import run
 import logging
 import os
 import string
 import crypt
 import random
+
+from press.helpers.cli import run
 
 
 log = logging.getLogger(__name__)

@@ -1,16 +1,19 @@
-## File is a POC
+# File is a POC
 
 import logging
 import pprint
 import sys
+import shutil
 
 from traceback import format_exception
 
 # Press imports
 from configuration import global_defaults
 from generators.chroot import target_mapping
+from generators.post_target import target_mapping as new_target_mapping
 from generators.image import downloader_generator
 from generators.layout import layout_from_config, generate_layout_stub
+from helpers import deployment
 from logger import setup_logging
 from network.base import Network
 from post.common import create_fstab
@@ -36,7 +39,7 @@ class Press(object):
         """
         partitions = partition_table['partitions']
         if partitions:
-            if not 'bios_grub' in partitions[0].get('flags', list()):
+            if 'bios_grub' not in partitions[0].get('flags', list()):
                 log.info('Automatically inserting a BIOS boot partition')
                 bios_boot_partition = dict(name='BIOS boot partition', size='1MiB', flags=['bios_grub'])
                 partitions.insert(0, bios_boot_partition)
@@ -119,8 +122,12 @@ class Press(object):
         if not self.image_configuration:
             raise ConfigurationError('There is no image defined, I have nothing to deploy')
 
-        self.image_downloader = downloader_generator(
-            self.configuration.get('image'), self.target, self.proxy_info)
+        if 'file' in self.image_configuration:
+            log.info('file path specified in configuration, not downloading')
+            self.image_downloader = None
+        else:
+            self.image_downloader = downloader_generator(
+                self.configuration.get('image'), self.target, self.proxy_info)
 
         if 'networking' in self.configuration:
             self.network = Network(self.target, self.configuration)
@@ -130,6 +137,11 @@ class Press(object):
         self.image_target = self.configuration['target']
 
         self.chroot_class = target_mapping.get(self.image_target)
+        self.post_configuration_target = None
+
+        if not self.chroot_class:
+            # Temporary hack for testing
+            self.post_configuration_target = new_target_mapping.get(self.image_target)
 
         self.mount_handler = None
 
@@ -151,6 +163,11 @@ class Press(object):
         self.mount_handler.teardown()
 
     def download_and_validate_image(self):
+        if not self.image_downloader:
+            log.info('Copying image to target')
+            shutil.copy(self.image_configuration['file'], self.target)
+            return
+
         def our_callback(total, done):
             log.debug('Downloading: %.1f%%' % (float(done) / float(total) * 100))
         log.info('Starting download...')
@@ -164,10 +181,12 @@ class Press(object):
             log.info('Checksum validation on image is not possible')
 
     def extract_image(self):
-        log.info('Extracting image...')
-        self.image_downloader.extract(target_path=self.target)
-        log.info('Removing image archive')
-        self.image_downloader.cleanup()
+        log.info('Extracting image and cleaning up')
+        if self.image_downloader:
+            self.image_downloader.extract(target_path=self.target)
+            self.image_downloader.cleanup()
+        else:
+            deployment.tar_extract(self.image_configuration['file'], self.target)
 
     def write_fstab(self):
         log.info('Writing fstab')
@@ -194,6 +213,24 @@ class Press(object):
         else:
             log.warning('%s target is not currently supported. Sorry, Sam.' % self.image_target)
 
+    def post_configuration(self):
+        log.info('Running post configuration target')
+        obj = self.post_configuration_target(self.configuration, self.layout.disks,
+                                             self.target, global_defaults.staging_dir)
+        obj.run()
+
+    @staticmethod
+    def __join_staging_dir():
+        return global_defaults.press_target.rstrip('/') + '/' + global_defaults.staging_dir.lstrip('/')
+
+    @staticmethod
+    def create_staging_dir():
+        deployment.recursive_makedir(Press.__join_staging_dir())
+
+    @staticmethod
+    def remove_staging_dir():
+        deployment.recursive_remove(Press.__join_staging_dir())
+
     def crash_and_burn(self):
         """
         Place your head between your legs... and relax. You paid for the ticket,
@@ -203,14 +240,20 @@ class Press(object):
         log.info('Installation is starting', extra={'press_event': 'deploying'})
         self.burn_layout()
         self.mount_file_systems()
-        log.info('Fetching image at %s' % self.image_downloader.url, extra={'press_event': 'downloading'})
+        if self.image_downloader:
+            log.info('Fetching image at %s' % self.image_downloader.url, extra={'press_event': 'downloading'})
         self.download_and_validate_image()
         self.extract_image()
         log.info('Configuring image', extra={'press_event': 'configuring'})
         self.write_fstab()
         self.configure_network()
         self.mount_pseudo_file_systems()
-        self.run_chroot()
+        self.create_staging_dir()
+        if self.chroot_class:
+            self.run_chroot()
+        if self.post_configuration_target:
+            self.post_configuration()
+        self.remove_staging_dir()
         log.info('Finished', extra={'press_event': 'complete'})
 
 
@@ -236,5 +279,3 @@ def entry_main(configuration, plugin_dir=None):
     finally:
         if press.layout.committed:
             press.teardown()
-
-

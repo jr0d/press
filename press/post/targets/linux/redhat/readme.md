@@ -1,0 +1,1 @@
+Methods for interacting with redhat systems, ie yum, rpm, etc

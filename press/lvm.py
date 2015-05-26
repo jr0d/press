@@ -4,7 +4,7 @@ Original Author: Jeff Ness
 
 import logging
 
-from press.cli import run
+from press.helpers.cli import run
 
 log = logging.getLogger(__name__)
 

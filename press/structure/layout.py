@@ -1,23 +1,22 @@
 import os
 import logging
 import time
-
 from collections import OrderedDict
 
 from press import helpers
-from press.cli import run
+from press.helpers.cli import run
 from press.parted import PartedInterface, NullDiskException, PartedException
 from press.lvm import LVM
 from press.udev import UDevHelper
 from press.structure.disk import Disk
 from press.structure.lvm import VolumeGroup
 from press.structure.size import Size
-
 from press.structure.exceptions import (
     PhysicalDiskException,
     LayoutValidationError,
     GeneralValidationException
 )
+
 
 log = logging.getLogger(__name__)
 
@@ -198,7 +197,7 @@ class Layout(object):
                 time.sleep(.5)
                 # end hack
                 log.debug('Monitoring for devname')
-                partition.devname = self.udev.monitor_partition_by_devname(monitor, partition_id)
+                partition.devname = self.udev.monitor_partition_by_devname(monitor, partition_id, action='add')
                 log.debug('Found %s' % partition.devname)
                 partition.partition_id = partition_id
 

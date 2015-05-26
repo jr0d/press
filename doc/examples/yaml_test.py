@@ -1,14 +1,15 @@
+import logging
+import sys
+
 from press.models.partition import PartitionTableModel
 from press.structure import EXT4, Partition, PercentString, Layout, SWAP
 from press.chroot.debian import DebianChroot
 from press.network.base import Network
-from press.cli import run
+from press.helpers.cli import run
 from press.logger import setup_logging
 from press import helpers
-
 import yaml
-import logging
-import sys
+
 
 try:
     yaml_file = str(sys.argv[1])

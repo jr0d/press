@@ -1,6 +1,6 @@
 import uuid
 
-from press.cli import find_in_path
+from press.helpers.cli import find_in_path
 
 
 class FileSystem(object):

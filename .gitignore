@@ -7,4 +7,4 @@ env/
 documentation/_build/*
 .vagrant/
 Vagrantfile
-configuration/
+configuration/logging.yaml

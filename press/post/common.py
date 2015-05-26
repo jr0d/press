@@ -1,5 +1,5 @@
 import os
-from press.helpers.file import write
+from press.helpers.deployment import write
 
 
 def create_fstab(fstab, target):
