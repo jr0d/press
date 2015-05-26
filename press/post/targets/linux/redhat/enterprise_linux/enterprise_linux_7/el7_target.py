@@ -2,8 +2,7 @@ import logging
 import os
 import shlex
 
-from press.sysfs_info import NetDeviceInfo
-from press.helpers import deployment
+from press.helpers import deployment, networking as net_helper
 from press.post.targets import GeneralPostTargetError
 from press.post.targets.linux.redhat.enterprise_linux.enterprise_linux_target \
     import EnterpriseLinuxTarget
@@ -111,9 +110,47 @@ class EL7Target(EnterpriseLinuxTarget):
                 log.info('Rebuilding %s' % initramfs_path)
                 self.chroot('dracut -v -f %s %s' % (initramfs_path, kernel))
 
+    def write_network_script(self, device, network_config):
+        script_name = 'ifcfg-%s' % device.devname
+        script_path = self.join_root(os.path.join(self.network_scripts_path,  script_name))
+        ip_address = network_config.get('ip_address')
+        cidr_mask = net_helper.mask2cidr(network_config.get('netmask'))
+        gateway = network_config.get('gateway')
+        _template = networking.InterfaceTemplate(device.devname,
+                                                 default_route=network_config.get('default_route', False),
+                                                 ip_address=ip_address,
+                                                 cidr_mask=cidr_mask,
+                                                 gateway=gateway)
+        log.info('Writing %s' % script_path)
+        deployment.write(script_path, _template.generate())
+
+    def write_route_script(self, device, routes):
+        script_name = 'route-%s' % device.devname
+        script_path = self.join_root(os.path.join(self.network_scripts_path,  script_name))
+        log.info('Writing %s' % script_path)
+        deployment.write(script_path, networking.generate_routes(routes))
+
+    def configure_networks(self):
+        network_configuration = self.press_configuration.get('network')
+        if not network_configuration:
+            log.warn('Network configuration is missing')
+            return
+
+        interfaces = network_configuration.get('interfaces', list())
+        networks = network_configuration.get('networks')
+        for interface in interfaces:
+            name, device = networking.lookup_interface(interface, interface.get('missing_ok', False))
+
+            for network in networks:
+                if name == network.get('interface'):
+                    self.write_network_script(device, network)
+                    routes = network.get('routes')
+                    if routes:
+                        self.write_route_script(device, routes)
+
     def run(self):
         super(EL7Target, self).run()
         self.rebuild_initramfs()
         self.install_grub2()
-
+        self.configure_networks()
 

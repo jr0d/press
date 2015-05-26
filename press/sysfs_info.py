@@ -75,7 +75,8 @@ class NetDeviceInfo(SysFSInfo):
             'speed': (None, 'speed'),
             'ifindex': (None, 'ifindex'),
         }
-        self.devpath = append_sys(os.path.join(self.class_path, devname))
+        self.devname = devname
+        self.devpath = append_sys(os.path.join(self.class_path, self.devname))
         if not os.path.exists(self.devpath):
             raise SYSFSInfoException('%s does not exist' % self.devpath)
 

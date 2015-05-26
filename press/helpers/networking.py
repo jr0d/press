@@ -6,6 +6,18 @@ def cidr2mask(prefix):
             for i in [24, 16, 8, 0]]
 
 
+def mask2cidr(mask):
+    mask = map(int, mask.split('.'))
+    count = 32
+    for octet in reversed(mask):
+        if octet:
+            bstr = bin(octet)[2:].zfill(8)
+            count -= (8 - len(bstr.strip('0')))
+            break
+        count -= 8
+    return count
+
+
 def get_network(cidr_ip):
     addr, cidr = cidr_ip.split('/')
     addr = addr.split('.')
