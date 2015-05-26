@@ -246,7 +246,7 @@ class Press(object):
         self.extract_image()
         log.info('Configuring image', extra={'press_event': 'configuring'})
         self.write_fstab()
-        self.configure_network()
+        # self.configure_network()
         self.mount_pseudo_file_systems()
         self.create_staging_dir()
         if self.chroot_class:

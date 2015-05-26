@@ -6,6 +6,7 @@ From the pyudev docs:
 pyudev can be kind of silly, but I certainly don't feel like wrapping my own.
 """
 import logging
+import os
 import pyudev
 
 log = logging.getLogger(__name__)
@@ -64,6 +65,9 @@ class UDevHelper(object):
                 continue
 
             if disk.get('MAJOR') == '254':  # Device Mapper (LVM)
+                continue
+
+            if os.path.split(disk.get('DEVPATH', ''))[-1].startswith('ram'):
                 continue
 
             pruned.append(disk)
