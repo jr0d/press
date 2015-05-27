@@ -21,8 +21,8 @@ class DebianChroot(Chroot):
         debconf = 'grub-pc grub-pc/install_devices multiselect %s' % disk
         run('echo "%s" | debconf-set-selections' % debconf,
             raise_exception=True)
-        run('grub-mkconfig -o /boot/grub/grub.cfg', raise_exception=True)
         run('grub-install %s' % disk, raise_exception=True)
+        run('grub-mkconfig -o /boot/grub/grub.cfg', raise_exception=True)
 
     @staticmethod
     def __modify_default_grub(data, appending, omitting):
