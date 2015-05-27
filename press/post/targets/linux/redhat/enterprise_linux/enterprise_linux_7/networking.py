@@ -54,6 +54,7 @@ class InterfaceTemplate(OrderedDict):
         self['UUID'] = uid
         self['ONBOOT'] = self.yes_no(on_boot)
         self['PEERDNS'] = self.yes_no(peer_dns)
+        self['IPV6_PEERDNS'] = self.yes_no(peer_dns)
 
         if ip_address:
             self['IPADDR'] = ip_address
