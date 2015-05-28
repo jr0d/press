@@ -21,7 +21,7 @@ from press.structure.size import PercentString
 from press.structure.filesystems.extended import (
     EXT2,
     EXT3,
-    EXT4,
+    EXT4
 )
 
 from press.structure.filesystems.swap import (

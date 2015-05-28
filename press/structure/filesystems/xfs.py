@@ -15,7 +15,7 @@ class XFS(FileSystem):
     command_name = 'mkfs.xfs'
     xfs_admin = 'xfs_admin'
 
-    xfs_required_mount_options = ['']
+    xfs_required_mount_options = ['inode64', 'nobarrier']
 
     def __init__(self, label=None, mount_options=None, **extra):
         super(XFS, self).__init__(label, mount_options)
