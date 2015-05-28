@@ -11,12 +11,6 @@ log = logging.getLogger(__name__)
 class LinuxTarget(Target):
     name = 'Linux'
 
-    __default_user_home = '/home'  # /home/USER
-    __default_root_home = '/'      # /USER, ie. /root
-
-    required_files = [
-    ]
-
     def set_language(self, language):
         _locale = 'LANG=%s\nLC_MESSAGES=C\n' % language
         deployment.write(self.join_root('/etc/locale.conf'), _locale)

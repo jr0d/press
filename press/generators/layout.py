@@ -21,12 +21,14 @@ from press.structure.size import PercentString
 from press.structure.filesystems.extended import (
     EXT2,
     EXT3,
-    EXT4
+    EXT4,
 )
 
 from press.structure.filesystems.swap import (
     SWAP
 )
+
+from press.structure.filesystems.xfs import XFS
 
 from press.models.lvm import VolumeGroupModel
 from press.models.partition import PartitionTableModel
@@ -72,7 +74,8 @@ _fs_selector = dict(
     ext2=EXT2,
     ext3=EXT3,
     ext4=EXT4,
-    swap=SWAP
+    swap=SWAP,
+    xfs=XFS
 )
 
 _volume_group_defaults = dict(

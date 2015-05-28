@@ -7,10 +7,11 @@ class FileSystem(object):
     fs_type = ''
     default_mount_options = ['defaults']
 
-    def __init__(self, label=None, mount_options=None):
+    def __init__(self, label=None, mount_options=None, late_uuid=False):
         self.fs_label = label
         self.mount_options = mount_options or self.default_mount_options
-        self.fs_uuid = uuid.uuid4()
+        if not late_uuid:
+            self.fs_uuid = uuid.uuid4()
         self.require_fsck = False
 
     def create(self, device):
