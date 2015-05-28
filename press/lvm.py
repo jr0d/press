@@ -77,7 +77,7 @@ class LVM(object):
         Create a physical volume using pvcreate command line tool.
         """
         log.info('Creating physical volume: %s' % physical_volume)
-        command = 'pvcreate %s' % physical_volume
+        command = 'pvcreate --force %s' % physical_volume
         return self.__execute(command)
 
     def pvremove(self, physical_volume):
