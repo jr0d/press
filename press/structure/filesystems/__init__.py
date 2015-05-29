@@ -5,11 +5,11 @@ from press.helpers.cli import find_in_path
 
 class FileSystem(object):
     fs_type = ''
-    default_mount_options = ['defaults']
+    default_mount_options = ('defaults',)
 
     def __init__(self, label=None, mount_options=None, late_uuid=False):
         self.fs_label = label
-        self.mount_options = mount_options or self.default_mount_options
+        self.mount_options = mount_options or list(self.default_mount_options)
         if not late_uuid:
             self.fs_uuid = uuid.uuid4()
         self.require_fsck = False
