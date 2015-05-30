@@ -211,39 +211,39 @@ class Layout(object):
             # If we are recreating the same partition table, we will need to nuke any
             # lvm metadata which is still present on the disk
 
-            # WARNING: THIS WILL NUKE LVM METADATA ON YOUR TEST BOX
-            # TODO: Don't NUKE LVM metadata on test boxes
-            # Solution: Use pvs only, find PVs, and associated volume groups, only for allocated disks
-            old_vgs = self.lvm.get_volume_groups()
-            old_pvs = self.lvm.get_physical_volumes()
-            log.debug('Discovered resident lvm data, pvs: %s, lvs: %s' % (old_vgs, old_pvs))
-            for vg in old_vgs:
-                log.info('Removing old vg: %s' % vg)
-                self.lvm.vgremove(vg)
-            for pv in old_pvs:
-                log.info('Removing old pv: %s' % pv)
-                self.lvm.pvremove(pv)
+        # WARNING: THIS WILL NUKE LVM METADATA ON YOUR TEST BOX
+        # TODO: Don't NUKE LVM metadata on test boxes
+        # Solution: Use pvs only, find PVs, and associated volume groups, only for allocated disks
+        old_vgs = self.lvm.get_volume_groups()
+        old_pvs = self.lvm.get_physical_volumes()
+        log.debug('Discovered resident lvm data, pvs: %s, lvs: %s' % (old_vgs, old_pvs))
+        for vg in old_vgs:
+            log.info('Removing old vg: %s' % vg)
+            self.lvm.vgremove(vg)
+        for pv in old_pvs:
+            log.info('Removing old pv: %s' % pv)
+            self.lvm.pvremove(pv)
 
-            for volume_group in self.volume_groups:
-                devnames = list()
-                monitor = self.udev.get_monitor()
-                monitor.start()
-                for pv in volume_group.physical_volumes:
-                    if not pv.reference.devname:
-                        raise LayoutValidationError('devname is not populated, and it should be')
-                    devnames.append(pv.reference.devname)
-                    self.lvm.pvcreate(pv.reference.devname)
-                self.lvm.vgcreate(volume_group.name, devnames, volume_group.pe_size.bytes)
-                for lv in volume_group.logical_volumes:
-                    self.lvm.lvcreate(lv.extents, volume_group.name, lv.name)
-                    log.debug(lv.name)
-                    log.debug('Monitoring for devname')
-                    device = self.udev.monitor_for_volume(monitor, lv.name)
-                    lv.devname = device['DEVNAME']
-                    log.debug('Found %s' % lv.devname)
-                    lv.devlinks = device.get('DEVLINKS', '').split()
-                    if lv.file_system:
-                        lv.file_system.create(lv.devname)
+        for volume_group in self.volume_groups:
+            devnames = list()
+            monitor = self.udev.get_monitor()
+            monitor.start()
+            for pv in volume_group.physical_volumes:
+                if not pv.reference.devname:
+                    raise LayoutValidationError('devname is not populated, and it should be')
+                devnames.append(pv.reference.devname)
+                self.lvm.pvcreate(pv.reference.devname)
+            self.lvm.vgcreate(volume_group.name, devnames, volume_group.pe_size.bytes)
+            for lv in volume_group.logical_volumes:
+                self.lvm.lvcreate(lv.extents, volume_group.name, lv.name)
+                log.debug(lv.name)
+                log.debug('Monitoring for devname')
+                device = self.udev.monitor_for_volume(monitor, lv.name)
+                lv.devname = device['DEVNAME']
+                log.debug('Found %s' % lv.devname)
+                lv.devlinks = device.get('DEVLINKS', '').split()
+                if lv.file_system:
+                    lv.file_system.create(lv.devname)
 
         self.committed = True
 
