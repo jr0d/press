@@ -28,7 +28,7 @@ class InterfaceTemplate(OrderedDict):
                  default_route=False,
                  ipv4_failure_fatal=False,
                  ipv6init=True,
-                 ipv6_autoconf=True,
+                 ipv6_autoconf=False,
                  ipv6_failure_fatal=False,
                  uid='',
                  name='',
