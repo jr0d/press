@@ -1,4 +1,4 @@
-from press.structure import Size
+from press.layout import Size
 
 
 class VolumeGroupModel(object):

@@ -2,33 +2,34 @@ import os
 import logging
 import yaml
 
+from press import sysfs_info
 from press.configuration import global_defaults
-from press.structure import (
+from press.layout import (
     Layout,
     Partition,
 )
 
-from press.structure.exceptions import (
+from press.layout.exceptions import (
     GeneratorError
 )
 
-from press.structure.lvm import (
+from press.layout.lvm import (
     PhysicalVolume,
     LogicalVolume
 )
 
-from press.structure.size import PercentString
-from press.structure.filesystems.extended import (
+from press.layout.size import PercentString, Size
+from press.layout.filesystems.extended import (
     EXT2,
     EXT3,
     EXT4
 )
 
-from press.structure.filesystems.swap import (
+from press.layout.filesystems.swap import (
     SWAP
 )
 
-from press.structure.filesystems.xfs import XFS
+from press.layout.filesystems.xfs import XFS
 
 from press.models.lvm import VolumeGroupModel
 from press.models.partition import PartitionTableModel
@@ -103,7 +104,7 @@ def _max_primary(partitions):
 
 
 def _fsck_pass(fs_object, lv_or_part, mount_point):
-    if not 'fsck_option' in lv_or_part:
+    if 'fsck_option' not in lv_or_part:
         if fs_object.require_fsck and mount_point:
             # root should fsck on pass 1
             if mount_point == '/':
@@ -323,12 +324,77 @@ def generate_layout_stub(layout_config):
     )
 
 
+def add_bios_boot_partition(partition_table):
+    partitions = partition_table['partitions']
+    if partitions:
+        if 'bios_grub' not in partitions[0].get('flags', list()):
+            LOG.info('Automatically inserting a BIOS boot partition')
+            bios_boot_partition = dict(name='BIOS boot partition', size='1MiB', flags=['bios_grub'])
+            partitions.insert(0, bios_boot_partition)
+        else:
+            LOG.info('BIOS boot partition seems to already be present, kudos!')
+    partition_table['partitions'] = partitions
+
+
+def set_disk_labels(layout, layout_config):
+    """
+    Read into configuration and set label to gpt or msdos based on size.
+    If label is present in the configuration, do nothing.
+    :param layout:
+    :param layout_config:
+    :return:
+    """
+    # TODO: Trace disk generator and inject this
+    partition_tables = layout_config.get('partition_tables')
+    for partition_table in partition_tables:
+        if partition_table.get('label'):
+            LOG.info('Table: %s is set as %s in configuration' % (
+                partition_table.get('disk', 'undefined'), partition_table['label']))
+            continue
+
+        # 'first' and 'any' are valid disk references in the configuration
+        # 'first' indicates the first unallocated disk (as sorted by udev (subsystem->sub_id)
+        # 'any' references that first disk encountered that is large enough to hold the partitions
+        # 'any' is slated for removal in v0.4.0 roadmap
+
+        if partition_table['disk'] == 'first':
+            disk = layout.unallocated[0]
+        elif partition_table['disk'] == 'any':
+            size = Size(0)
+            for partition in partition_table.get('partitions'):
+                # Percent strings are relative and cannot be used to calculate total size
+                if '%' not in partition['size']:
+                    size += Size(partition['size'])
+            disk = layout.find_device_by_size(size)
+        else:
+            disk = layout.find_device_by_ref(partition_table['disk'])
+
+        if not sysfs_info.has_efi():
+            if disk.size.over_2t:
+                LOG.info('%s is over 2.2TiB, using gpt')
+                label = 'gpt'
+                if not layout_config.get('no_bios_boot_partition'):
+                    # TODO: Add config option to disks, allowing user to specify the boot disk
+                    # if disk == the first disk or presumed boot disk
+                    if layout.disks.keys().index(disk.devname) == 0:
+                        add_bios_boot_partition(partition_table)
+            else:
+                LOG.info('%s is under 2.2TiB, using msdos' % disk.devname)
+                label = 'msdos'
+        else:
+            LOG.info('Booting in UEFI mode, using gpt')
+            label = 'gpt'
+        partition_table['label'] = label
+
+
 def layout_from_config(layout_config):
     LOG.info('Generating Layout')
     layout = generate_layout_stub(layout_config)
     partition_tables = layout_config.get('partition_tables')
     if not partition_tables:
         raise GeneratorError('No partition tables have been defined')
+
+    set_disk_labels(layout, layout_config)
 
     for pt in partition_tables:
         ptm = generate_partition_table_model(pt)

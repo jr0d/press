@@ -28,11 +28,12 @@ class Target(object):
         return os.path.join(self.root, path)
 
     @classmethod
-    def probe(cls):
+    def probe(cls, deployment_root):
         """
         function is called to identify
         :return:
         """
+        assert os.path.isdir(deployment_root)
         return False
 
     def run(self):

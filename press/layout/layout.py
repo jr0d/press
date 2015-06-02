@@ -8,10 +8,10 @@ from press.helpers.cli import run
 from press.parted import PartedInterface, NullDiskException, PartedException
 from press.lvm import LVM
 from press.udev import UDevHelper
-from press.structure.disk import Disk
-from press.structure.lvm import VolumeGroup
-from press.structure.size import Size
-from press.structure.exceptions import (
+from press.layout.disk import Disk
+from press.layout.lvm import VolumeGroup
+from press.layout.size import Size
+from press.layout.exceptions import (
     PhysicalDiskException,
     LayoutValidationError,
     GeneralValidationException
@@ -51,7 +51,7 @@ class Layout(object):
             raise PhysicalDiskException('There are no valid disks.')
 
         self.disks = OrderedDict()
-        self.__populate_disks()
+        self.populate_disks()
         if not self.disks:
             raise PhysicalDiskException('There are no valid disks.')
 
@@ -60,7 +60,7 @@ class Layout(object):
 
         self.mount_handler = None
 
-    def __populate_disks(self):
+    def populate_disks(self):
         for udisk in self.udisks:
             device = udisk.get('DEVNAME')
             try:
@@ -373,7 +373,7 @@ class MountHandler(object):
         self.mount('/proc', mount_type='proc')
 
     def mount_sys(self):
-        ## mounting sys may not be needed
+        # mounting sys may not be needed
         self.create_directory(self.join('/sys'))
         self.mount_points['/sys'] = dict(mount_point='/sys',
                                          level=1,

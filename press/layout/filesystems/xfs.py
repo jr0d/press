@@ -1,8 +1,8 @@
 import logging
 
 from press.helpers.cli import run
-from press.structure.filesystems import FileSystem
-from press.structure.exceptions import (
+from press.layout.filesystems import FileSystem
+from press.layout.exceptions import (
     FileSystemCreateException,
     FileSystemFindCommandException
 )

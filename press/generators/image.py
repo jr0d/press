@@ -1,4 +1,4 @@
-from press.structure.exceptions import GeneratorError
+from press.layout.exceptions import GeneratorError
 from press.helpers.download import Download
 
 

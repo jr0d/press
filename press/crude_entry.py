@@ -12,16 +12,14 @@ from configuration import global_defaults
 from generators.chroot import target_mapping
 from generators.post_target import target_mapping as new_target_mapping
 from generators.image import downloader_generator
-from generators.layout import layout_from_config, generate_layout_stub
+from generators.layout import layout_from_config
 from helpers import deployment
 from logger import setup_logging
 from network.base import Network
 from post.common import create_fstab
 from plugins import init_plugins
-from structure.exceptions import ConfigurationError, PressCriticalException
-from structure.layout import MountHandler
-from structure.size import Size
-from sysfs_info import has_efi
+from layout.exceptions import ConfigurationError, PressCriticalException
+from layout.layout import MountHandler
 
 log = logging.getLogger('press')
 
@@ -30,70 +28,6 @@ class Press(object):
     """
     The main orchestrator class, for v1
     """
-    @staticmethod
-    def __add_bios_boot_partition(partition_table):
-        """
-        Hack. We meed to use a BIOS boot partition for booting gpt from BIOS.
-        This will insert a 1MiB partition and flag the partition bios_grub.
-        :return: Modified partition table structure
-        """
-        partitions = partition_table['partitions']
-        if partitions:
-            if 'bios_grub' not in partitions[0].get('flags', list()):
-                log.info('Automatically inserting a BIOS boot partition')
-                bios_boot_partition = dict(name='BIOS boot partition', size='1MiB', flags=['bios_grub'])
-                partitions.insert(0, bios_boot_partition)
-            else:
-                log.info('BIOS boot partition seems to already be present, kudos!')
-        partition_table['partitions'] = partitions
-        return partition_table
-
-    def __associate_disk_labels(self):
-        """
-        Hack. I didn't want to rewrite the partition generators, so I am going to read ahead into the
-        configuration here and update the label field to gpt or msdos, based on associated
-        disk size
-        :return:
-        """
-        layout_configuration = self.configuration['layout']
-        temp_layout = generate_layout_stub(layout_configuration)
-        partition_tables = layout_configuration.get('partition_tables')
-        log.info('Checking configuration for partition label types')
-        for idx in xrange(len(partition_tables)):
-            if partition_tables[idx].get('label'):
-                log.info('Table %d is explicitly set to %s' % (idx, partition_tables[idx].get('label')))
-                continue
-            if partition_tables[idx]['disk'] == 'first':
-                disk = temp_layout.unallocated[0]
-            elif partition_tables[idx]['disk'] == 'any':
-                size = Size(0)
-                for partition in partition_tables[idx].get('partitions'):
-                    if '%' not in partition['size']:
-                        size += Size(partition['size'])
-                disk = temp_layout.find_device_by_size(size)
-            else:
-                disk = temp_layout.find_device_by_ref(partition_tables[idx]['disk'])
-
-            if not has_efi():
-                if disk.size.over_2t:
-                    log.info('%s is over 2.2TiB, using gpt' % disk.devname)
-                    label = 'gpt'
-                    if not layout_configuration.get('no_bios_boot_partition'):
-                        # am I the first, possibly boot, disk?
-                        if temp_layout.disks.keys().index(disk.devname) == 0:
-                            partition_tables[idx] = self.__add_bios_boot_partition(partition_tables[idx])
-                else:
-                    log.info('%s is under 2.2TiB, using msdos' % disk.devname)
-                    label = 'msdos'
-            else:
-                log.info('Booting in UEFI mode, using gpt partition table')
-                label = 'gpt'
-
-            partition_tables[idx]['label'] = label
-
-        layout_configuration['partition_tables'] = partition_tables
-        self.configuration['layout'].update(layout_configuration)
-
     def __init__(self, press_configuration):
         """
         Parse the configuration and instansiate our classes.
@@ -108,8 +42,6 @@ class Press(object):
         layout_config = self.configuration.get('layout')
         if not layout_config:
             raise ConfigurationError('Layout is missing, this is kind of a big deal')
-
-        self.__associate_disk_labels()
 
         self.layout = layout_from_config(layout_config)
         log.info('Layout generation successful')

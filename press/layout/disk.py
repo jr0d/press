@@ -1,7 +1,7 @@
 import logging
 
-from press.structure.exceptions import PartitionValidationError
-from press.structure.size import Size, PercentString
+from press.layout.exceptions import PartitionValidationError
+from press.layout.size import Size, PercentString
 
 GPT = 'gpt'
 MSDOS = 'msdos'

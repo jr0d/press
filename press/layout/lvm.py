@@ -1,8 +1,8 @@
 import os
 import logging
 
-from press.structure.size import Size, PercentString
-from press.structure.exceptions import LVMValidationError
+from press.layout.size import Size, PercentString
+from press.layout.exceptions import LVMValidationError
 
 log = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
-from press.structure import Partition
-from press.structure.size import PercentString
-from press.structure.filesystems.extended import EXT4
-from press.structure.lvm import PhysicalVolume, VolumeGroup, LogicalVolume
+from press.layout import Partition
+from press.layout.size import PercentString
+from press.layout.filesystems.extended import EXT4
+from press.layout.lvm import PhysicalVolume, VolumeGroup, LogicalVolume
 from press.logger import setup_logging
 
 import logging
