@@ -73,7 +73,9 @@ class VolumeGroup(object):
         self._validate_volume(volume)
         extents = volume.size.bytes / self.pe_size.bytes
         unused = volume.size % self.pe_size
-        log.info('Adding logical volume: %d / %d LE, unusable: %s' % (volume.size.bytes, extents, unused))
+        log.info('Adding logical volume <%s>: %d / %d LE, unusable: %s' % (volume.name,
+                                                                           volume.size.bytes,
+                                                                           extents, unused))
         allocated_pe = self.current_pe + extents
         log.debug('allocated: %d , total: %d' % (allocated_pe, self.extents))
         if allocated_pe == self.extents:
