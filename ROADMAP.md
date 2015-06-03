@@ -5,11 +5,9 @@
 * Disto Support
     - RHEL 6/7
     - Debian 7/8
-    - Ubuntu 12.04 - 15.04
+    - Ubuntu 12.04, 14.04, 15.04
     - Gentoo
     - Arch
-    - SLES
-    - Oracle EL
 * kexec booting
 * Clean up configuration disk references
     - remove 'any'
@@ -22,6 +20,8 @@
 * Clean up structure/models/generators so they make more sense
 * Full "end user" configuration documentation
 * Tests
+* Post Target discovery, import, and registration
+    - Find a better name for this, they are the things that run OS specific post actions
 
 # "Wishful Thinking" release v0.5.0
 * Move disk scanning and bare metal operation to disk object
@@ -30,3 +30,11 @@
 declaration
 * cloud-init support
 * Raw and QCOW2 image support
+* Distro Support
+    - SLES
+    - Oracle EL
+* OS Support (Pending discovery)
+    - Citrix XenServer
+    - ESX
+    - FreeBSD/OpenBSD
+    - Microsoft Windows
