@@ -2,8 +2,9 @@ import logging
 import os
 
 from press.helpers import deployment, package
-from press.post.targets import Target
-from press.post.targets.linux import util
+from press.targets import Target
+from press.targets.linux import util
+
 
 log = logging.getLogger(__name__)
 

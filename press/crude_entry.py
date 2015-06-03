@@ -16,7 +16,6 @@ from generators.layout import layout_from_config
 from helpers import deployment
 from logger import setup_logging
 from network.base import Network
-from post.common import create_fstab
 from plugins import init_plugins
 from layout.exceptions import ConfigurationError, PressCriticalException
 from layout.layout import MountHandler
@@ -122,7 +121,7 @@ class Press(object):
 
     def write_fstab(self):
         log.info('Writing fstab')
-        create_fstab(self.layout.generate_fstab(), self.target)
+        deployment.create_fstab(self.layout.generate_fstab(), self.target)
 
     def configure_network(self):
         if self.network:

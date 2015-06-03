@@ -1,0 +1,7 @@
+This plugin handles the installation of server management software for a
+specific OS and platform
+
+Targets will include installation of:
+    Dell OpenManage
+    HP PSP
+    VMWare Virtutils

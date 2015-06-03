@@ -147,6 +147,7 @@ def remove_file(path):
 
 
 def tar_extract(archive_path, chdir=''):
+    # TODO: read header to determine compression / archive type?
     bzip_extensions = ('bz2', 'tbz', 'tbz2')
     compress_method = 'z'
     use_bzip = bool([i for i in bzip_extensions if archive_path.endswith(i)])
@@ -155,3 +156,8 @@ def tar_extract(archive_path, chdir=''):
 
     return cli.run('tar -%sxf %s%s' % (compress_method, archive_path,
                                        chdir and ' -C %s' % chdir or ''))
+
+
+def create_fstab(fstab, target):
+    path = os.path.join(target, 'etc/fstab')
+    write(path, fstab)
