@@ -21,9 +21,12 @@
 * Seriously stable partitioning operations
 * Clean up structure/models/generators so they make more sense
 * Full "end user" configuration documentation
+* Tests
 
 # "Wishful Thinking" release v0.5.0
 * Move disk scanning and bare metal operation to disk object
     - MockDisk() for testing
 * Probe functions in post configuration targets, allowing the user to omit a target
 declaration
+* cloud-init support
+* Raw and QCOW2 image support
