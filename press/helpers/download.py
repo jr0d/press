@@ -78,7 +78,7 @@ class Download(object):
         self.full_filename = self.url.split('file://')[1]
 
     def download(self, callback_func=None):
-        """Start the download_directory
+        """Start the download
 
         Downloads the file located at self.url to self.download_directory
 
