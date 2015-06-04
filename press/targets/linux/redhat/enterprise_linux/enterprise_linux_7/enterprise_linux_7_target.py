@@ -3,8 +3,8 @@ import os
 import shlex
 
 from press.helpers import deployment, networking as net_helper
-from press.post.targets import GeneralPostTargetError
-from press.post.targets.linux.redhat.enterprise_linux.enterprise_linux_target \
+from press.targets import GeneralPostTargetError
+from press.targets.linux.redhat.enterprise_linux.enterprise_linux_target \
     import EnterpriseLinuxTarget
 from press.targets.linux.redhat.enterprise_linux.enterprise_linux_7 \
     import networking

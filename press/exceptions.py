@@ -41,3 +41,7 @@ class ConfigurationError(Exception):
 
 class PressCriticalException(Exception):
     pass
+
+
+class ImageValidationException(Exception):
+    pass

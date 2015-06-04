@@ -1,44 +1,18 @@
 import logging
 
 # Press imports
-from .configuration import global_defaults
-from .generators.chroot import target_mapping
-from .generators.post_target import target_mapping as new_target_mapping
-from .generators.image import downloader_generator
-from .generators.layout import layout_from_config, generate_layout_stub
+from .layout.layout_mixin import LayoutMixin
+from .generators.image import ImageMixin
+from .generators.post_target import target_mapping
 from .helpers import deployment
-from .logger import setup_logging
-from .network.base import Network
-from .plugins import init_plugins
-from .layout.exceptions import ConfigurationError, PressCriticalException
-from .layout.layout import MountHandler
-from .layout.size import Size
-from .sysfs_info import has_efi
 
 log = logging.getLogger('press')
 
 
-class Press(object):
+class Press(LayoutMixin, ImageMixin):
     """
 
     """
-    def generate_layout(self):
-        layout_config = self.configuration.get('layout')
-        if not layout_config:
-            raise ConfigurationError('Layout is missing')
-        self.layout = layout_from_config(layout_config)
-
-    def global_proxy(self):
-        pi = self.configuration.get('proxy_info')
-        if pi:
-            log.debug('Using proxy, %s, where possible.' % pi)
-        self.proxy_info = pi
-
-    def set_downloader(self):
-        self.downloader = downloader_generator(self.image_configuration,
-                                               self.deployment_root,
-                                               self.proxy_info)
-
     def __init__(self, press_configuration,
                  deployment_root='/mnt/press',
                  staging_dir='/.press'
@@ -53,27 +27,24 @@ class Press(object):
         self.deployment_root = deployment_root.rstrip('/')
         self.staging_dir = staging_dir
 
+        LayoutMixin.__init__(self, press_configuration, deployment_root)
+        ImageMixin.__init__(self, press_configuration, deployment_root)
+
         log.info('Press initializing', extra={'press_event': 'initializing'})
 
-        self.layout = None
-        self.proxy_info = None
-        self.image_target = None
-        self.downloader = None
-        self.generate_layout()
+        self.image_target = press_configuration.get('target')
+        # Replaced once dynamic target discovery is implemented
+        self.post_configuration_target = target_mapping.get(self.image_target)
 
-    def download_image(self):
-        def our_callback(total, done):
-            log.debug('Downloading: %.1f%%' % (float(done) / float(total) * 100))
-
-        log.info('Starting Download...')
-        self.downloader.download(our_callback)
-        log.info('done')
-
-    def validate_image(self):
-
-    @property
-    def image_configuration(self):
-        return self.configuration.get('image')
+    def post_configuration(self):
+        log.info('Running post configuration target')
+        obj = self.post_configuration_target(self.configuration,
+                                             self.layout.disks,
+                                             self.deployment_root,
+                                             self.staging_dir)
+        self.create_staging_dir()
+        obj.run()
+        self.remove_staging_dir()
 
     @property
     def full_staging_dir(self):
@@ -85,4 +56,19 @@ class Press(object):
     def remove_staging_dir(self):
         deployment.recursive_remove(self.full_staging_dir)
 
+    def run(self):
+        log.info('Installation is starting', extra={'press_event': 'deploying'})
+        self.apply_layout()
+        if self.image_configuration:
+            self.mount_file_systems()
+            log.info('Fetching image at %s' % self.imagefile.url,
+                     extra={'press_event': 'downloading'})
+            self.run_image_ops()
+            log.info('Configuring image', extra={'press_event': 'configuring'})
+            self.write_fstab()
+            self.mount_pseudo_file_systems()
+            self.post_configuration()
+        else:
+            log.info('Press configured in layout only mode, finishing up.')
+        log.info('Finished', extra={'press_event': 'complete'})
 

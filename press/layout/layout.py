@@ -11,7 +11,7 @@ from press.udev import UDevHelper
 from press.layout.disk import Disk
 from press.layout.lvm import VolumeGroup
 from press.layout.size import Size
-from press.layout.exceptions import (
+from press.exceptions import (
     PhysicalDiskException,
     LayoutValidationError,
     GeneralValidationException

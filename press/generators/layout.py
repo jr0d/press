@@ -1,5 +1,6 @@
 import os
 import logging
+
 import yaml
 
 from press import sysfs_info
@@ -8,29 +9,23 @@ from press.layout import (
     Layout,
     Partition,
 )
-
-from press.layout.exceptions import (
+from press.exceptions import (
     GeneratorError
 )
-
 from press.layout.lvm import (
     PhysicalVolume,
     LogicalVolume
 )
-
 from press.layout.size import PercentString, Size
 from press.layout.filesystems.extended import (
     EXT2,
     EXT3,
     EXT4
 )
-
 from press.layout.filesystems.swap import (
     SWAP
 )
-
 from press.layout.filesystems.xfs import XFS
-
 from press.models.lvm import VolumeGroupModel
 from press.models.partition import PartitionTableModel
 

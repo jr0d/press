@@ -2,7 +2,7 @@ import logging
 
 from press.helpers.cli import run
 from . import FileSystem
-from ..exceptions import FileSystemCreateException, FileSystemFindCommandException
+from press.exceptions import FileSystemCreateException, FileSystemFindCommandException
 from press.udev import UDevHelper
 
 

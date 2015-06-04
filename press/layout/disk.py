@@ -1,6 +1,6 @@
 import logging
 
-from press.layout.exceptions import PartitionValidationError
+from press.exceptions import PartitionValidationError
 from press.layout.size import Size, PercentString
 
 GPT = 'gpt'
