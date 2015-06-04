@@ -5,9 +5,9 @@ from collections import OrderedDict
 
 from press import helpers
 from press.helpers.cli import run
-from press.parted import PartedInterface, NullDiskException, PartedException
-from press.lvm import LVM
-from press.udev import UDevHelper
+from press.helpers.parted import PartedInterface, NullDiskException, PartedException
+from press.helpers.lvm import LVM
+from press.helpers.udev import UDevHelper
 from press.layout.disk import Disk
 from press.layout.lvm import VolumeGroup
 from press.layout.size import Size

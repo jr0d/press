@@ -1,4 +1,4 @@
-from press.sysfs_info import NetDeviceInfo
+from press.helpers.sysfs_info import NetDeviceInfo
 
 
 def cidr2mask(prefix):

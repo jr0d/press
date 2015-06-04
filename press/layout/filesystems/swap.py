@@ -3,7 +3,7 @@ import logging
 from press.helpers.cli import run
 from . import FileSystem
 from press.exceptions import FileSystemCreateException, FileSystemFindCommandException
-from press.udev import UDevHelper
+from press.helpers.udev import UDevHelper
 
 
 log = logging.getLogger(__name__)

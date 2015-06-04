@@ -1,9 +1,11 @@
 import logging
 import os
-from press.helpers.deployment import write
-from press.udev import UDevHelper
 
 from jinja2 import Environment, FileSystemLoader
+
+from press.helpers.deployment import write
+from press.helpers.udev import UDevHelper
+
 
 log = logging.getLogger(__name__)
 

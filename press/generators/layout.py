@@ -3,7 +3,7 @@ import logging
 
 import yaml
 
-from press import sysfs_info
+from press.helpers import sysfs_info
 from press.configuration import global_defaults
 from press.layout import (
     Layout,

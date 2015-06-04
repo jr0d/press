@@ -1,8 +1,8 @@
 import logging
 
 from press.helpers.cli import run, find_in_path
-from press.sysfs_info import AlignmentInfo, append_sys
-from press.udev import UDevHelper
+from press.helpers.sysfs_info import AlignmentInfo, append_sys
+from press.helpers.udev import UDevHelper
 
 log = logging.getLogger(__name__)
 
