@@ -14,7 +14,10 @@ log = logging.getLogger(__name__)
 
 
 class EL7Target(EnterpriseLinuxTarget):
-    name = 'el7'
+    """
+    Should work with CentOS and RHEL.
+    """
+    name = 'enterprise_linux_7'
 
     grub_cmdline_config_path = '/etc/default/grub'
     network_scripts_path = '/etc/sysconfig/network-scripts'

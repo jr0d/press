@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 
 class LinuxTarget(Target):
-    name = 'Linux'
+    name = 'linux'
 
     def set_language(self, language):
         _locale = 'LANG=%s\nLC_MESSAGES=C\n' % language

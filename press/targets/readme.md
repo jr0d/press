@@ -62,3 +62,7 @@ Extending:
 Plugins may import a base class, override, and extend methods and then call register_target. Plugin registered targets
 will be scanned by press after supported target classes, ensuring that the plugin classes have priority
 
+---
+
+v0.5 update: This will be replaced by a Task() Manifest() model. The primary reason for the shift in thinking is the
+ability to easily add in Task order and dependency enforcement, rather than relying on mro and class overrides.
