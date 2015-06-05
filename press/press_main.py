@@ -1,10 +1,10 @@
 import logging
 
 # Press imports
-from .layout.layout_mixin import LayoutMixin
-from .generators.image import ImageMixin
-from .generators.post_target import target_mapping
-from .helpers import deployment
+from press.layout.layout_mixin import LayoutMixin
+from press.generators.image import ImageMixin
+from press.helpers import deployment
+from press.targets.registration import post_configurators
 
 log = logging.getLogger('press')
 
@@ -34,14 +34,20 @@ class Press(LayoutMixin, ImageMixin):
 
         self.image_target = press_configuration.get('target')
         # Replaced once dynamic target discovery is implemented
-        self.post_configuration_target = target_mapping.get(self.image_target)
+        self.post_configuration_target = post_configurators.vendor.get(self.image_target)
 
     def post_configuration(self):
+        if not self.post_configuration_target:
+            log.info('Target: %s is not supported' % self.image_target)
+            return
+
         log.info('Running post configuration target')
         obj = self.post_configuration_target(self.configuration,
                                              self.layout.disks,
                                              self.deployment_root,
                                              self.staging_dir)
+        self.write_fstab()
+        self.mount_pseudo_file_systems()
         self.create_staging_dir()
         obj.run()
         self.remove_staging_dir()
@@ -65,8 +71,6 @@ class Press(LayoutMixin, ImageMixin):
                      extra={'press_event': 'downloading'})
             self.run_image_ops()
             log.info('Configuring image', extra={'press_event': 'configuring'})
-            self.write_fstab()
-            self.mount_pseudo_file_systems()
             self.post_configuration()
         else:
             log.info('Press configured in layout only mode, finishing up.')

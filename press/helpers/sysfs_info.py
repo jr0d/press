@@ -1,4 +1,6 @@
-"""sysfs helpers
+"""sysfs helpers...
+
+Really horrible class design, rewrite please. Lets say I wasn't invested.
 """
 import os
 
@@ -112,8 +114,8 @@ class NetDeviceInfo(SysFSInfo):
     def list_interfaces(cls, exclude_loopback=True):
         path = append_sys(cls.class_path)
         interfaces = os.listdir(path)
-        if exclude_loopback:
-            interfaces = [interface for interface in interfaces if interface != 'lo']
+        if exclude_loopback and 'lo' in interfaces:
+            interfaces.remove('lo')
         return interfaces
 
 def has_efi():

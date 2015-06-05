@@ -108,7 +108,7 @@ def lookup_interface(interface, dev_missing_ok=False):
             class Duck(object):
                 devname = ref['value']
             ndi = Duck
-            log.warn('Duck typing an NetDeviceInfo object, %s does not seem to exist' % ref['value'])
+            log.warn('Duck typing NetDeviceInfo object, %s does not seem to exist' % ref['value'])
         else:
             raise NetworkConfigurationException('Press 0.3 Could not find device: %s' % ref['value'])
     return interface['name'], ndi
