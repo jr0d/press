@@ -129,7 +129,29 @@ class LinuxTarget(Target):
         else:
             log.warn('No nameservers or search domains are defined')
 
+    @property
+    def network_configuration(self):
+        return self.press_configuration.get('network') or \
+            self.press_configuration.get('networking')
+
+    def update_etc_hosts(self):
+        hostname = self.network_configuration.get('hostname')
+        if not hostname:
+            return
+        networks = self.network_configuration.get('networks')
+        if not networks:
+            return
+
+        for network in networks:
+            default_route = network.get('default_route')
+            if default_route:
+                data = '%s %s\n' % (network.get('ip_address'), hostname)
+                log.info('Adding %s to /etc/hosts' % data)
+                deployment.write(self.join_root('/etc/hosts'), data, append=True)
+                break
+
     def run(self):
         self.localization()
         self.authentication()
         self.set_hostname()
+        self.update_etc_hosts()
