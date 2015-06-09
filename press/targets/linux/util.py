@@ -1,7 +1,7 @@
 import crypt
 import os
 import random
-
+import shlex
 
 def join_root(root, path):
     return os.path.join(root, path.lstrip('/'))
@@ -75,3 +75,20 @@ def format_change_password(name, p, is_encrypted=True):
     else:
         hashed_password = p
     return 'usermod --password \'%s\' %s' % (hashed_password, name)
+
+
+def opts_modifier(l, appending, removing):
+    config_line = l.split('=', 1)
+    if not len(config_line) > 1:
+        var = config_line[0]
+        options = '\"\"'
+    else:
+        var, options = tuple(l.split('=', 1))
+    if options.startswith('"') and options.endswith('"'):
+        options = options[1:-1]
+    options = shlex.split(options)
+    options = [o for o in options if o not in removing]
+    if appending:
+        options += appending
+
+    return '%s=\"%s\"' % (var, ' '.join(options))

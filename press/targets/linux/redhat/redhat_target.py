@@ -24,14 +24,16 @@ class RedhatTarget(LinuxTarget):
         res = self.chroot(command)
         if res.returncode:
             log.error('Failed to install package %s' % package)
-        log.info('Installed: %s' % package)
+        else:
+            log.info('Installed: %s' % package)
 
-    def install_pacakges(self, packages):
+    def install_packages(self, packages):
         command = '%s installl -y --quiet %s' % (self.yum_path, ' '.join(packages))
         res = self.chroot(command)
         if res.returncode:
             log.error('Failed to install packages: %s' % ' '.join(packages))
-        log.info('Installed: %s' % ' '.join(packages))
+        else:
+            log.info('Installed: %s' % ' '.join(packages))
         return res.returncode
 
     def package_exists(self, package_name):
@@ -50,25 +52,8 @@ class RedhatTarget(LinuxTarget):
         return True
 
     @property
-    def has_os_release(self):
-        return os.path.exists(self.join_root('/etc/os-release'))
-
-    @property
     def has_redhat_release(self):
         return os.path.exists(self.join_root('/etc/redhat-release'))
-
-    @property
-    def os_release(self):
-        release_info = dict()
-        if not self.has_os_release:
-            return release_info
-        data = deployment.read(self.join_root('/etc/os-release'))
-        for line in data.splitlines():
-            line = line.strip()
-            if line:
-                k, v = line.split('=')
-                release_info[k.lower()] = v.strip('\"')
-        return release_info
 
     def parse_redhat_release(self):
         """
@@ -85,5 +70,5 @@ class RedhatTarget(LinuxTarget):
             release_info['version'] = data[-2]
             release_info['os'] = data.split('release')[0].strip()
         except IndexError:
-            log.error('Error parsing redhat-relase')
+            log.error('Error parsing redhat-release')
         return release_info
