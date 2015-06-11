@@ -4,7 +4,7 @@ import logging
 from press.layout.layout_mixin import LayoutMixin
 from press.generators.image import ImageMixin
 from press.helpers import deployment
-from press.targets.registration import post_configurators
+from press.targets import VendorRegistry
 
 log = logging.getLogger('press')
 
@@ -34,7 +34,7 @@ class Press(LayoutMixin, ImageMixin):
 
         self.image_target = press_configuration.get('target')
         # Replaced once dynamic target discovery is implemented
-        self.post_configuration_target = post_configurators.vendor.get(self.image_target)
+        self.post_configuration_target = VendorRegistry.targets.get(self.image_target)
 
     def post_configuration(self):
         if not self.post_configuration_target:

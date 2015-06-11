@@ -1,55 +1,15 @@
-import os
+from target_base import (
+    Chroot,
+    GeneralPostTargetError,
+    Target,
+    VendorRegistry
+)
 
-from press.helpers.cli import run_chroot
+from press.targets import linux
 
-
-class Chroot(object):
-    def __init__(self, root, staging_dir):
-        self.root = root
-        self.staging_dir = staging_dir
-
-    def __call__(self, command, raise_exception=False, quiet=False):
-        return run_chroot(command, root=self.root, staging_dir=self.staging_dir,
-                          raise_exception=raise_exception, quiet=quiet)
-
-
-class Target(object):
-    name = ''
-
-    def __init__(self, press_configuration, disks, root, chroot_staging_dir):
-        self.press_configuration = press_configuration
-        self.disks = disks
-        self.root = root
-        self.chroot_staging_dir = chroot_staging_dir
-        self.chroot = Chroot(self.root, self.chroot_staging_dir)
-
-    def join_root(self, path):
-        path = path.lstrip('/')
-        return os.path.join(self.root, path)
-
-    @classmethod
-    def probe(cls, deployment_root):
-        """
-        function is called to identify
-        :return:
-        """
-        assert os.path.isdir(deployment_root)
-        return False
-
-    def run(self):
-        """
-        Called by press, overrides should take care to call the run function of their parent unless the override
-        is meant to replace all of the parents functionality
-
-        eg:
-            class EnterpriseLinux7(Redhat):
-                def run(self):
-                    super(EnterpriseLinux7, self).run()
-                    el7_function()
-        :return:
-        """
-        return self
-
-
-class GeneralPostTargetError(Exception):
-    pass
+import linux.linux_target
+import linux.debian.debian_target
+import linux.debian.ubuntu_1404.ubuntu1404_target
+import linux.redhat.redhat_target
+import linux.redhat.enterprise_linux.enterprise_linux_target
+import linux.redhat.enterprise_linux.enterprise_linux_7.enterprise_linux_7_target
