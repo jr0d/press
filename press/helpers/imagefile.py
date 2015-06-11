@@ -58,7 +58,8 @@ class ImageFile(object):
             self.image_exists = True
             self.full_filename = filename
         else:
-            self.full_filename = os.path.join(self.download_directory, filename)
+            self.full_filename = os.path.join(self.download_directory,
+                                              os.path.basename(filename))
 
     def hash_file(self):
         """
