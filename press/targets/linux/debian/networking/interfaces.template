@@ -8,14 +8,16 @@ iface lo inet loopback
 
 # Additional network interfaces go below.
 {% for network in networks %}
-auto {{ network.interface }}
+auto {{ network.device }}
     iface {{ network.interface }} inet static
         address {{ network.ip_address }}
         netmask {{ network.netmask }}
-        {% if network.gateway %}gateway {{ network.gateway }}{% endif %}
-        {% for route in network.routes %}
+{% if network.gateway %}
+        gateway {{ network.gateway }}
+{% endif %}
+{% for route in network.routes %}
             post-up route add -net {{ route.cidr }} gw {{ route.gateway }}
             post-down route del -net {{ route.cidr }} gw {{ route.gateway }}
-        {% endfor %}
+{% endfor %}
 
 {% endfor %}

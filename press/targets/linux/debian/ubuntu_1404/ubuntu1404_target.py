@@ -24,6 +24,7 @@ class Ubuntu1404Target(DebianTarget, Grub2):
 
     def run(self):
         super(DebianTarget, self).run()
+        self.write_interfaces()
         self.update_host_keys()
         self.update_debconf_for_grub()
         self.install_grub2()

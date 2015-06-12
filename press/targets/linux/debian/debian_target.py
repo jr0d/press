@@ -1,6 +1,7 @@
 import logging
 
 from press.targets.linux.linux_target import LinuxTarget
+from press.targets.linux.debian.networking import debian_networking
 
 log = logging.getLogger(__name__)
 
@@ -43,3 +44,9 @@ class DebianTarget(LinuxTarget):
     def remove_packages(self, packages):
         log.info('Removing: %s' % ' '.join(packages))
         self.chroot(self.__apt_command + ' remove %s' % ' '.join(packages))
+
+    def write_interfaces(self):
+        interfaces_path = self.join_root('/etc/network/interfaces')
+        if self.network_configuration:
+            log.info('Writing network configuration')
+            debian_networking.write_interfaces(interfaces_path, self.network_configuration)
