@@ -45,3 +45,7 @@ class PressCriticalException(Exception):
 
 class ImageValidationException(Exception):
     pass
+
+
+class NetworkConfigurationError(ConfigurationError):
+    pass
