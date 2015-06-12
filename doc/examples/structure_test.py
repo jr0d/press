@@ -1,4 +1,4 @@
-from press.structure import Size, Layout, Disk, PartitionTable, Partition, EXT4, PercentString
+from press.layout import Size, Layout, Disk, PartitionTable, Partition, EXT4, PercentString
 
 
 s1 = Size(19674)

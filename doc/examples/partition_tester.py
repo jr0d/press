@@ -1,5 +1,5 @@
 from press.models.partition import PartitionTableModel
-from press.structure import EXT4, Partition, PercentString, Size, Layout, SWAP
+from press.layout import EXT4, Partition, PercentString, Size, Layout, SWAP
 from press.logger import setup_logging
 
 import logging

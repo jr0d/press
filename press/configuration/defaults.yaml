@@ -1,0 +1,14 @@
+layout_defaults:
+  use_fibre_channel: false
+  loop_only: false
+
+partition_table_defaults:
+  partition_start: 1048576
+  alignment: 1048576
+
+partition_defaults:
+  flags: []
+
+volume_group_defaults:
+  pe_size: 4MiB
+

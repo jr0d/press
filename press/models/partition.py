@@ -1,6 +1,6 @@
 import logging
 
-from press.structure import Size
+from press.layout import Size
 
 log = logging.getLogger(__name__)
 

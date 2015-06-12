@@ -2,6 +2,7 @@ import hashlib
 import logging
 import os
 import requests
+import shutil
 import time
 import urlparse
 
@@ -47,8 +48,11 @@ class Download(object):
         if download_directory is None:
             self.download_directory = '/tmp'
 
+        parsed_url = urlparse.urlparse(self.url)
+
+        self.url_scheme = parsed_url.scheme
+
         if filename is None:
-            parsed_url = urlparse.urlparse(self.url)
             new_filename = os.path.basename(parsed_url.path)
             if new_filename:
                 self.filename = new_filename
@@ -65,8 +69,16 @@ class Download(object):
             output.append('%s=%s' % (attr_name, attr))
         return 'Download(%s)' % ', '.join(output)
 
+    def hash_file_url(self):
+        """
+
+        :return:
+        """
+        # urlparse doesn't support relative paths with file://
+        self.full_filename = self.url.split('file://')[1]
+
     def download(self, callback_func=None):
-        """Start the download_directory
+        """Start the download
 
         Downloads the file located at self.url to self.download_directory
 
@@ -75,6 +87,10 @@ class Download(object):
         Raises an exception on error, otherwise the download was completed(as far as http is concerned)
 
         """
+        if self.url_scheme == 'file':
+            self.hash_file_url()
+            return
+
         byte_count = 0
         if self.proxy:
             proxies = {
@@ -118,6 +134,7 @@ class Download(object):
 
         This doesn't do anything, subclasses(like qcow) or something could do something like mount an image
         """
+        assert self  # stop pycharm from telling me this can be static
         pass
 
     def extract(self, target_path):

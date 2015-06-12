@@ -1,1 +1,1 @@
-import structure
+from press_main import Press

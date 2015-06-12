@@ -1,3 +1,4 @@
+import os
 import pkg_resources
 
 
@@ -11,3 +12,7 @@ def get_package_version(package):
 
 def get_press_version():
     return get_package_version('press')
+
+
+def get_press_location():
+    return os.path.abspath(pkg_resources.get_distribution('press').location)

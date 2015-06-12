@@ -2,7 +2,7 @@ import logging
 import sys
 
 from press.models.partition import PartitionTableModel
-from press.structure import EXT4, Partition, PercentString, Layout, SWAP
+from press.layout import EXT4, Partition, PercentString, Layout, SWAP
 from press.chroot.debian import DebianChroot
 from press.network.base import Network
 from press.helpers.cli import run

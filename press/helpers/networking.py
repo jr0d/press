@@ -1,4 +1,4 @@
-from press.sysfs_info import NetDeviceInfo
+from press.helpers.sysfs_info import NetDeviceInfo
 
 
 def cidr2mask(prefix):
@@ -36,7 +36,7 @@ def get_network(cidr_ip):
 
 
 def get_device_by_dev(dev):
-    if not dev in NetDeviceInfo.list_interfaces():
+    if dev not in NetDeviceInfo.list_interfaces():
         return
     return NetDeviceInfo(dev)
 

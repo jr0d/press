@@ -1,7 +1,7 @@
 from press.models.lvm import VolumeGroupModel
 from press.models.partition import PartitionTableModel
-from press.structure import EXT4, Partition, PercentString, Layout, SWAP
-from press.structure.lvm import LogicalVolume, PhysicalVolume
+from press.layout import EXT4, Partition, PercentString, Layout, SWAP
+from press.layout.lvm import LogicalVolume, PhysicalVolume
 
 from press.logger import setup_logging
 

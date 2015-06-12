@@ -1,8 +1,7 @@
 from pprint import pprint
-import sys
 
-from press.parted import PartedInterface
-from press.structure import Size
+from press.helpers.parted import PartedInterface
+from press.layout import Size
 
 pi = PartedInterface(device='/dev/loop0')
 #if not pi.has_label:
