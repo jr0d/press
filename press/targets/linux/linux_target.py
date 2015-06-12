@@ -6,7 +6,6 @@ from press.helpers import deployment, package, cli
 from press.targets import Target
 from press.targets import util
 
-
 log = logging.getLogger(__name__)
 
 
@@ -72,13 +71,13 @@ class LinuxTarget(Target):
                 if not util.auth.user_exists(user, self.root):
                     log.info('Creating user: %s' % user)
                     self.chroot(util.auth.format_useradd(user,
-                                                    _u.get('uid'),
-                                                    _u.get('group'),
-                                                    _u.get('groups'),
-                                                    _u.get('home'),
-                                                    _u.get('shell'),
-                                                    _u.get('create_home', True),
-                                                    _u.get('system', False)))
+                                                         _u.get('uid'),
+                                                         _u.get('group'),
+                                                         _u.get('groups'),
+                                                         _u.get('home'),
+                                                         _u.get('shell'),
+                                                         _u.get('create_home', True),
+                                                         _u.get('system', False)))
                 else:
                     log.warn('Defined user, %s, already exists' % user)
 
@@ -141,6 +140,7 @@ class LinuxTarget(Target):
         hostname = self.network_configuration.get('hostname')
         if not hostname:
             return
+
         networks = self.network_configuration.get('networks')
         if not networks:
             return
