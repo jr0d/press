@@ -3,7 +3,7 @@ import os
 
 from press.helpers import deployment
 from press.targets import Target
-from press.targets.linux import util
+from press.targets import util
 
 log = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ class Grub2(Target):
                 continue
 
             if self.grub2_cmdline_name in line:
-                data[idx] = util.opts_modifier(line, appending, removing)
+                data[idx] = util.misc.opts_modifier(line, appending, removing)
                 log.debug('%s > %s' % (line, data[idx]))
                 modified = True
                 continue

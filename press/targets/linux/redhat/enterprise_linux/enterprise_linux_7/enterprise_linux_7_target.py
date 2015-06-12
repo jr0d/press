@@ -3,6 +3,7 @@ import os
 
 from press.helpers import deployment, networking as net_helper
 from press.targets import GeneralPostTargetError
+from press.targets import util
 from press.targets.linux.grub2_target import Grub2
 from press.targets.linux.redhat.enterprise_linux.enterprise_linux_target \
     import EnterpriseLinuxTarget
@@ -68,7 +69,7 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
         interfaces = network_configuration.get('interfaces', list())
         networks = network_configuration.get('networks')
         for interface in interfaces:
-            name, device = networking.lookup_interface(interface, interface.get('missing_ok', False))
+            name, device = util.networking.lookup_interface(interface, interface.get('missing_ok', False))
 
             for network in networks:
                 if name == network.get('interface'):

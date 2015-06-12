@@ -4,7 +4,7 @@ import os
 
 from press.helpers import deployment, package, cli
 from press.targets import Target
-from press.targets.linux import util
+from press.targets import util
 
 
 log = logging.getLogger(__name__)
@@ -38,9 +38,9 @@ class LinuxTarget(Target):
             log.info('Setting localtime: %s' % timezone)
 
     def __groupadd(self, group, gid=None, system=False):
-        if not util.group_exists(group, self.root):
+        if not util.auth.group_exists(group, self.root):
             log.info('Creating group %s' % group)
-            self.chroot(util.format_groupadd(group, gid, system))
+            self.chroot(util.auth.format_groupadd(group, gid, system))
         else:
             log.warn('Group %s already exists' % group)
 
@@ -69,9 +69,9 @@ class LinuxTarget(Target):
 
                 # Add user
 
-                if not util.user_exists(user, self.root):
+                if not util.auth.user_exists(user, self.root):
                     log.info('Creating user: %s' % user)
-                    self.chroot(util.format_useradd(user,
+                    self.chroot(util.auth.format_useradd(user,
                                                     _u.get('uid'),
                                                     _u.get('group'),
                                                     _u.get('groups'),
@@ -89,7 +89,7 @@ class LinuxTarget(Target):
                 password_options = _u.get('password_options', dict())
                 is_encrypted = password_options.get('encrypted', True)
                 log.info('Setting password for %s' % user)
-                self.chroot(util.format_change_password(user, password, is_encrypted))
+                self.chroot(util.auth.format_change_password(user, password, is_encrypted))
             else:
                 log.warn('User %s has no password defined' % user)
 
