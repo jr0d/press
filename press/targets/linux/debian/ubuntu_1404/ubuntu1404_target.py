@@ -26,6 +26,7 @@ class Ubuntu1404Target(DebianTarget, Grub2):
         super(DebianTarget, self).run()
         self.write_interfaces()
         self.update_host_keys()
+        self.remove_resolvconf()
         self.update_debconf_for_grub()
         self.install_grub2()
         self.write_resolvconf()
