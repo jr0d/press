@@ -80,9 +80,9 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
 
     def run(self):
         super(EL7Target, self).run()
+        self.update_host_keys()
+        self.configure_networks()
         self.rebuild_initramfs()
         self.check_for_grub()
         self.install_grub2()
-        self.update_host_keys()
-        self.configure_networks()
         self.write_resolvconf()
