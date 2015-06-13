@@ -171,8 +171,16 @@ class LinuxTarget(Target):
             log.debug('Updating %s' % path)
             self.ssh_keygen(path, key_type, comment=hostname)
 
+    def copy_resolvconf(self):
+        if not os.path.exists('/etc/resolv.conf'):
+            log.warn('Host resolv.conf is missing')
+            return
+        deployment.write(self.join_root('/etc/resolv.conf'),
+                         deployment.read('/etc/resolv.conf'))
+
     def run(self):
         self.localization()
         self.authentication()
         self.set_hostname()
         self.update_etc_hosts()
+        self.copy_resolvconf()

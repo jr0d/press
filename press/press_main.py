@@ -61,6 +61,8 @@ class Press(LayoutMixin, ImageMixin):
         obj.run()
         self.run_extensions(obj)
         self.remove_staging_dir()
+        if hasattr(obj, 'write_resolvconf'):
+            obj.write_resolvconf()
 
     @property
     def full_staging_dir(self):
