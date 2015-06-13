@@ -29,4 +29,3 @@ class Ubuntu1404Target(DebianTarget, Grub2):
         self.remove_resolvconf()
         self.update_debconf_for_grub()
         self.install_grub2()
-        self.write_resolvconf()
