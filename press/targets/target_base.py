@@ -67,5 +67,23 @@ class Target(object):
         return self
 
 
+
+class TargetExtension(object):
+    __extends__ = ''
+
+    def __init__(self, target_obj):
+        self.target = target_obj
+
+    def run(self):
+        """
+
+        :return:
+        """
+        return self
+
+    def join_root(self, path):
+        return self.target.join_root(path)
+
+
 class GeneralPostTargetError(Exception):
     pass

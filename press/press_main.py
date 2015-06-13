@@ -5,6 +5,7 @@ from press.layout.layout_mixin import LayoutMixin
 from press.generators.image import ImageMixin
 from press.helpers import deployment
 from press.targets import VendorRegistry
+from press.targets.registration import apply_extension, target_extensions
 
 log = logging.getLogger('press')
 
@@ -33,8 +34,16 @@ class Press(LayoutMixin, ImageMixin):
         log.info('Press initializing', extra={'press_event': 'initializing'})
 
         self.image_target = press_configuration.get('target')
-        # Replaced once dynamic target discovery is implemented
         self.post_configuration_target = VendorRegistry.targets.get(self.image_target)
+
+    @staticmethod
+    def run_extensions(obj):
+        if not target_extensions:
+            log.debug('There are no extensions registered')
+        for extension in target_extensions:
+            if apply_extension(extension, obj):
+                log.info('Running Extension: %s' % extension.__name__)
+                extension(obj).run()
 
     def post_configuration(self):
         if not self.post_configuration_target:
@@ -50,6 +59,7 @@ class Press(LayoutMixin, ImageMixin):
         self.mount_pseudo_file_systems()
         self.create_staging_dir()
         obj.run()
+        self.run_extensions(obj)
         self.remove_staging_dir()
 
     @property
