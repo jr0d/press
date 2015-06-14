@@ -118,7 +118,7 @@ def run_chroot(command,
     f.close()
     os.chmod(f.name, 0700)
     script_path = os.path.join(staging_dir, os.path.split(f.name)[1])
-    log.info('chroot: %s' % command)
+    log.debug('chroot: %s' % command)
     cmd = 'chroot %s %s' % (root, script_path)
     r = run(cmd, bufsize, dry_run, raise_exception, ignore_error, quiet, env)
     if unlink:
