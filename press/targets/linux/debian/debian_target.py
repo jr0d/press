@@ -36,7 +36,7 @@ class DebianTarget(LinuxTarget):
         return map(lambda s: s.strip(), out.splitlines())
 
     def apt_update(self):
-        res = self.chroot(self.__apt_command + ' update')
+        res = self.chroot(self.__apt_command + ' update', proxy=self.proxy)
         if res.returncode:
             log.error('Failed to update apt-cache')
         else:
@@ -49,9 +49,9 @@ class DebianTarget(LinuxTarget):
         if not self.cache_updated:
             self.apt_update()
         packages_str = ' '.join(packages)
-        log.info('Installing: %s' % packages_str)
         command = self.__apt_command + ' install %s' % packages_str
         self.insert_no_start_hack()
+        log.info('Installing packages: %s' % packages_str)
         res = self.chroot(command, proxy=self.proxy)
         self.remove_no_start_hack()
         if res.returncode:
@@ -71,7 +71,7 @@ class DebianTarget(LinuxTarget):
         self.remove_packages([package])
 
     def remove_packages(self, packages):
-        log.info('Removing: %s' % ' '.join(packages))
+        log.info('Removing packages: %s' % ' '.join(packages))
         self.chroot(self.__apt_command + ' remove %s' % ' '.join(packages))
 
     def write_interfaces(self):
