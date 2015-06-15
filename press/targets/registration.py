@@ -7,6 +7,8 @@ from press import exceptions
 
 log = logging.getLogger(__name__)
 
+target_extensions = []
+
 
 def get_module(module_name, path):
     log.debug('Looking up module: %s @ %s' % (module_name, path))
@@ -20,6 +22,7 @@ def register_extension(cls, run_method='run'):
     if not hasattr(cls, run_method):
         raise exceptions.PressCriticalException('Run method is missing from class')
     log.info('Extending %s target using %s' % (cls.__extends__, cls.__name__))
+    target_extensions.append(cls)
 
 
 def apply_extension(extension_cls, target_object):
