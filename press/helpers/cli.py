@@ -109,7 +109,7 @@ def run_chroot(command,
     pre = \
         'export PATH=\"/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin\"\n'
     if proxy:
-        pre += 'export HTTP_PROXY=http://%s\nexport HTTPS_PROXY=%s\n' % (proxy, proxy)
+        pre += 'export HTTP_PROXY=http://%s\nexport HTTPS_PROXY=http://%s\n' % (proxy, proxy)
     abs_path = os.path.join(root, staging_dir.lstrip('/'))
     f = tempfile.NamedTemporaryFile(suffix='.sh', prefix='press-',
                                     dir=abs_path, delete=False)

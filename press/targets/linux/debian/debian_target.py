@@ -36,7 +36,7 @@ class DebianTarget(LinuxTarget):
         return map(lambda s: s.strip(), out.splitlines())
 
     def apt_update(self):
-        res = self.chroot(self.__apt_command + ' update')
+        res = self.chroot(self.__apt_command + ' update', proxy=self.proxy)
         if res.returncode:
             log.error('Failed to update apt-cache')
         else:
