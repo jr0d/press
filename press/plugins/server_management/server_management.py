@@ -17,11 +17,6 @@ extension_mapper = {
     ]
 }
 
-hp_manufacturer_names = [
-    'hp',
-    'hewlett-packard',
-    'hewlett-packard company'
-]
 
 def get_manufacturer():
     res = cli.run('dmidecode -s system-manufacturer', raise_exception=True)
@@ -39,5 +34,5 @@ def plugin_init(configuration):
     if manufacturer == 'Dell Inc.':
         OMSAUbuntu1404.__configuration__ = configuration
         register_extension(OMSAUbuntu1404)
-    if manufacturer.lower() in hp_manufacturer_names:
+    if manufacturer == 'HP':
         register_extension(SPPUbuntu1404)
