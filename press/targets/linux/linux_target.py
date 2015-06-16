@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 class LinuxTarget(Target):
     name = 'linux'
 
-    ssh_protocol_2_key_types = ('rsa', 'ecdsa', 'ed25519')
+    ssh_protocol_2_key_types = ('rsa', 'ecdsa', 'ed25519', 'dsa')
 
     def set_language(self, language):
         _locale = 'LANG=%s\nLC_MESSAGES=C\n' % language
@@ -156,8 +156,8 @@ class LinuxTarget(Target):
     def ssh_keygen(self, path, key_type, passphrase='', comment='localhost.localdomain'):
         full_path = self.join_root(path)
         deployment.remove_file(path)
-        command = 'ssh-keygen -f %s -N\'%s\' -t%s -Cpress@%s' % (
-            full_path, passphrase, key_type, comment)
+        command = 'ssh-keygen -f %s -t%s -Cpress@%s -N \"%s\"' % (
+            full_path, key_type, comment, passphrase)
         cli.run(command)
 
     def update_host_keys(self):
