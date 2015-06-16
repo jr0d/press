@@ -2,6 +2,7 @@ import logging
 
 from press.helpers import cli
 from press.plugins.server_management.omsa import OMSAUbuntu1404
+from press.plugins.server_management.vmware import VMWareTools
 from press.targets.registration import register_extension
 
 
@@ -12,6 +13,7 @@ extension_mapper = {
         OMSAUbuntu1404
     ]
 }
+
 
 def get_manufacturer():
     res = cli.run('dmidecode -s system-manufacturer', raise_exception=True)
@@ -29,3 +31,7 @@ def plugin_init(configuration):
     if manufacturer == 'Dell Inc.':
         OMSAUbuntu1404.__configuration__ = configuration
         register_extension(OMSAUbuntu1404)
+
+    if manufacturer == 'VMware, Inc.':
+        VMWareTools.__configuration__ = configuration
+        register_extension(VMWareTools)
