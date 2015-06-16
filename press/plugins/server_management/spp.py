@@ -16,7 +16,7 @@ class SPPDebian(TargetExtension):
     def write_sources(self):
         log.info('Creating SPP sources file')
         sources_path = self.join_root('/etc/apt/sources.list.d/hp-spp.list')
-        source = 'deb %s %s/current non-free\n' % (OMSADebian.mirrorbase, self.dist)
+        source = 'deb %s %s/current non-free\n' % (SPPDebian.mirrorbase, self.dist)
         deployment.write(sources_path, source)
 
     def import_key(self):
