@@ -167,7 +167,7 @@ class LinuxTarget(Target):
             deployment.remove_file(f)
         for key_type in self.ssh_protocol_2_key_types:
             path = '/etc/ssh/ssh_host_%s_key' % key_type
-            log.debug('Updating %s' % path)
+            log.info('Creating SSH host key %s' % path)
             self.ssh_keygen(path, key_type, comment=hostname)
 
     def copy_resolvconf(self):
