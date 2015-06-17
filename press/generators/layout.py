@@ -366,7 +366,7 @@ def set_disk_labels(layout, layout_config):
 
         if not sysfs_info.has_efi():
             if disk.size.over_2t:
-                LOG.info('%s is over 2.2TiB, using gpt')
+                LOG.info('%s is over 2.2TiB, using gpt' % disk.devname)
                 label = 'gpt'
                 if not layout_config.get('no_bios_boot_partition'):
                     # TODO: Add config option to disks, allowing user to specify the boot disk
