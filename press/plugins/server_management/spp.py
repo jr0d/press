@@ -5,7 +5,7 @@ from press.targets.target_base import TargetExtension
 
 pgp_key_files = ['hpPublicKey1024.pub', 'hpPublicKey2048.pub', 'hpPublicKey2048_key1.pub']
 
-spp_packages = ['hpssa', 'hpsmh', 'hponcfg', 'hpssacli', 'hp-health', 'hp-smh-templates', 'hp-snmp-agents']
+spp_packages = ['hponcfg', 'hpssacli', 'hp-health']
 
 log = logging.getLogger('press.plugins.server_management')
 
