@@ -19,5 +19,8 @@ class PackageExtension(TargetExtension):
 
 def plugin_init(configuration):
     log.info('Registering Rackspace Package Extension')
-    PackageExtension.__configuration__ = configuration
-    register_extension(PackageExtension)
+    if configuration.get('packages'):
+        PackageExtension.__configuration__ = configuration
+        register_extension(PackageExtension)
+    else:
+        log.info('Packages plugin enabled buy no packages are specified')
