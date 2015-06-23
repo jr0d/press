@@ -30,7 +30,8 @@ class Ubuntu1404Target(DebianTarget, Grub2):
 
     def run(self):
         super(DebianTarget, self).run()
-        self.create_default_locale()
+        # Canonical is now setting locale in the image, so commenting out this call
+        #self.create_default_locale()
         self.write_interfaces()
         self.update_host_keys()
         self.remove_resolvconf()

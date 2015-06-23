@@ -72,7 +72,7 @@ class DebianTarget(LinuxTarget):
 
     def remove_packages(self, packages):
         log.info('Removing packages: %s' % ' '.join(packages))
-        self.chroot(self.__apt_command + ' remove %s' % ' '.join(packages))
+        self.chroot(self.__apt_command + ' remove --purge %s' % ' '.join(packages))
 
     def write_interfaces(self):
         interfaces_path = self.join_root('/etc/network/interfaces')
