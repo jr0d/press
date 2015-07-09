@@ -13,10 +13,16 @@ class LinuxTarget(Target):
     name = 'linux'
 
     ssh_protocol_2_key_types = ('rsa', 'ecdsa', 'ed25519', 'dsa')
+    locale_command = "/usr/sbin/locale-gen"
 
     def set_language(self, language):
         _locale = 'LANG=%s\nLC_MESSAGES=C\n' % language
         deployment.write(self.join_root('/etc/locale.conf'), _locale)
+
+    def generate_locales(self):
+        language = self.press_configuration.get('localization', {}).get('language', 'en_US.utf8')
+        cmd = '%s %s' % (self.locale_command, language)
+        self.chroot(cmd)
 
     def set_timezone(self, timezone):
         localtime_path = self.join_root('/etc/localtime')
