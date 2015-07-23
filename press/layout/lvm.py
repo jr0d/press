@@ -151,9 +151,6 @@ class LogicalVolume(object):
         if not self.file_system:
             return
 
-        if not self.mount_point:
-            return
-
         uuid = self.file_system.fs_uuid
         if not uuid:
             return
@@ -178,7 +175,7 @@ class LogicalVolume(object):
         else:
             gen += '# UUID=%s\tLABEL=%s\n%s\t\t' % (uuid, label or '', self.devlink)
         gen += '%s\t\t%s\t\t%s\t\t%s %s\n\n' % (
-            self.mount_point, self.file_system, options, dump, fsck_option)
+            self.mount_point or 'none', self.file_system, options, dump, fsck_option)
 
         return gen
 
