@@ -30,6 +30,12 @@ class LinuxTarget(Target):
         zone_info = os.path.join('../usr/share/zoneinfo/', timezone)
         deployment.create_symlink(zone_info, localtime_path)
 
+    def set_time(self, ntp_server):
+        time_cmds = ['ntpdate %s' % ntp_server,
+                     'hwclock --systohc']
+        for cmd in time_cmds:
+            self.chroot(cmd)
+
     def localization(self):
         configuration = self.press_configuration.get('localization', dict())
 
@@ -42,6 +48,12 @@ class LinuxTarget(Target):
         if timezone:
             log.info('Setting localtime: %s' % timezone)
             self.set_timezone(timezone)
+
+        ntp_server = configuration.get('ntp_server')
+        if ntp_server:
+            log.info('Syncing time with: %s' % ntp_server)
+            self.set_time(ntp_server)
+
 
     def __groupadd(self, group, gid=None, system=False):
         if not util.auth.group_exists(group, self.root):
