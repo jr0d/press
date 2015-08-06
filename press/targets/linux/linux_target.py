@@ -41,6 +41,7 @@ class LinuxTarget(Target):
         timezone = configuration.get('timezone')
         if timezone:
             log.info('Setting localtime: %s' % timezone)
+            self.set_timezone(timezone)
 
     def __groupadd(self, group, gid=None, system=False):
         if not util.auth.group_exists(group, self.root):
