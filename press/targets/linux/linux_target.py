@@ -197,8 +197,8 @@ class LinuxTarget(Target):
                          deployment.read('/etc/resolv.conf'))
 
     def run(self):
-        self.localization()
         self.authentication()
         self.set_hostname()
         self.update_etc_hosts()
         self.copy_resolvconf()
+        self.localization()
