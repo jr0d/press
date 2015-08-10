@@ -90,22 +90,3 @@ class DebianTarget(LinuxTarget):
         if self.network_configuration:
             log.info('Writing network configuration')
             debian_networking.write_interfaces(interfaces_path, self.network_configuration)
-
-    def localization(self):
-        configuration = self.press_configuration.get('localization', dict())
-
-        language = configuration.get('language')
-        if language:
-            log.info('Setting LANG=%s' % language)
-            self.set_language(language)
-
-        timezone = configuration.get('timezone')
-        if timezone:
-            log.info('Setting localtime: %s' % timezone)
-            self.set_timezone(timezone)
-
-        ntp_server = configuration.get('ntp_server')
-        if ntp_server:
-            log.info('Syncing time with: %s' % ntp_server)
-            self.set_time(ntp_server)
-
