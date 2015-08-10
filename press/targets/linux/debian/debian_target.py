@@ -14,6 +14,7 @@ class DebianTarget(LinuxTarget):
     __apt_command = 'DEBIAN_FRONTEND=noninteractive apt-get -y'
 
     __query_packages = 'dpkg --get-selections | awk \'{print $1}\''
+    __reconfigure_package = 'dpkg-reconfigure --frontend noninteractive '
     __start_hack_script = '#!/bin/sh\nexit 101\n'
     __start_hack_path = '/usr/sbin/policy-rc.d'
 
@@ -74,8 +75,37 @@ class DebianTarget(LinuxTarget):
         log.info('Removing packages: %s' % ' '.join(packages))
         self.chroot(self.__apt_command + ' remove --purge %s' % ' '.join(packages))
 
+    def reconfigure_package(self, package):
+        log.info('Reconfiguring package: %s' % package)
+        self.chroot(self.__reconfigure_package + package)
+
+    def set_timezone(self, timezone):
+        localtime_path = '/etc/localtime'
+        deployment.remove_file(self.join_root(localtime_path))
+        deployment.write(self.join_root(localtime_path), timezone)
+        self.reconfigure_package('tzdata')
+
     def write_interfaces(self):
         interfaces_path = self.join_root('/etc/network/interfaces')
         if self.network_configuration:
             log.info('Writing network configuration')
             debian_networking.write_interfaces(interfaces_path, self.network_configuration)
+
+    def localization(self):
+        configuration = self.press_configuration.get('localization', dict())
+
+        language = configuration.get('language')
+        if language:
+            log.info('Setting LANG=%s' % language)
+            self.set_language(language)
+
+        timezone = configuration.get('timezone')
+        if timezone:
+            log.info('Setting localtime: %s' % timezone)
+            self.set_timezone(timezone)
+
+        ntp_server = configuration.get('ntp_server')
+        if ntp_server:
+            log.info('Syncing time with: %s' % ntp_server)
+            self.set_time(ntp_server)
+
