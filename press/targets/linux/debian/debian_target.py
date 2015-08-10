@@ -80,7 +80,7 @@ class DebianTarget(LinuxTarget):
         self.chroot(self.__reconfigure_package + package)
 
     def set_timezone(self, timezone):
-        localtime_path = '/etc/localtime'
+        localtime_path = '/etc/timezone'
         deployment.remove_file(self.join_root(localtime_path))
         deployment.write(self.join_root(localtime_path), timezone)
         self.reconfigure_package('tzdata')
