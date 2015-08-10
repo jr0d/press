@@ -24,6 +24,29 @@ class LinuxTarget(Target):
         cmd = '%s %s' % (self.locale_command, language)
         self.chroot(cmd)
 
+    def set_timezone(self, timezone):
+        localtime_path = self.join_root('/etc/localtime')
+        deployment.remove_file(localtime_path)
+        zone_info = os.path.join('../usr/share/zoneinfo/', timezone)
+        deployment.create_symlink(zone_info, localtime_path)
+
+    def localization(self):
+        configuration = self.press_configuration.get('localization', dict())
+
+        language = configuration.get('language')
+        if language:
+            log.info('Setting LANG=%s' % language)
+            self.set_language(language)
+
+        timezone = configuration.get('timezone')
+        if timezone:
+            log.info('Setting localtime: %s' % timezone)
+            self.set_timezone(timezone)
+
+        ntp_server = configuration.get('ntp_server')
+        if ntp_server:
+            log.info('Syncing time with: %s' % ntp_server)
+            self.set_time(ntp_server)
 
     def set_time(self, ntp_server):
         time_cmds = ['ntpdate %s' % ntp_server,
@@ -171,30 +194,6 @@ class LinuxTarget(Target):
             return
         deployment.write(self.join_root('/etc/resolv.conf'),
                          deployment.read('/etc/resolv.conf'))
-
-    def set_timezone(self, timezone):
-        localtime_path = self.join_root('/etc/localtime')
-        deployment.remove_file(localtime_path)
-        zone_info = os.path.join('../usr/share/zoneinfo/', timezone)
-        deployment.create_symlink(zone_info, localtime_path)
-
-    def localization(self):
-        configuration = self.press_configuration.get('localization', dict())
-
-        language = configuration.get('language')
-        if language:
-            log.info('Setting LANG=%s' % language)
-            self.set_language(language)
-
-        timezone = configuration.get('timezone')
-        if timezone:
-            log.info('Setting localtime: %s' % timezone)
-            self.set_timezone(timezone)
-
-        ntp_server = configuration.get('ntp_server')
-        if ntp_server:
-            log.info('Syncing time with: %s' % ntp_server)
-            self.set_time(ntp_server)
 
     def run(self):
         self.authentication()
