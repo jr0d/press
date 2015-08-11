@@ -52,7 +52,10 @@ class LinuxTarget(Target):
         time_cmds = ['ntpdate %s' % ntp_server,
                      'hwclock --utc --systohc']
         for cmd in time_cmds:
-            self.chroot(cmd)
+            result = cli.run(cmd)
+            if result.returncode:
+                log.error('Failed to run %s: %s' % (cmd, result.returncode))
+
 
     def __groupadd(self, group, gid=None, system=False):
         if not util.auth.group_exists(group, self.root):
