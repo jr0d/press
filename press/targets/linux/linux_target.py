@@ -41,6 +41,21 @@ class LinuxTarget(Target):
         timezone = configuration.get('timezone')
         if timezone:
             log.info('Setting localtime: %s' % timezone)
+            self.set_timezone(timezone)
+
+        ntp_server = configuration.get('ntp_server')
+        if ntp_server:
+            log.info('Syncing time with: %s' % ntp_server)
+            self.set_time(ntp_server)
+
+    def set_time(self, ntp_server):
+        time_cmds = ['ntpdate %s' % ntp_server,
+                     'hwclock --utc --systohc']
+        for cmd in time_cmds:
+            result = cli.run(cmd)
+            if result.returncode:
+                log.error('Failed to run %s: %s' % (cmd, result.returncode))
+
 
     def __groupadd(self, group, gid=None, system=False):
         if not util.auth.group_exists(group, self.root):
@@ -184,7 +199,6 @@ class LinuxTarget(Target):
                          deployment.read('/etc/resolv.conf'))
 
     def run(self):
-        self.localization()
         self.authentication()
         self.set_hostname()
         self.update_etc_hosts()
