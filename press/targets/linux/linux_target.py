@@ -50,7 +50,7 @@ class LinuxTarget(Target):
 
     def set_time(self, ntp_server):
         time_cmds = ['ntpdate %s' % ntp_server,
-                     'hwclock --systohc']
+                     'hwclock --utc --systohc']
         for cmd in time_cmds:
             self.chroot(cmd)
 
