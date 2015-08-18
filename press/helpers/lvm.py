@@ -85,7 +85,7 @@ class LVM(object):
         Delete a physical volume using pvcreate command line tool.
         """
         log.info('running pvremove')
-        command = 'pvremove --force --force %s' % physical_volume
+        command = 'pvremove --force --force --yes %s' % physical_volume
         return self.__execute(command)
 
     def pvdisplay(self, physical_volume=''):
