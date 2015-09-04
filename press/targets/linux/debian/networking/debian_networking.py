@@ -42,6 +42,3 @@ def write_interfaces(path, network_configuration):
                 network['device'] = device.devname
 
     deployment.write(path, render_template(networks))
-
-if __name__ == '__main__':
-    pass

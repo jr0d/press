@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 class LinuxTarget(Target):
     name = 'linux'
 
-    ssh_protocol_2_key_types = ('rsa', 'ecdsa', 'ed25519')
+    ssh_protocol_2_key_types = ('rsa', 'ecdsa', 'ed25519', 'dsa')
 
     def set_language(self, language):
         _locale = 'LANG=%s\nLC_MESSAGES=C\n' % language
@@ -154,11 +154,10 @@ class LinuxTarget(Target):
                 break
 
     def ssh_keygen(self, path, key_type, passphrase='', comment='localhost.localdomain'):
-        full_path = self.join_root(path)
         deployment.remove_file(path)
-        command = 'ssh-keygen -f %s -N\'%s\' -t%s -Cpress@%s' % (
-            full_path, passphrase, key_type, comment)
-        cli.run(command)
+        command = 'ssh-keygen -f %s -t%s -Cpress@%s -N \"%s\"' % (
+            path, key_type, comment, passphrase)
+        self.chroot(command)
 
     def update_host_keys(self):
         log.info('Updating SSH host keys')
@@ -168,11 +167,19 @@ class LinuxTarget(Target):
             deployment.remove_file(f)
         for key_type in self.ssh_protocol_2_key_types:
             path = '/etc/ssh/ssh_host_%s_key' % key_type
-            log.debug('Updating %s' % path)
+            log.info('Creating SSH host key %s' % path)
             self.ssh_keygen(path, key_type, comment=hostname)
+
+    def copy_resolvconf(self):
+        if not os.path.exists('/etc/resolv.conf'):
+            log.warn('Host resolv.conf is missing')
+            return
+        deployment.write(self.join_root('/etc/resolv.conf'),
+                         deployment.read('/etc/resolv.conf'))
 
     def run(self):
         self.localization()
         self.authentication()
         self.set_hostname()
         self.update_etc_hosts()
+        self.copy_resolvconf()

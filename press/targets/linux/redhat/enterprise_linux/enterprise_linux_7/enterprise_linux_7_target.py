@@ -85,4 +85,3 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
         self.rebuild_initramfs()
         self.check_for_grub()
         self.install_grub2()
-        self.write_resolvconf()

@@ -11,9 +11,10 @@ class Chroot(object):
         self.root = root
         self.staging_dir = staging_dir
 
-    def __call__(self, command, raise_exception=False, quiet=False):
+    def __call__(self, command, raise_exception=False, quiet=False, proxy=None):
         return run_chroot(command, root=self.root, staging_dir=self.staging_dir,
-                          raise_exception=raise_exception, quiet=quiet)
+                          raise_exception=raise_exception, quiet=quiet,
+                          proxy=proxy)
 
 
 class VendorRegistry(type):
@@ -26,6 +27,7 @@ class VendorRegistry(type):
             log.info('Registered post handler: %s' % name)
             mcs.targets[name] = new_cls
         return new_cls
+
 
 class Target(object):
     __metaclass__ = VendorRegistry
@@ -42,6 +44,10 @@ class Target(object):
     def join_root(self, path):
         path = path.lstrip('/')
         return os.path.join(self.root, path)
+
+    @property
+    def proxy(self):
+        return self.press_configuration.get('proxy')
 
     @classmethod
     def probe(cls, deployment_root):
@@ -65,6 +71,23 @@ class Target(object):
         :return:
         """
         return self
+
+
+class TargetExtension(object):
+    __extends__ = ''
+
+    def __init__(self, target_obj):
+        self.target = target_obj
+
+    def run(self):
+        """
+
+        :return:
+        """
+        return self
+
+    def join_root(self, path):
+        return self.target.join_root(path)
 
 
 class GeneralPostTargetError(Exception):

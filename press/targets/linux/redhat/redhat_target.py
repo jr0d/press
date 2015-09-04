@@ -28,7 +28,7 @@ class RedhatTarget(LinuxTarget):
             log.info('Installed: %s' % package)
 
     def install_packages(self, packages):
-        command = '%s installl -y --quiet %s' % (self.yum_path, ' '.join(packages))
+        command = '%s install -y --quiet %s' % (self.yum_path, ' '.join(packages))
         res = self.chroot(command)
         if res.returncode:
             log.error('Failed to install packages: %s' % ' '.join(packages))
@@ -50,6 +50,14 @@ class RedhatTarget(LinuxTarget):
         if False in match.values():
             return False
         return True
+
+    def packages_missing(self, packages):
+        missing = list()
+        installed_packages = self.get_package_list()
+        for package in packages:
+            if package not in installed_packages:
+                missing.append(package)
+        return missing
 
     @property
     def has_redhat_release(self):
