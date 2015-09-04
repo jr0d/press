@@ -1,5 +1,6 @@
 import logging
 
+from press.helpers import deployment
 from press.targets.linux.grub2_target import Grub2
 from press.targets.linux.debian.debian_target import DebianTarget
 
@@ -22,8 +23,14 @@ class Ubuntu1404Target(DebianTarget, Grub2):
         debconf = 'grub-pc grub-pc/install_devices multiselect %s' % self.disk_target
         self.chroot('echo %s | debconf-set-selections' % debconf)
 
+    def create_default_locale(self):
+        language = self.press_configuration.get('localization', {}).get('language', 'C')
+        _locale = 'LANG=%s\nLC_MESSAGES=C\n' % language
+        deployment.write(self.join_root('/etc/default/locale'), _locale)
+
     def run(self):
         super(DebianTarget, self).run()
+        self.create_default_locale()
         self.write_interfaces()
         self.update_host_keys()
         self.remove_resolvconf()
