@@ -1,6 +1,8 @@
 # Press
 Image installer with custom partitioning
 
+## What is press?
+...Elevator pitch here...
 # 'Prime Time' release 0.4.0
 ## Distro Support (baked in)
 
@@ -96,13 +98,17 @@ example:
     - hash: hash used to verify the image after download
     - method: hash method (sha1, sha256, sha512, md5)
 
-- keep: Optional, testing. Do not remove the image after downloading/copying 
+- keep: Optional, testing. Do not remove the image after downloading/copying
+
+
+Press supports a variety of image formats and compression algorithms. For file based images 
+(tar), files are extracted onto the installation target. For block based images (raw, qcow2, 
+vmdk, raw), images are mounted and an rsync is performed onto the installation target.
 
 ### Bootloader
 example:
 
     bootloader:
-      type: grub
       target: first
       kernel_parameters:
         append:
@@ -113,6 +119,24 @@ example:
         remove:
           - splash
           - quiet
+
+- target: The disk reference to install the bootloader on. This can be a device node (/dev/sda),
+ a device link (/dev/disk/by-label/ROOT), sysfs disk reference, or 'first' which references
+ the first enumerated disk.
+- kernel parameters: append or remove kernel command line options via bootloader configuration
+
+At present, the bootloader press installs is dependent on the default bootloader used by the 
+target distribution / operating system. 
+
+
+It is common for images created for paravirtualized environments and containers 
+(chroot/cgroups) to not include a bootloader or kernel images/modules. Thus, press does not
+assume these packages will be present and will attempt to install any packages needed to boot
+the device during post configuration.
+
+
+EFI bootloader support will be added in v0.5 "Wishful Thinking"
+
 
 ### Networking
 example:
@@ -158,6 +182,7 @@ example:
             cidr: 10.22.56.0/25
             gateway: 10.22.56.1
 ### Layout
+example:
     
     use_fiber_channel: false
     loop_only: false
