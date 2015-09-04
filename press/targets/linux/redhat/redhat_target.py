@@ -80,3 +80,4 @@ class RedhatTarget(LinuxTarget):
         except IndexError:
             log.error('Error parsing redhat-release')
         return release_info
+
