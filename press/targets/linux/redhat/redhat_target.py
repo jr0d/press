@@ -51,6 +51,14 @@ class RedhatTarget(LinuxTarget):
             return False
         return True
 
+    def packages_missing(self, packages):
+        missing = list()
+        installed_packages = self.get_package_list()
+        for package in packages:
+            if package not in installed_packages:
+                missing.append(package)
+        return missing
+
     @property
     def has_redhat_release(self):
         return os.path.exists(self.join_root('/etc/redhat-release'))
@@ -72,3 +80,4 @@ class RedhatTarget(LinuxTarget):
         except IndexError:
             log.error('Error parsing redhat-release')
         return release_info
+

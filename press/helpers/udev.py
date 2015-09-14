@@ -64,6 +64,9 @@ class UDevHelper(object):
             if disk.get('ID_TYPE') == 'cd':
                 continue
 
+            if disk.get('ID_TYPE') == 'usb':
+                continue
+
             if disk.get('MAJOR') == '254':  # Device Mapper (LVM)
                 continue
 

@@ -148,13 +148,14 @@ def remove_file(path):
 
 def tar_extract(archive_path, chdir=''):
     # TODO: read header to determine compression / archive type?
+    base_tar_cmd = 'tar --numeric-owner'
     bzip_extensions = ('bz2', 'tbz', 'tbz2')
     compress_method = 'z'
     use_bzip = bool([i for i in bzip_extensions if archive_path.endswith(i)])
     if use_bzip:
         compress_method = 'j'
 
-    return cli.run('tar -%sxf %s%s' % (compress_method, archive_path,
+    return cli.run('%s -%sxf %s%s' % (base_tar_cmd, compress_method, archive_path,
                                        chdir and ' -C %s' % chdir or ''))
 
 
