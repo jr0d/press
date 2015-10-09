@@ -2,7 +2,7 @@ import logging
 
 from press.helpers import cli
 from press.plugins.server_management.omsa import OMSAUbuntu1404, OMSARHEL7
-from press.plugins.server_management.spp import SPPUbuntu1404
+from press.plugins.server_management.spp import SPPUbuntu1404, SPPRHEL7
 from press.plugins.server_management.vmware import VMWareTools
 from press.targets.registration import register_extension
 
@@ -15,7 +15,8 @@ extension_mapper = {
         OMSARHEL7
     ],
     'HP': [
-        SPPUbuntu1404
+        SPPUbuntu1404,
+        SPPRHEL7
     ]
 }
 
@@ -35,17 +36,18 @@ def plugin_init(configuration):
     log.info('Server manufacturer: %s' % manufacturer)
 
     if manufacturer == 'Dell Inc.':
-        if configuration['target'] == "enterprise_linux_7":
-            OMSARHEL7.__configuration__ = configuration
-            register_extension(OMSARHEL7)
-        else:
-            OMSAUbuntu1404.__configuration__ = configuration
-            register_extension(OMSAUbuntu1404)
+        OMSARHEL7.__configuration__ = configuration
+        register_extension(OMSARHEL7)
 
-    if manufacturer == 'VMware, Inc.':
+        OMSAUbuntu1404.__configuration__ = configuration
+        register_extension(OMSAUbuntu1404)
+
+    elif manufacturer == 'VMware, Inc.':
         VMWareTools.__configuration__ = configuration
         register_extension(VMWareTools)
     
-    if manufacturer == 'HP':
-        register_extension(SPPUbuntu1404)
+    elif manufacturer == 'HP':
+        SPPRHEL7.__configuration__ = configuration
+        register_extension(SPPRHEL7)
 
+        register_extension(SPPUbuntu1404)
