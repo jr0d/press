@@ -49,7 +49,3 @@ def plugin_init(configuration):
     if manufacturer == 'HP':
         register_extension(SPPUbuntu1404)
 
-    else:
-        OMSARHEL7.__configuration__ = configuration
-        register_extension(OMSARHEL7)
-
