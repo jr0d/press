@@ -68,19 +68,6 @@ class OMSARedHat(TargetExtension):
     def install_openmanage(self):
         self.target.install_package('srvadmin-all')
 
-    def run(self):
-        self.download_and_prepare_repositories()
-        self.install_omsa_repo()
-        self.install_openmanage()
-
-
-class OMSARHEL7(OMSARedHat):
-    __extends__ = 'enterprise_linux_7'
-
-
-class OMSACentOS7(OMSARedHat):
-    __extends__ = 'centos_7'
-
     def install_wget(self):
         self.target.install_package('wget')
 
@@ -89,3 +76,7 @@ class OMSACentOS7(OMSARedHat):
         self.download_and_prepare_repositories()
         self.install_omsa_repo()
         self.install_openmanage()
+
+
+class OMSARHEL7(OMSARedHat):
+    __extends__ = 'enterprise_linux_7'
