@@ -34,13 +34,17 @@ def plugin_init(configuration):
     log.info('Registering Server Management plugins')
     manufacturer = get_manufacturer()
     log.info('Server manufacturer: %s' % manufacturer)
+
     if manufacturer == 'Dell Inc.':
-        OMSAUbuntu1404.__configuration__ = configuration
-        register_extension(OMSAUbuntu1404)
-        OMSACentOS7.__configuration__ = configuration
-        register_extension(OMSACentOS7)
-        OMSARHEL7.__configuration__ = configuration
-        register_extension(OMSARHEL7)
+        if configuration['target'] == "centos_7":
+            OMSACentOS7.__configuration__ = configuration
+            register_extension(OMSACentOS7)
+        elif configuration['target'] == "enterprise_linux_7":
+            OMSARHEL7.__configuration__ = configuration
+            register_extension(OMSARHEL7)
+        else:
+            OMSAUbuntu1404.__configuration__ = configuration
+            register_extension(OMSAUbuntu1404)
 
     if manufacturer == 'VMware, Inc.':
         VMWareTools.__configuration__ = configuration
@@ -48,4 +52,3 @@ def plugin_init(configuration):
     
     if manufacturer == 'HP':
         register_extension(SPPUbuntu1404)
-

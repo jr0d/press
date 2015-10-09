@@ -81,5 +81,11 @@ class OMSARHEL7(OMSARedHat):
 class OMSACentOS7(OMSARedHat):
     __extends__ = 'centos_7'
 
+    def install_wget(self):
+        self.target.install_package('wget')
 
-
+    def run(self):
+        self.install_wget()
+        self.download_and_prepare_repositories()
+        self.install_omsa_repo()
+        self.install_openmanage()
