@@ -52,12 +52,13 @@ class OMSARedHat(TargetExtension):
     def __init__(self, target_obj, version='7'):
         self.version = version
         self.repository_rpm_url = 'http://mirror.rackspace.com/dell/hardware/latest/mirrors.cgi/' \
-                                  'osname=rhel{{version}}&basearch=x86_64' \
+                                  'osname=rhel{version}&basearch=x86_64' \
                                   '&native=1&getrpm=dell-omsa-repository&redirpath='.format(version=self.version)
         super(OMSARedHat, self).__init__(target_obj)
 
     def download_and_prepare_repositories(self):
-        self.target.chroot('try wget -O dell-omsa-repository.rpm "{0}"'.format(self.repository_rpm_url))
+        log.debug("Updating repos to add OMSA")
+        self.target.chroot('wget -O dell-omsa-repository.rpm "{0}"'.format(self.repository_rpm_url))
         self.target.chroot('echo bootstrapurl=http://mirror.rackspace.com/dell/hardware/latest/bootstrap.cgi'
                            '  > /etc/yum.repos.d/dell-omsa-repository.repo')
 
@@ -74,16 +75,11 @@ class OMSARedHat(TargetExtension):
 
 
 class OMSARHEL7(OMSARedHat):
-    __extends__ = 'rhel_7'
-
-    def __init__(self, target_obj):
-        super(OMSARHEL7, self).__init__(target_obj, version='7')
+    __extends__ = 'enterprise_linux_7'
 
 
 class OMSACentOS7(OMSARedHat):
     __extends__ = 'centos_7'
 
-    def __init__(self, target_obj):
-        super(OMSACentOS7, self).__init__(target_obj, version='7')
 
 
