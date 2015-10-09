@@ -9,6 +9,7 @@ spp_packages = ['hponcfg', 'hpssacli', 'hp-health']
 
 log = logging.getLogger('press.plugins.server_management')
 
+
 class SPPDebian(TargetExtension):
     dist = ''
     mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/mcp/'
@@ -45,4 +46,30 @@ class SPPUbuntu1404(SPPDebian):
     dist = 'trusty'
 
 
+class SPPRHEL(TargetExtension):
+    dist = ''
+    mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/spp/RHEL/7/x86_64/current/'
+    gpgkey = 'http://mirror.rackspace.com/hp/SDR/repo/spp/GPG-KEY-SPP'
 
+    def write_sources(self):
+        log.info('Creating SPP sources file')
+        sources_path = self.join_root('/etc/yum.repos.d/hp-spp.repo')
+        source = """[spp]
+name=HP SPP
+baseurl={mirror}
+enabled=1
+gpgcheck=1
+gpgkey={gpgkey}""".format(mirror=self.mirrorbase, gpgkey=self.gpgkey)
+
+        deployment.write(sources_path, source)
+
+    def install_spp(self):
+        self.target.install_packages(spp_packages)
+
+    def run(self):
+        self.write_sources()
+        self.install_spp()
+
+
+class SPPRHEL7(SPPRHEL):
+    __extends__ = 'enterprise_linux_7'
