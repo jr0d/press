@@ -7,7 +7,6 @@ from press.targets.linux.debian.networking import debian_networking
 log = logging.getLogger(__name__)
 
 
-
 class DebianTarget(LinuxTarget):
     name = 'debian'
 
