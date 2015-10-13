@@ -30,5 +30,5 @@ def run_hooks(hook_point):
         return
 
     for hook in target_hooks[hook_point]:
-        log.debug("Running hook '{0}' for point '{1}'".format(func.__name__, hook_point))
+        log.debug("Running hook '{0}' for point '{1}'".format(hook.function.__name__, hook_point))
         hook.function(*hook.args, **hook.kwargs)
