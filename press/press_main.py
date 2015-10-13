@@ -6,6 +6,8 @@ from press.generators.image import ImageMixin
 from press.helpers import deployment
 from press.targets import VendorRegistry
 from press.targets.registration import apply_extension, target_extensions
+from press.hooks.hooks import run_hooks
+
 
 log = logging.getLogger('press')
 
@@ -57,9 +59,13 @@ class Press(LayoutMixin, ImageMixin):
                                              self.staging_dir)
         self.write_fstab()
         self.mount_pseudo_file_systems()
+        run_hooks("pre-create-staging")
         self.create_staging_dir()
+        run_hooks("pre-target-run")
         obj.run()
+        run_hooks("pre-extensions")
         self.run_extensions(obj)
+        run_hooks("post-extensions")
         self.remove_staging_dir()
         if hasattr(obj, 'write_resolvconf'):
             obj.write_resolvconf()
@@ -76,13 +82,17 @@ class Press(LayoutMixin, ImageMixin):
 
     def run(self):
         log.info('Installation is starting', extra={'press_event': 'deploying'})
+        run_hooks("pre-apply-layout")
         self.apply_layout()
         if self.image_configuration:
+            run_hooks("pre-mount-fs")
             self.mount_file_systems()
             log.info('Fetching image at %s' % self.imagefile.url,
                      extra={'press_event': 'downloading'})
+            run_hooks("pre-image-ops")
             self.run_image_ops()
             log.info('Configuring image', extra={'press_event': 'configuring'})
+            run_hooks("pre-post-config")
             self.post_configuration()
         else:
             log.info('Press configured in layout only mode, finishing up.')
