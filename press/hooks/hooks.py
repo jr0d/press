@@ -14,7 +14,7 @@ from press.exceptions import HookError
 log = logging.getLogger(__name__)
 
 
-Hook = namedtuple("Hook", "function args kwargs")
+Hook = namedtuple("Hook", "name function args kwargs")
 
 valid_hook_points = ["post-press-init", "pre-apply-layout", "pre-mount-fs",
                      "pre-image-ops", "pre-post-config", "pre-create-staging",
@@ -25,15 +25,23 @@ for valid_point in valid_hook_points:
     target_hooks[valid_point] = []
 
 
-def add_hook(func, point, *args, **kwargs):
+def add_hook(func, point, hook_name=None, *args, **kwargs):
     """Add a function as a hook, make sure the function accepts a keyword argument 'press_config'"""
-    if "press_config" not in inspect.getargspec(func).args:
-        raise HookError("Attempted hook function '{0}' does not accept argument 'press_config'".format(func.__name__))
+    if not hook_name:
+        hook_name = func.__name__
 
-    log.debug("Adding hook '{0}' for point '{1}'".format(func.__name__, point))
+    if "press_config" not in inspect.getargspec(func).args:
+        raise HookError("Attempted hook '{0}' does not accept argument 'press_config'".format(hook_name))
+
+    log.debug("Adding hook '{0}' for point '{1}'".format(hook_name, point))
     if point not in valid_hook_points:
         raise HookError("Not a valid hook point '{0}'".format(point))
-    target_hooks[point].append(Hook(function=func, args=args, kwargs=kwargs))
+
+    for hook in target_hooks[point]:
+        if hook.hook_name == hook_name:
+            raise HookError("Hook '{0}' already exists in '{0}'!".format(hook_name, point))
+
+    target_hooks[point].append(Hook(name=hook_name, function=func, args=args, kwargs=kwargs))
 
 
 def run_hooks(point, press_config):
@@ -48,14 +56,16 @@ def run_hooks(point, press_config):
         hook.function(*hook.args, press_config=press_config, **hook.kwargs)
 
 
-def hook_point(point):
+def hook_point(point, hook_name=None):
     """
     Wrapper for adding a function as a hook,
     make sure the function accepts a keyword argument 'press_config'
     """
     def decorate(func):
+        add_hook(func, point, hook_name)
+
         @wraps(func)
-        def call(*args, **kwargs):
-            add_hook(func, point, *args, **kwargs)
-        return call
+        def wrapped(*args, **kwargs):
+            return func(*args, **kwargs)
+        return wrapped
     return decorate
