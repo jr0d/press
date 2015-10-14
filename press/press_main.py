@@ -37,6 +37,7 @@ class Press(LayoutMixin, ImageMixin):
 
         self.image_target = press_configuration.get('target')
         self.post_configuration_target = VendorRegistry.targets.get(self.image_target)
+        run_hooks("post-press-init", self.configuration)
 
     @staticmethod
     def run_extensions(obj):
@@ -59,13 +60,13 @@ class Press(LayoutMixin, ImageMixin):
                                              self.staging_dir)
         self.write_fstab()
         self.mount_pseudo_file_systems()
-        run_hooks("pre-create-staging")
+        run_hooks("pre-create-staging", self.configuration)
         self.create_staging_dir()
-        run_hooks("pre-target-run")
+        run_hooks("pre-target-run", self.configuration)
         obj.run()
-        run_hooks("pre-extensions")
+        run_hooks("pre-extensions", self.configuration)
         self.run_extensions(obj)
-        run_hooks("post-extensions")
+        run_hooks("post-extensions", self.configuration)
         self.remove_staging_dir()
         if hasattr(obj, 'write_resolvconf'):
             obj.write_resolvconf()
@@ -82,17 +83,17 @@ class Press(LayoutMixin, ImageMixin):
 
     def run(self):
         log.info('Installation is starting', extra={'press_event': 'deploying'})
-        run_hooks("pre-apply-layout")
+        run_hooks("pre-apply-layout", self.configuration)
         self.apply_layout()
         if self.image_configuration:
-            run_hooks("pre-mount-fs")
+            run_hooks("pre-mount-fs", self.configuration)
             self.mount_file_systems()
             log.info('Fetching image at %s' % self.imagefile.url,
                      extra={'press_event': 'downloading'})
-            run_hooks("pre-image-ops")
+            run_hooks("pre-image-ops", self.configuration)
             self.run_image_ops()
             log.info('Configuring image', extra={'press_event': 'configuring'})
-            run_hooks("pre-post-config")
+            run_hooks("pre-post-config", self.configuration)
             self.post_configuration()
         else:
             log.info('Press configured in layout only mode, finishing up.')
