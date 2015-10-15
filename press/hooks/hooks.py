@@ -1,8 +1,6 @@
 """
 Hooks are to be used to execute sections of code as needed throughout the Press process.
 """
-
-
 from __future__ import absolute_import
 import logging
 import inspect
@@ -56,16 +54,16 @@ def run_hooks(point, press_config):
         hook.function(*hook.args, press_config=press_config, **hook.kwargs)
 
 
-def hook_point(point, hook_name=None):
+def hook_point(point, hook_name=None, *args, **kwargs):
     """
     Wrapper for adding a function as a hook,
     make sure the function accepts a keyword argument 'press_config'
     """
     def decorate(func):
-        add_hook(func, point, hook_name)
+        add_hook(func, point, hook_name, *args, **kwargs)
 
         @wraps(func)
-        def wrapped(*args, **kwargs):
-            return func(*args, **kwargs)
+        def wrapped(*wargs, **wkwargs):
+            return func(*wargs, **wkwargs)
         return wrapped
     return decorate
