@@ -1,14 +1,20 @@
 import logging
+import os
+import uuid
+
+import requests
 
 from press.helpers import deployment
 from press.targets.linux.linux_target import LinuxTarget
 from press.targets.linux.debian.networking import debian_networking
+from press.hooks.hooks import add_hook
 
 log = logging.getLogger(__name__)
 
 
 class DebianTarget(LinuxTarget):
     name = 'debian'
+    dist = ''
 
     __apt_command = 'DEBIAN_FRONTEND=noninteractive apt-get -y'
 
@@ -21,6 +27,7 @@ class DebianTarget(LinuxTarget):
         super(DebianTarget, self).__init__(press_configuration,
                                            disks, root, chroot_staging_dir)
         self.cache_updated = False
+        add_hook(self.add_repos, "pre-extensions", self)
 
     def insert_no_start_hack(self):
         log.info('Inserting NOSTART hack')
@@ -66,6 +73,43 @@ class DebianTarget(LinuxTarget):
             if package not in installed_packages:
                 missing.append(package)
         return missing
+
+    def add_source(self, name, mirror):
+        path_name = name.lower().replace(" ", "_")
+        log.info('Creating "{name}" sources file'.format(name=name))
+        sources_path = self.join_root('/etc/apt/sources.list.d/{name}.list'.format(name=path_name))
+        source = 'deb %s %s openmanage\n' % (mirror, self.dist)
+        deployment.write(sources_path, source)
+
+    def add_key(self, gpgkey, local=False):
+        key_name = "key.{0}".format(uuid.uuid4().hex)
+
+        if local:
+            with open(gpgkey, "r") as f:
+                key_data = f.read()
+        else:
+            r = requests.get(gpgkey, stream=True)
+            key_data = r.content
+
+        destination = os.path.join(self.join_root(self.chroot_staging_dir), key_name)
+        deployment.write(destination, key_data)
+        log.info('Importing public key "{gpgkey}"'.format(gpgkey=gpgkey))
+        self.chroot('apt-key add %s' % os.path.join(self.chroot_staging_dir, key_name))
+
+    def add_repo(self, name, mirror, gpgkey):
+        log.info("Adding repo '{name}'".format(name))
+        self.add_source(name, mirror)
+        if gpgkey:
+            if gpgkey.startswith("/") or gpgkey.startswith("\\"):
+                if not os.path.exists(gpgkey):
+                    raise Exception("Cannot find local gpgpkey at '{gpgkey}'".format(gpgkey=gpgkey))
+                self.add_key(gpgkey, local=True)
+            else:
+                self.add_key(gpgkey)
+
+    def add_repos(self, press_config):
+        for repo in press_config.get('repos'):
+            self.add_repo(repo['name'], repo['mirror'], repo.get('gpgkey', None))
 
     def remove_package(self, package):
         self.remove_packages([package])
