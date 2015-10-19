@@ -98,7 +98,7 @@ class DebianTarget(LinuxTarget):
         self.chroot('apt-key add %s' % os.path.join(self.chroot_staging_dir, key_name))
 
     def add_repo(self, name, mirror, gpgkey):
-        log.info("Adding repo '{name}'".format(name))
+        log.info("Adding repo '{name}'".format(name=name))
         self.add_source(name, mirror)
         if gpgkey:
             if gpgkey.startswith("/") or gpgkey.startswith("\\"):
