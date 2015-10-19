@@ -249,6 +249,19 @@ example:
               label: LOG
               superuser_reserve: 1%
 
+### Repositories
+
+example:
+
+    repos:
+      -
+        name: Example Mirror
+        mirror: http://mirror.rackspace.com/example/mirror/
+        gpgkey: http://mirror.rackspace.com/example/mirror/GPGKEY
+
+Debian targets may specify a path to a local key, RedHat targets require a URL.
+
+
 ## Invoking
 ### entry
 ### Logging
