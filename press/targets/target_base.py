@@ -52,7 +52,7 @@ class Target(object):
     @classmethod
     def probe(cls, deployment_root):
         """
-        function is called to identify
+        function is called to identify a target
         :return:
         """
         assert os.path.isdir(deployment_root)
