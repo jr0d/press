@@ -126,10 +126,11 @@ class LinuxTarget(Target):
                     log.info('Creating .ssh directory: %s' % ssh_config_path)
                     deployment.recursive_makedir(ssh_config_path, mode=0700)
 
-                for public_key_string in authorized_keys:
-                    log.debug('Adding public key: %s' % public_key_string)
+                if authorized_keys:
+                    public_keys_string = '\n'.join(authorized_keys).strip() + '\n'
+                    log.debug('Adding public key: %s' % public_keys_string)
                     deployment.write(os.path.join(ssh_config_path, 'authorized_keys'),
-                                     public_key_string.strip() + '\n',
+                                     public_keys_string,
                                      append=True)
 
         # Create system groups
