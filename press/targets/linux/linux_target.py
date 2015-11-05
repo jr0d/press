@@ -48,14 +48,16 @@ class LinuxTarget(Target):
             log.info('Syncing time with: %s' % ntp_server)
             self.set_time(ntp_server)
 
-    def set_time(self, ntp_server):
+    @staticmethod
+    def set_time(ntp_server):
+        # TODO: Make utility function
+        # TODO: --utc/--local or setting the hardware clock at all should be configurable
         time_cmds = ['ntpdate %s' % ntp_server,
                      'hwclock --utc --systohc']
         for cmd in time_cmds:
             result = cli.run(cmd)
             if result.returncode:
                 log.error('Failed to run %s: %s' % (cmd, result.returncode))
-
 
     def __groupadd(self, group, gid=None, system=False):
         if not util.auth.group_exists(group, self.root):
@@ -64,7 +66,6 @@ class LinuxTarget(Target):
         else:
             log.warn('Group %s already exists' % group)
 
-    # TODO: Authorized keys support
     def authentication(self):
         configuration = self.press_configuration.get('auth')
         if not configuration:
@@ -78,6 +79,7 @@ class LinuxTarget(Target):
         for user in users:
             _u = users[user]
             if user != 'root':
+                home_dir = _u.get('home', '/home/%s' % user)
                 # Add user groups
 
                 if 'group' in _u:
@@ -95,7 +97,7 @@ class LinuxTarget(Target):
                                                          _u.get('uid'),
                                                          _u.get('group'),
                                                          _u.get('groups'),
-                                                         _u.get('home'),
+                                                         home_dir,
                                                          _u.get('shell'),
                                                          _u.get('create_home', True),
                                                          _u.get('system', False)))
@@ -103,6 +105,8 @@ class LinuxTarget(Target):
                     log.warn('Defined user, %s, already exists' % user)
 
             # Set password
+            else:
+                home_dir = _u.get('home', '/root')
 
             password = _u.get('password')
             if password:
@@ -112,6 +116,22 @@ class LinuxTarget(Target):
                 self.chroot(util.auth.format_change_password(user, password, is_encrypted))
             else:
                 log.warn('User %s has no password defined' % user)
+
+            authorized_keys = _u.get('authorized_keys', list())
+            if authorized_keys:
+                log.info('Adding authorized_keys for %s' % user)
+                ssh_config_path = self.join_root('%s/.ssh' % home_dir)
+                log.debug(ssh_config_path)
+                if not os.path.exists(ssh_config_path):
+                    log.info('Creating .ssh directory: %s' % ssh_config_path)
+                    deployment.recursive_makedir(ssh_config_path, mode=0700)
+
+                if authorized_keys:
+                    public_keys_string = '\n'.join(authorized_keys).strip() + '\n'
+                    log.debug('Adding public key: %s' % public_keys_string)
+                    deployment.write(os.path.join(ssh_config_path, 'authorized_keys'),
+                                     public_keys_string,
+                                     append=True)
 
         # Create system groups
 
