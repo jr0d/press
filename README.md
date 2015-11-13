@@ -3,7 +3,7 @@ Image installer with custom partitioning
 
 ## What is press?
 ...Elevator pitch here...
-# 'Prime Time' release 0.4.0
+# 'Forgetful Tyrannosaurus' release 0.4.5
 ## Distro Support (baked in)
 
 * RHEL/CentOS
@@ -36,7 +36,7 @@ Python packages:
 ### Installation
     git clone git@github.rackspace.com:OSDeployment/press.git
     cd press/
-    git checkout -b v0.3 origin/v0.3
+    git checkout -b 0.4.5 origin/0.4.5
     python setup.py develop
 
 ## User Configuration
