@@ -56,7 +56,7 @@ class RedhatTarget(LinuxTarget):
         deployment.write(sources_path, source)
 
     def add_repos(self, press_config):
-        for repo in press_config.get('repos'):
+        for repo in press_config.get('repos', []):
             self.add_repo(repo['name'], repo['mirror'], repo.get('gpgkey', None))
 
     def package_exists(self, package_name):
