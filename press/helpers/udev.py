@@ -91,7 +91,9 @@ class UDevHelper(object):
             if action and device.get('ACTION') != action:
                 log.debug('Action, %s, does not match %s' % (action, device.get('ACTION')))
                 continue
-            if device.get('UDISKS_PARTITION_NUMBER') == str(partition_id):
+            elif device.get('UDISKS_PARTITION_NUMBER') == str(partition_id):
+                return str(device['DEVNAME'])
+            elif not device.get('UDISKS_PARTITION_NUMBER') and device.get('ID_PART_ENTRY_NUMBER') == str(partition_id):
                 return str(device['DEVNAME'])
 
     def get_network_devices(self):
