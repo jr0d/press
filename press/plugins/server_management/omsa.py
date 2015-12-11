@@ -74,13 +74,13 @@ class OMSARedHat(TargetExtension):
     def install_wget(self):
         self.target.install_package('wget')
 
-    def get_os_and_release(self):
+    def get_os_id(self):
         os_release = self.target.parse_os_release()
-        os_id = self.os_release.get('ID')
-        return os_release, os_id
+        os_id = os_release.get('ID')
+        return os_id
 
     def run(self):
-        self.os_id, self.os_release = self.get_os_and_release()
+        self.os_id = self.get_os_id()
         self.target.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
         self.install_wget()
         self.download_and_prepare_repositories()
