@@ -13,6 +13,7 @@ class RedhatTarget(LinuxTarget):
 
     rpm_path = '/usr/bin/rpm'
     yum_path = '/usr/bin/yum'
+    yum_config_file = '/etc/yum.conf'
 
     def __init__(self, press_configuration, disks, root, chroot_staging_dir):
         super(RedhatTarget, self).__init__(press_configuration, disks, root, chroot_staging_dir)
@@ -22,6 +23,12 @@ class RedhatTarget(LinuxTarget):
         command = '%s --query --all --queryformat \"%%{NAME}\\n\"' % self.rpm_path
         out = self.chroot(command, quiet=True)
         return out.splitlines()
+
+    def enable_yum_proxy(self, proxy):
+        self.chroot('echo proxy=http://%s >> %s' % (proxy, self.yum_config_file))
+
+    def disable_yum_proxy(self, proxy):
+        self.chroot("sed -i -e 's/proxy=http://%s//g %s" % (proxy, self.yum_config_file))
 
     def install_package(self, package):
         command = '%s install -y --quiet %s' % (self.yum_path, package)
@@ -54,6 +61,12 @@ class RedhatTarget(LinuxTarget):
             source += "\ngpgcheck=0"
 
         deployment.write(sources_path, source)
+
+    def remove_repo(self, name):
+        path_name = name.lower().replace(" ", "_")
+        log.info('Removing repo file for "{name"'.format(name=name))
+        sources_path = self.join_root('/etc/yum.repos.d/{name}.repo'.format(name=path_name))
+        deployment.remove_file(sources_path)
 
     def add_repos(self, press_config):
         for repo in press_config.get('repos', []):
@@ -104,3 +117,36 @@ class RedhatTarget(LinuxTarget):
             log.error('Error parsing redhat-release')
         return release_info
 
+    def parse_os_release(self):
+        """
+        reads /etc/os-release, excluding blank lines and returns dict()
+        """
+        with open("/etc/os-release") as f:
+            os_release = {}
+            for line in f:
+                if line.rstrip():
+                    k,v = line.rstrip().split("=")
+                    os_release[k] = v.strip('"')
+        return os_release
+
+    def baseline_yum(self, os_id, rhel_repo_name, version, proxy):
+        """
+        Check to see if we need proxy, and enable in yum.conf
+        Check if we are 'rhel' and if so add base repo
+        """
+        rhel_repo_url = 'http://intra.mirror.rackspace.com/kickstart/'\
+                            'rhel-x86_64-server-{version}/'.format(version)
+        if proxy:
+            self.enable_yum_proxy(proxy)
+        if os_id == 'rhel':
+            self.add_repo(rhel_repo_name, rhel_repo_url, gpgkey=None)
+
+    def revert_yum(self, os_id, rhel_repo_name):
+        """
+        Reverts changes from baseline yum:
+        Disabled proxy
+        If 'rhel' removes the base repo
+        """
+        self.disable_yum_proxy(self.proxy)
+        if os_id == 'rhel':
+            self.remove_repo(rhel_repo_name)
