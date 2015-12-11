@@ -121,7 +121,7 @@ class RedhatTarget(LinuxTarget):
         """
         reads /etc/os-release, excluding blank lines and returns dict()
         """
-        with open("/etc/os-release") as f:
+        with open(self.join_root("/etc/os-release")) as f:
             os_release = {}
             for line in f:
                 if line.rstrip():
@@ -135,18 +135,19 @@ class RedhatTarget(LinuxTarget):
         Check if we are 'rhel' and if so add base repo
         """
         rhel_repo_url = 'http://intra.mirror.rackspace.com/kickstart/'\
-                            'rhel-x86_64-server-{version}/'.format(version)
+                            'rhel-x86_64-server-{version}/'.format(version=version)
         if proxy:
             self.enable_yum_proxy(proxy)
         if os_id == 'rhel':
             self.add_repo(rhel_repo_name, rhel_repo_url, gpgkey=None)
 
-    def revert_yum(self, os_id, rhel_repo_name):
+    def revert_yum(self, os_id, rhel_repo_name, proxy):
         """
         Reverts changes from baseline yum:
         Disabled proxy
         If 'rhel' removes the base repo
         """
-        self.disable_yum_proxy(self.proxy)
+        if proxy:
+            self.disable_yum_proxy(self.proxy)
         if os_id == 'rhel':
             self.remove_repo(rhel_repo_name)

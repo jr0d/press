@@ -57,9 +57,7 @@ class OMSARedHat(TargetExtension):
         self.omsa_repo_file = '/etc/yum.repos.d/dell-omsa-repository.repo'
         self.omsa_bootstrap_url = 'http://mirror.rackspace.com/dell/hardware/latest/bootstrap.cgi'
         self.rhel_repo_name = 'rhel_base'
-        self.proxy = self.target.press_configuration.get('proxy')
-        self.os_release = self.target.parse_os_release()
-        self.os_id = self.os_release.get('ID')
+        self.proxy = self.__configuration__.get('proxy')
         super(OMSARedHat, self).__init__(target_obj)
 
     def download_and_prepare_repositories(self):
@@ -76,18 +74,19 @@ class OMSARedHat(TargetExtension):
     def install_wget(self):
         self.target.install_package('wget')
 
-    def normalize_yum(self):
-        self.target.disable_proxy(self.proxy)
-        if self.os_id == 'rhel':
-            self.target.remove_repo(self.rhel_repo_name)
+    def get_os_and_release(self):
+        os_release = self.target.parse_os_release()
+        os_id = self.os_release.get('ID')
+        return os_release, os_id
 
     def run(self):
+        self.os_id, self.os_release = self.get_os_and_release()
         self.target.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
         self.install_wget()
         self.download_and_prepare_repositories()
         self.install_omsa_repo()
         self.install_openmanage()
-        self.target.revert_yum(self.os_id, self.rhel_repo_name)
+        self.target.revert_yum(self.os_id, self.rhel_repo_name, self.proxy)
 
 
 class OMSARHEL7(OMSARedHat):
