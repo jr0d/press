@@ -14,6 +14,7 @@ class RedhatTarget(LinuxTarget):
     rpm_path = '/usr/bin/rpm'
     yum_path = '/usr/bin/yum'
     yum_config_file = '/etc/yum.conf'
+    yum_config_backup = '/etc/yum.conf_bak'
 
     def __init__(self, press_configuration, disks, root, chroot_staging_dir):
         super(RedhatTarget, self).__init__(press_configuration, disks, root, chroot_staging_dir)
@@ -25,10 +26,11 @@ class RedhatTarget(LinuxTarget):
         return out.splitlines()
 
     def enable_yum_proxy(self, proxy):
+        self.chroot('/bin/cp %s %s' % (self.yum_config_file, self.yum_config_backup))
         self.chroot('echo proxy=http://%s >> %s' % (proxy, self.yum_config_file))
 
     def disable_yum_proxy(self, proxy):
-        self.chroot("sed -i -e 's/proxy=http:\/\/%s//g' %s" % (proxy, self.yum_config_file))
+        self.chroot('/bin/mv %s %s' % (self.yum_config_backup, self.yum_config_file))
 
     def install_package(self, package):
         command = '%s install -y --quiet %s' % (self.yum_path, package)
