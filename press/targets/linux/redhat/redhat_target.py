@@ -28,7 +28,7 @@ class RedhatTarget(LinuxTarget):
         self.chroot('echo proxy=http://%s >> %s' % (proxy, self.yum_config_file))
 
     def disable_yum_proxy(self, proxy):
-        self.chroot("sed -i -e 's/proxy=http://%s//g %s" % (proxy, self.yum_config_file))
+        self.chroot("sed -i -e 's/proxy=http:\/\/%s//g' %s" % (proxy, self.yum_config_file))
 
     def install_package(self, package):
         command = '%s install -y --quiet %s' % (self.yum_path, package)
@@ -64,7 +64,7 @@ class RedhatTarget(LinuxTarget):
 
     def remove_repo(self, name):
         path_name = name.lower().replace(" ", "_")
-        log.info('Removing repo file for "{name"'.format(name=name))
+        log.info('Removing repo file for "{name}"'.format(name=name))
         sources_path = self.join_root('/etc/yum.repos.d/{name}.repo'.format(name=path_name))
         deployment.remove_file(sources_path)
 
