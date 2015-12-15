@@ -3,7 +3,7 @@ import logging
 from press.helpers import cli
 from press.plugins.server_management.omsa import OMSAUbuntu1404, OMSARHEL7
 from press.plugins.server_management.spp import SPPUbuntu1404, SPPRHEL7
-from press.plugins.server_management.vmware import VMWareTools
+from press.plugins.server_management.vmware import VMWareTools, VMWareToolsEL7
 from press.targets.registration import register_extension
 
 
@@ -17,6 +17,10 @@ extension_mapper = {
     'HP': [
         SPPUbuntu1404,
         SPPRHEL7
+    ],
+    'VMware, Inc.': [
+        VMWareTools,
+        VMWareToolsEL7
     ]
 }
 
@@ -46,6 +50,9 @@ def plugin_init(configuration):
     elif manufacturer == 'VMware, Inc.':
         VMWareTools.__configuration__ = configuration
         register_extension(VMWareTools)
+
+        VMWareToolsEL7.__configuration__ = configuration
+        register_extension(VMWareToolsEL7)
     
     elif manufacturer == 'HP':
         SPPRHEL7.__configuration__ = configuration
