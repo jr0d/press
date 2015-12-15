@@ -108,7 +108,7 @@ class DebianTarget(LinuxTarget):
                 self.add_key(gpgkey)
 
     def add_repos(self, press_config):
-        for repo in press_config.get('repos'):
+        for repo in press_config.get('repos', []):
             self.add_repo(repo['name'], repo['mirror'], repo.get('gpgkey', None))
 
     def remove_package(self, package):
