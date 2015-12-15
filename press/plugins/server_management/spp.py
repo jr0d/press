@@ -94,7 +94,7 @@ class SPPRHEL(TargetExtension):
         If 'rhel' removes the base repo
         """
         if proxy:
-            self.target.disable_yum_proxy(self.proxy)
+            self.target.disable_yum_proxy()
         if os_id == 'rhel':
             self.target.remove_repo(rhel_repo_name)
 
