@@ -40,17 +40,20 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
                 log.info('Rebuilding %s' % initramfs_path)
                 self.chroot('dracut -v -f %s %s' % (initramfs_path, kernel))
 
-    def write_network_script(self, device, network_config):
+    def write_network_script(self, device, network_config, dummy=False):
         script_name = 'ifcfg-%s' % device.devname
         script_path = self.join_root(os.path.join(self.network_scripts_path,  script_name))
-        ip_address = network_config.get('ip_address')
-        cidr_mask = net_helper.mask2cidr(network_config.get('netmask'))
-        gateway = network_config.get('gateway')
-        _template = networking.InterfaceTemplate(device.devname,
-                                                 default_route=network_config.get('default_route', False),
-                                                 ip_address=ip_address,
-                                                 cidr_mask=cidr_mask,
-                                                 gateway=gateway)
+        if dummy:
+            _template = networking.DummyInterfaceTemplate(device.devname)
+        else:
+            ip_address = network_config.get('ip_address')
+            cidr_mask = net_helper.mask2cidr(network_config.get('netmask'))
+            gateway = network_config.get('gateway')
+            _template = networking.InterfaceTemplate(device.devname,
+                                                     default_route=network_config.get('default_route', False),
+                                                     ip_address=ip_address,
+                                                     cidr_mask=cidr_mask,
+                                                     gateway=gateway)
         log.info('Writing %s' % script_path)
         deployment.write(script_path, _template.generate())
 
@@ -73,7 +76,7 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
 
             for network in networks:
                 if name == network.get('interface'):
-                    self.write_network_script(device, network)
+                    self.write_network_script(device, network, dummy=network.get('dummy', False))
                     routes = network.get('routes')
                     if routes:
                         self.write_route_script(device, routes)
