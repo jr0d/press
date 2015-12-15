@@ -10,6 +10,7 @@ log = logging.getLogger(__name__)
 
 class Ubuntu1404Target(DebianTarget, Grub2):
     name = 'ubuntu_1404'
+    dist = 'trusty'
 
     grub2_install_path = 'grub-install'
     grub2_mkconfig_path = 'grub-mkconfig'

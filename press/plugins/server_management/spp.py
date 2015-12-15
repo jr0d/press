@@ -9,6 +9,7 @@ spp_packages = ['hponcfg', 'hpssacli', 'hp-health']
 
 log = logging.getLogger('press.plugins.server_management')
 
+
 class SPPDebian(TargetExtension):
     dist = ''
     mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/mcp/'
@@ -45,4 +46,65 @@ class SPPUbuntu1404(SPPDebian):
     dist = 'trusty'
 
 
+class SPPRHEL(TargetExtension):
+    __configuration__ = {} # Filled at runtime
 
+    def __init__(self, target_obj, version='7'):
+        self.version = version
+        self.mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/spp' \
+                          '/RHEL/{version}/x86_64/current/'.format(version=self.version)
+        self.spp_repo_file = '/etc/yum.repos.d/hp-spp.repo'
+        self.gpgkey = 'http://mirror.rackspace.com/hp/SDR/repo/spp/GPG-KEY-SPP'
+        self.rhel_repo_name = 'rhel_base'
+        self.spp_source = '[spp]\nname=HP SPP\nbaseurl={mirror}\nenabled=1' \
+                          '\ngpgcheck=1\ngpgkey={gpgkey}'.format(mirror=self.mirrorbase, gpgkey=self.gpgkey)
+        self.proxy = self.__configuration__.get('proxy')
+        self.os_id = None
+
+        super(SPPRHEL, self).__init__(target_obj)
+
+    def prepare_repositories(self):
+        log.debug("Updating repos to add HP-SPP")
+        self.target.chroot('echo "{0}" > "{1}"'.format(self.spp_source, self.spp_repo_file))
+
+    def install_hp_spp(self):
+        self.target.install_packages(spp_packages)
+
+    def get_os_id(self):
+        os_release = self.target.parse_os_release()
+        os_id = os_release.get('ID')
+        return os_id
+
+    def baseline_yum(self, os_id, rhel_repo_name, version, proxy):
+        """
+        Check to see if we need proxy, and enable in yum.conf
+        Check if we are 'rhel' and if so add base repo
+        """
+        rhel_repo_url = 'http://intra.mirror.rackspace.com/kickstart/'\
+                            'rhel-x86_64-server-{version}/'.format(version=version)
+        if proxy:
+            self.target.enable_yum_proxy(proxy)
+        if os_id == 'rhel':
+            self.target.add_repo(rhel_repo_name, rhel_repo_url, gpgkey=None)
+
+    def revert_yum(self, os_id, rhel_repo_name, proxy):
+        """
+        Reverts changes from baseline yum:
+        Disabled proxy
+        If 'rhel' removes the base repo
+        """
+        if proxy:
+            self.target.disable_yum_proxy()
+        if os_id == 'rhel':
+            self.target.remove_repo(rhel_repo_name)
+
+
+    def run(self):
+        self.os_id = self.get_os_id()
+        self.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
+        self.prepare_repositories()
+        self.install_hp_spp()
+        self.revert_yum(self.os_id, self.rhel_repo_name, self.proxy)
+
+class SPPRHEL7(SPPRHEL):
+    __extends__ = 'enterprise_linux_7'

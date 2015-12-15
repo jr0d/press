@@ -3,7 +3,7 @@ import logging
 
 from press.helpers import deployment
 from press.targets.linux.linux_target import LinuxTarget
-
+from press.hooks.hooks import add_hook
 
 log = logging.getLogger(__name__)
 
@@ -13,11 +13,26 @@ class RedhatTarget(LinuxTarget):
 
     rpm_path = '/usr/bin/rpm'
     yum_path = '/usr/bin/yum'
+    yum_config_file = '/etc/yum.conf'
+    yum_config_backup = '/etc/yum.conf_bak'
+
+    def __init__(self, press_configuration, disks, root, chroot_staging_dir):
+        super(RedhatTarget, self).__init__(press_configuration, disks, root, chroot_staging_dir)
+        add_hook(self.add_repos, "pre-extensions", self)
 
     def get_package_list(self):
         command = '%s --query --all --queryformat \"%%{NAME}\\n\"' % self.rpm_path
         out = self.chroot(command, quiet=True)
         return out.splitlines()
+
+    def enable_yum_proxy(self, proxy):
+        log.info('Enabling global yum proxy: %s' % proxy)
+        self.chroot('/bin/cp %s %s' % (self.yum_config_file, self.yum_config_backup))
+        self.chroot('echo proxy=http://%s >> %s' % (proxy, self.yum_config_file))
+
+    def disable_yum_proxy(self):
+        log.info('Restoring original yum configuration')
+        self.chroot('/bin/mv %s %s' % (self.yum_config_backup, self.yum_config_file))
 
     def install_package(self, package):
         command = '%s install -y --quiet %s' % (self.yum_path, package)
@@ -35,6 +50,31 @@ class RedhatTarget(LinuxTarget):
         else:
             log.info('Installed: %s' % ' '.join(packages))
         return res.returncode
+
+    def add_repo(self, name, mirror, gpgkey):
+        path_name = name.lower().replace(" ", "_")
+        log.info('Creating repo file for "{name}"'.format(name=name))
+        sources_path = self.join_root('/etc/yum.repos.d/{name}.repo'.format(name=path_name))
+        source = "[{lower_name}]\nname={formal_name}\nbaseurl={mirror}\nenabled=1".format(lower_name=path_name,
+                                                                                          formal_name=name,
+                                                                                          mirror=mirror)
+        if gpgkey:
+            source += "\ngpgcheck=1"
+            source += "\ngpgkey={gpgkey}".format(gpgkey=gpgkey)
+        else:
+            source += "\ngpgcheck=0"
+
+        deployment.write(sources_path, source)
+
+    def remove_repo(self, name):
+        path_name = name.lower().replace(" ", "_")
+        log.info('Removing repo file for "{name}"'.format(name=name))
+        sources_path = self.join_root('/etc/yum.repos.d/{name}.repo'.format(name=path_name))
+        deployment.remove_file(sources_path)
+
+    def add_repos(self, press_config):
+        for repo in press_config.get('repos', []):
+            self.add_repo(repo['name'], repo['mirror'], repo.get('gpgkey', None))
 
     def package_exists(self, package_name):
         for package in self.get_package_list():
@@ -81,3 +121,14 @@ class RedhatTarget(LinuxTarget):
             log.error('Error parsing redhat-release')
         return release_info
 
+    def parse_os_release(self):
+        """
+        reads /etc/os-release, excluding blank lines and returns dict()
+        """
+        with open(self.join_root("/etc/os-release")) as f:
+            os_release = {}
+            for line in f:
+                if line.rstrip():
+                    k, v = line.rstrip().split("=")
+                    os_release[k] = v.strip('"')
+        return os_release

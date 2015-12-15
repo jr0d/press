@@ -4,7 +4,6 @@ import logging
 from press.layout.size import Size, PercentString
 from press.exceptions import LVMValidationError
 
-
 log = logging.getLogger(__name__)
 
 
@@ -16,6 +15,7 @@ class PhysicalVolume(object):
      the apply function to do it's work. From the configuration file, these will be
      linked via list index.
     """
+
     def __init__(self, reference):
         self.reference = reference
 
@@ -119,6 +119,7 @@ class LogicalVolume(object):
     """
     Very similar to Partition, device is the /dev/link after the device is created.
     """
+
     def __init__(self, name, size_or_percent, file_system=None, mount_point=None, fsck_option=0):
         self.name = name
         if isinstance(size_or_percent, PercentString):
@@ -180,11 +181,12 @@ class LogicalVolume(object):
         return gen
 
     def __repr__(self):
-         return "device: %s, name: %s, size: %s, fs: %s, mount point: %s, fsck_option: %s" % (
-             self.devlinks and self.devlinks[-1] or 'unlinked',
-             self.name,
-             self.size or self.percent_string,
-             self.file_system,
-             self.mount_point,
-             self.fsck_option
-         )
+        return "device: %s, name: %s, size: %s, fs: %s, mount point: %s, fsck_option: %s" % (
+            self.devlinks and self.devlinks[-1] or 'unlinked',
+            self.name,
+            self.size or self.percent_string,
+            self.file_system,
+            self.mount_point,
+            self.fsck_option
+        )
+

@@ -89,7 +89,7 @@ def _has_logical(partitions):
     for partition in partitions:
         if partition.get('mbr_type') == 'logical':
             return True
-    
+
     if len(partitions) > 4:
         return True
 

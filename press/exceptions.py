@@ -49,3 +49,7 @@ class ImageValidationException(Exception):
 
 class NetworkConfigurationError(ConfigurationError):
     pass
+
+
+class HookError(Exception):
+    pass
