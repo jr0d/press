@@ -26,10 +26,12 @@ class RedhatTarget(LinuxTarget):
         return out.splitlines()
 
     def enable_yum_proxy(self, proxy):
+        log.info('Enabling global yum proxy: %s' % proxy)
         self.chroot('/bin/cp %s %s' % (self.yum_config_file, self.yum_config_backup))
         self.chroot('echo proxy=http://%s >> %s' % (proxy, self.yum_config_file))
 
-    def disable_yum_proxy(self, proxy):
+    def disable_yum_proxy(self):
+        log.info('Restoring original yum configuration')
         self.chroot('/bin/mv %s %s' % (self.yum_config_backup, self.yum_config_file))
 
     def install_package(self, package):
@@ -127,29 +129,6 @@ class RedhatTarget(LinuxTarget):
             os_release = {}
             for line in f:
                 if line.rstrip():
-                    k,v = line.rstrip().split("=")
+                    k, v = line.rstrip().split("=")
                     os_release[k] = v.strip('"')
         return os_release
-
-    def baseline_yum(self, os_id, rhel_repo_name, version, proxy):
-        """
-        Check to see if we need proxy, and enable in yum.conf
-        Check if we are 'rhel' and if so add base repo
-        """
-        rhel_repo_url = 'http://intra.mirror.rackspace.com/kickstart/'\
-                            'rhel-x86_64-server-{version}/'.format(version=version)
-        if proxy:
-            self.enable_yum_proxy(proxy)
-        if os_id == 'rhel':
-            self.add_repo(rhel_repo_name, rhel_repo_url, gpgkey=None)
-
-    def revert_yum(self, os_id, rhel_repo_name, proxy):
-        """
-        Reverts changes from baseline yum:
-        Disabled proxy
-        If 'rhel' removes the base repo
-        """
-        if proxy:
-            self.disable_yum_proxy(self.proxy)
-        if os_id == 'rhel':
-            self.remove_repo(rhel_repo_name)
