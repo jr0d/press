@@ -1,4 +1,10 @@
-# "Prime Time" release v0.4.0
+# "Forgetful Tyrannosaurus" release v0.4.5
+* Hooks
+* Repository manager plugin
+* authorized_keys support
+* ntp server and system time configuration
+
+# "Prime Time" release v0.4.9
 * SSD detection
     - Changes to file system mount options (discard)
 * EFI bootloader support
@@ -30,9 +36,13 @@
 declaration
 * cloud-init support
 * Raw and QCOW2 image support
+* Pull images from docker hub
+* Glance support
 * Distro Support
     - SLES
     - Oracle EL
+    - CORE OS
+    - Docker Box image
 * OS Support (Pending discovery)
     - Citrix XenServer
     - ESX

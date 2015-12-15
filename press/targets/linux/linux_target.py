@@ -14,8 +14,6 @@ class LinuxTarget(Target):
 
     ssh_protocol_2_key_types = ('rsa', 'ecdsa', 'ed25519', 'dsa')
     locale_command = "/usr/sbin/locale-gen"
-    default_home_dir = '/home'
-    default_root_user_home = '/root'
 
     def set_language(self, language):
         _locale = 'LANG=%s\nLC_MESSAGES=C\n' % language
@@ -121,16 +119,18 @@ class LinuxTarget(Target):
 
             authorized_keys = _u.get('authorized_keys', list())
             if authorized_keys:
+                log.info('Adding authorized_keys for %s' % user)
                 ssh_config_path = self.join_root('%s/.ssh' % home_dir)
                 log.debug(ssh_config_path)
                 if not os.path.exists(ssh_config_path):
                     log.info('Creating .ssh directory: %s' % ssh_config_path)
                     deployment.recursive_makedir(ssh_config_path, mode=0700)
 
-                for public_key_string in authorized_keys:
-                    log.debug('Adding public key: %s' % public_key_string)
+                if authorized_keys:
+                    public_keys_string = '\n'.join(authorized_keys).strip() + '\n'
+                    log.debug('Adding public key: %s' % public_keys_string)
                     deployment.write(os.path.join(ssh_config_path, 'authorized_keys'),
-                                     public_key_string.strip() + '\n',
+                                     public_keys_string,
                                      append=True)
 
         # Create system groups
