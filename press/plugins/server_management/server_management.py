@@ -32,7 +32,8 @@ def get_manufacturer():
 
 def plugin_init(configuration):
     log.info('Registering Server Management plugins')
-    manufacturer = get_manufacturer()
+    plugin_configuration = configuration.get('server_management', {})
+    manufacturer = plugin_configuration.get('override_manufacturer') or get_manufacturer()
     log.info('Server manufacturer: %s' % manufacturer)
 
     if manufacturer == 'Dell Inc.':
