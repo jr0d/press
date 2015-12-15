@@ -3,8 +3,6 @@ import os
 from press.helpers import deployment
 from press.targets.target_base import TargetExtension
 
-vmware_tools_packages = ['open-vm-tools', 'open-vm-dkms']
-
 log = logging.getLogger('press.plugins.server_management')
 
 
@@ -28,7 +26,7 @@ class VMWareToolsEL(TargetExtension):
 
     def install_vmware_tools(self):
         log.info('Installing vmware tools')
-        self.target.install_packages(vmware_tools_packages)
+        self.target.install_package('open-vm-tools')
 
     def get_os_id(self):
         os_release = self.target.parse_os_release()
