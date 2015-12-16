@@ -74,7 +74,7 @@ class OMSARedHat(TargetExtension):
     def install_omsa_repo(self):
         rpm_command = 'rpm -i dell-omsa-repository.rpm'
         if self.proxy:
-            rpm_command = 'http_proxy=http://%s HTTPS_PROXY=http://%s' % (self.proxy, self.proxy)
+            rpm_command = 'http_proxy=http://%s HTTPS_PROXY=http://%s ' % (self.proxy, self.proxy) + rpm_command
         self.target.chroot(rpm_command)
 
     def install_openmanage(self):
