@@ -72,7 +72,10 @@ class OMSARedHat(TargetExtension):
         self.target.chroot('echo bootstrapurl="{0}" > "{1}"'.format(self.omsa_bootstrap_url, self.omsa_repo_file))
 
     def install_omsa_repo(self):
-        self.target.chroot('rpm -i dell-omsa-repository.rpm')
+        rpm_command = 'rpm -i dell-omsa-repository.rpm'
+        if self.proxy:
+            rpm_command = 'http_proxy=http://%s HTTPS_PROXY=http://%s' % (self.proxy, self.proxy)
+        self.target.chroot(rpm_command)
 
     def install_openmanage(self):
         self.target.install_package('srvadmin-all')
