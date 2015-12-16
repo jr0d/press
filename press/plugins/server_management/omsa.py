@@ -65,7 +65,10 @@ class OMSARedHat(TargetExtension):
 
     def download_and_prepare_repositories(self):
         log.debug("Updating repos to add OMSA")
-        self.target.chroot('wget -O dell-omsa-repository.rpm "{0}"'.format(self.omsa_rpm_url))
+        wget_command = 'wget -O dell-omsa-repository.rpm "{0}"'.format(self.omsa_rpm_url)
+        if self.proxy:
+            wget_command = 'http_proxy=%s HTTPS_PROXY=%s ' % (self.proxy, self.proxy) + wget_command
+        self.target.chroot(wget_command)
         self.target.chroot('echo bootstrapurl="{0}" > "{1}"'.format(self.omsa_bootstrap_url, self.omsa_repo_file))
 
     def install_omsa_repo(self):
