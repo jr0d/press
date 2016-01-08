@@ -195,7 +195,7 @@ class LinuxTarget(Target):
                 break
 
     def ssh_keygen(self, path, key_type, passphrase='', comment='localhost.localdomain'):
-        deployment.remove_file(path)
+        deployment.remove_file(self.join_root(path))
         command = 'ssh-keygen -f %s -t%s -Cpress@%s -N \"%s\"' % (
             path, key_type, comment, passphrase)
         self.chroot(command)
