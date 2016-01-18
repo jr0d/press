@@ -115,7 +115,7 @@ class OMSARedHat(TargetExtension):
 
     def run(self):
         self.os_id = self.get_os_release_value('ID')
-        self.version = self.get_os_release_value('VERSION_ID')
+        self.version = self.get_os_release_value('VERSION_ID') + '.eus'
         self.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
         self.install_wget()
         self.download_and_prepare_repositories()
