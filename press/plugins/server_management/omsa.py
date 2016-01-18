@@ -2,7 +2,6 @@ import logging
 import os
 from press.helpers import deployment
 from press.targets.target_base import TargetExtension
-from press.plugins.server_management.server_management import get_os_release_value
 
 pgp_key_file = 'dell_key.1285491434D8786F'
 
@@ -52,6 +51,8 @@ class OMSARedHat(TargetExtension):
     __configuration__ = {}  # Filled at runtime
 
     def __init__(self, target_obj):
+        from press.plugins.server_management.server_management import get_os_release_value
+
         self.version = get_os_release_value('VERSION_ID')
         self.omsa_rpm_url = 'http://mirror.rackspace.com/dell/hardware/latest/mirrors.cgi/' \
                             'osname=rhel{version}&basearch=x86_64' \

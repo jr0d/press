@@ -2,8 +2,6 @@ import logging
 import os
 from press.helpers import deployment
 from press.targets.target_base import TargetExtension
-from press.plugins.server_management.server_management import get_os_release_value
-
 
 log = logging.getLogger('press.plugins.server_management')
 
@@ -19,6 +17,8 @@ class VMWareToolsEL(TargetExtension):
     __configuration__ = {}
 
     def __init__(self, target_obj):
+        from press.plugins.server_management.server_management import get_os_release_value
+
         self.version = get_os_release_value('VERSION_ID')
         self.rhel_repo_name = 'rhel_base'
         self.proxy = self.__configuration__.get('proxy')
