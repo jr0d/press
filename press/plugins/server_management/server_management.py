@@ -24,6 +24,13 @@ extension_mapper = {
     ]
 }
 
+def get_os_release_value(self, key):
+        """
+        parses /etc/os_release and returns the key value passed in
+        """
+        os_release = self.target.parse_os_release()
+        value = os_release.get(key)
+        return value
 
 def get_manufacturer():
     res = cli.run('dmidecode -s system-manufacturer', raise_exception=True)

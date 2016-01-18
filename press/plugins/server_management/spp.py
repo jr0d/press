@@ -2,6 +2,8 @@ import logging
 import os
 from press.helpers import deployment
 from press.targets.target_base import TargetExtension
+from press.plugins.server_management.server_management import get_os_release_value
+
 
 pgp_key_files = ['hpPublicKey1024.pub', 'hpPublicKey2048.pub', 'hpPublicKey2048_key1.pub']
 
@@ -50,6 +52,7 @@ class SPPRHEL(TargetExtension):
     __configuration__ = {} # Filled at runtime
 
     def __init__(self, target_obj):
+        self.version = get_os_release_value('VERSION_ID')
         self.mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/spp' \
                           '/RHEL/{version}/x86_64/current/'.format(version=self.version)
         self.spp_repo_file = '/etc/yum.repos.d/hp-spp.repo'
@@ -69,22 +72,13 @@ class SPPRHEL(TargetExtension):
     def install_hp_spp(self):
         self.target.install_packages(spp_packages)
 
-    def get_os_release_value(self, key):
-        """
-        parses /etc/os_release and returns the key value passed in
-        """
-        os_release = self.target.parse_os_release()
-        value = os_release.get(key)
-        return value
-
-
     def baseline_yum(self, os_id, rhel_repo_name, version, proxy):
         """
         Check to see if we need proxy, and enable in yum.conf
         Check if we are 'rhel' and if so add base repo
         """
         rhel_repo_url = 'http://intra.mirror.rackspace.com/kickstart/'\
-                            'rhel-x86_64-server-{version}/'.format(version=version)
+                            'rhel-x86_64-server-{version}.eus/'.format(version=version)
         if proxy:
             self.target.enable_yum_proxy(proxy)
         if os_id == 'rhel':
@@ -103,8 +97,7 @@ class SPPRHEL(TargetExtension):
 
 
     def run(self):
-        self.os_id = self.get_os_release_value('ID')
-        self.version = self.get_os_release_value('VERSION_ID') + '.eus'
+        self.os_id = get_os_release_value('ID')
         self.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
         self.prepare_repositories()
         self.install_hp_spp()
