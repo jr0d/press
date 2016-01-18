@@ -133,7 +133,7 @@ class RedhatTarget(LinuxTarget):
                     os_release[k] = v.strip('"')
         return os_release
 
-    def get_os_release_value(key):
+    def get_os_release_value(self, key):
         """
         parses /etc/os_release and returns the key value passed in
         """
