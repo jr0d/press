@@ -51,9 +51,7 @@ class OMSARedHat(TargetExtension):
     __configuration__ = {}  # Filled at runtime
 
     def __init__(self, target_obj):
-        from press.plugins.server_management.server_management import get_os_release_value
-
-        self.version = get_os_release_value('VERSION_ID')
+        self.version = self.target.get_os_release_value('VERSION_ID')
         self.omsa_rpm_url = 'http://mirror.rackspace.com/dell/hardware/latest/mirrors.cgi/' \
                             'osname=rhel{version}&basearch=x86_64' \
                             '&native=1&getrpm=dell-omsa-repository&redirpath='.format(version=self.version)
@@ -109,7 +107,7 @@ class OMSARedHat(TargetExtension):
             self.target.remove_repo(rhel_repo_name)
 
     def run(self):
-        self.os_id = get_os_release_value('ID')
+        self.os_id = self.target.get_os_release_value('ID')
         self.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
         self.install_wget()
         self.download_and_prepare_repositories()

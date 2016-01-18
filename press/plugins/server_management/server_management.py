@@ -7,6 +7,7 @@ from press.plugins.server_management.vmware import VMWareTools, VMWareToolsEL7
 from press.targets.registration import register_extension
 
 
+
 log = logging.getLogger('press.plugins.server_management')
 
 extension_mapper = {
@@ -24,13 +25,6 @@ extension_mapper = {
     ]
 }
 
-def get_os_release_value(key):
-        """
-        parses /etc/os_release and returns the key value passed in
-        """
-        os_release = self.target.parse_os_release()
-        value = os_release.get(key)
-        return value
 
 def get_manufacturer():
     res = cli.run('dmidecode -s system-manufacturer', raise_exception=True)

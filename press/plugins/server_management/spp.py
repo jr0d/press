@@ -51,9 +51,7 @@ class SPPRHEL(TargetExtension):
     __configuration__ = {} # Filled at runtime
 
     def __init__(self, target_obj):
-        from press.plugins.server_management.server_management import get_os_release_value
-
-        self.version = get_os_release_value('VERSION_ID')
+        self.version = self.target.get_os_release_value('VERSION_ID')
         self.mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/spp' \
                           '/RHEL/{version}/x86_64/current/'.format(version=self.version)
         self.spp_repo_file = '/etc/yum.repos.d/hp-spp.repo'
@@ -98,7 +96,7 @@ class SPPRHEL(TargetExtension):
 
 
     def run(self):
-        self.os_id = get_os_release_value('ID')
+        self.os_id = self.target.get_os_release_value('ID')
         self.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
         self.prepare_repositories()
         self.install_hp_spp()
