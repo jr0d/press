@@ -16,8 +16,7 @@ class VMWareTools(TargetExtension):
 class VMWareToolsEL(TargetExtension):
     __configuration__ = {}
 
-    def __init__(self, target_obj, version='7'):
-        self.version = version
+    def __init__(self, target_obj):
         self.rhel_repo_name = 'rhel_base'
         self.proxy = self.__configuration__.get('proxy')
         self.os_id = None
@@ -28,10 +27,14 @@ class VMWareToolsEL(TargetExtension):
         log.info('Installing vmware tools')
         self.target.install_package('open-vm-tools')
 
-    def get_os_id(self):
+    def get_os_release_value(self, key):
+        """
+        parses /etc/os_release and returns the key value passed in
+        """
         os_release = self.target.parse_os_release()
-        os_id = os_release.get('ID')
-        return os_id
+        value = os_release.get(key)
+        return value
+
 
     def baseline_yum(self, os_id, rhel_repo_name, version, proxy):
         """
@@ -58,7 +61,8 @@ class VMWareToolsEL(TargetExtension):
 
 
     def run(self):
-        self.os_id = self.get_os_id()
+        self.os_id = self.get_os_release_value('ID')
+        self.version = self.get_os_release_value('VERSION_ID')
         self.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
         self.install_vmware_tools()
         self.revert_yum(self.os_id, self.rhel_repo_name, self.proxy)

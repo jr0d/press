@@ -49,8 +49,7 @@ class SPPUbuntu1404(SPPDebian):
 class SPPRHEL(TargetExtension):
     __configuration__ = {} # Filled at runtime
 
-    def __init__(self, target_obj, version='7'):
-        self.version = version
+    def __init__(self, target_obj):
         self.mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/spp' \
                           '/RHEL/{version}/x86_64/current/'.format(version=self.version)
         self.spp_repo_file = '/etc/yum.repos.d/hp-spp.repo'
@@ -70,10 +69,14 @@ class SPPRHEL(TargetExtension):
     def install_hp_spp(self):
         self.target.install_packages(spp_packages)
 
-    def get_os_id(self):
+    def get_os_release_value(self, key):
+        """
+        parses /etc/os_release and returns the key value passed in
+        """
         os_release = self.target.parse_os_release()
-        os_id = os_release.get('ID')
-        return os_id
+        value = os_release.get(key)
+        return value
+
 
     def baseline_yum(self, os_id, rhel_repo_name, version, proxy):
         """
@@ -100,7 +103,8 @@ class SPPRHEL(TargetExtension):
 
 
     def run(self):
-        self.os_id = self.get_os_id()
+        self.os_id = self.get_os_release_value('ID')
+        self.version = self.get_os_release_value('VERSION_ID')
         self.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
         self.prepare_repositories()
         self.install_hp_spp()
