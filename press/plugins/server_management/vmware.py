@@ -17,7 +17,6 @@ class VMWareToolsEL(TargetExtension):
     __configuration__ = {}
 
     def __init__(self, target_obj):
-        self.version = self.target.get_os_release_value('VERSION_ID')
         self.rhel_repo_name = 'rhel_base'
         self.proxy = self.__configuration__.get('proxy')
         self.os_id = None
@@ -54,6 +53,7 @@ class VMWareToolsEL(TargetExtension):
 
     def run(self):
         self.os_id = self.target.get_os_release_value('ID')
+        self.version = self.target.get_os_release_value('VERSION_ID')
         self.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
         self.install_vmware_tools()
         self.revert_yum(self.os_id, self.rhel_repo_name, self.proxy)

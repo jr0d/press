@@ -50,11 +50,10 @@ class OMSAUbuntu1404(OMSADebian):
 class OMSARedHat(TargetExtension):
     __configuration__ = {}  # Filled at runtime
 
-    def __init__(self, target_obj):
-        self.version = self.target.get_os_release_value('VERSION_ID')
+    def __init__(self, target_obj, omsa_version = 7):
         self.omsa_rpm_url = 'http://mirror.rackspace.com/dell/hardware/latest/mirrors.cgi/' \
                             'osname=rhel{version}&basearch=x86_64' \
-                            '&native=1&getrpm=dell-omsa-repository&redirpath='.format(version=self.version)
+                            '&native=1&getrpm=dell-omsa-repository&redirpath='.format(version=omsa_version)
         self.omsa_repo_file = '/etc/yum.repos.d/dell-omsa-repository.repo'
         self.omsa_bootstrap_url = 'http://mirror.rackspace.com/dell/hardware/latest/bootstrap.cgi'
         self.rhel_repo_name = 'rhel_base'
@@ -108,6 +107,7 @@ class OMSARedHat(TargetExtension):
 
     def run(self):
         self.os_id = self.target.get_os_release_value('ID')
+        self.version = self.target.get_os_release_value('VERSION_ID')
         self.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
         self.install_wget()
         self.download_and_prepare_repositories()
