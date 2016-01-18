@@ -24,7 +24,7 @@ extension_mapper = {
     ]
 }
 
-def get_os_release_value(self, key):
+def get_os_release_value(key):
         """
         parses /etc/os_release and returns the key value passed in
         """
