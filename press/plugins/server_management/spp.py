@@ -3,6 +3,7 @@ import os
 from press.helpers import deployment
 from press.targets.target_base import TargetExtension
 
+
 pgp_key_files = ['hpPublicKey1024.pub', 'hpPublicKey2048.pub', 'hpPublicKey2048_key1.pub']
 
 spp_packages = ['hponcfg', 'hpssacli', 'hp-health']
@@ -49,10 +50,9 @@ class SPPUbuntu1404(SPPDebian):
 class SPPRHEL(TargetExtension):
     __configuration__ = {} # Filled at runtime
 
-    def __init__(self, target_obj, version='7'):
-        self.version = version
+    def __init__(self, target_obj, spp_version = 7):
         self.mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/spp' \
-                          '/RHEL/{version}/x86_64/current/'.format(version=self.version)
+                          '/RHEL/{version}/x86_64/current/'.format(version=spp_version)
         self.spp_repo_file = '/etc/yum.repos.d/hp-spp.repo'
         self.gpgkey = 'http://mirror.rackspace.com/hp/SDR/repo/spp/GPG-KEY-SPP'
         self.rhel_repo_name = 'rhel_base'
@@ -70,18 +70,13 @@ class SPPRHEL(TargetExtension):
     def install_hp_spp(self):
         self.target.install_packages(spp_packages)
 
-    def get_os_id(self):
-        os_release = self.target.parse_os_release()
-        os_id = os_release.get('ID')
-        return os_id
-
     def baseline_yum(self, os_id, rhel_repo_name, version, proxy):
         """
         Check to see if we need proxy, and enable in yum.conf
         Check if we are 'rhel' and if so add base repo
         """
         rhel_repo_url = 'http://intra.mirror.rackspace.com/kickstart/'\
-                            'rhel-x86_64-server-{version}/'.format(version=version)
+                            'rhel-x86_64-server-{version}.eus/'.format(version=version)
         if proxy:
             self.target.enable_yum_proxy(proxy)
         if os_id == 'rhel':
@@ -100,7 +95,8 @@ class SPPRHEL(TargetExtension):
 
 
     def run(self):
-        self.os_id = self.get_os_id()
+        self.version = self.target.get_os_release_value('VERSION_ID')
+        self.os_id = self.target.get_os_release_value('ID')
         self.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
         self.prepare_repositories()
         self.install_hp_spp()

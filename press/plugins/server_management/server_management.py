@@ -7,6 +7,7 @@ from press.plugins.server_management.vmware import VMWareTools, VMWareToolsEL7
 from press.targets.registration import register_extension
 
 
+
 log = logging.getLogger('press.plugins.server_management')
 
 extension_mapper = {
