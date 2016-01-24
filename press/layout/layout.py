@@ -177,11 +177,8 @@ class Layout(object):
             real_vg.add_logical_volume(lv)
         self.volume_groups.append(real_vg)
 
-    def apply(self):
-        """Lots of logging here
-        """
-        log.info('Clearing the device mapper')
-        run('dmsetup remove_all')
+    def apply_standard_partitions(self):
+        log.info('Configuring standard partitions')
         for disk in self.allocated:
             parted = self._get_parted_interface_for_allocated_device(disk)
             partition_table = disk.partition_table
@@ -208,12 +205,10 @@ class Layout(object):
                 if partition.file_system:
                     partition.file_system.create(partition.devname)
 
-            # If we are recreating the same partition table, we will need to nuke any
-            # lvm metadata which is still present on the disk
+    def build_software_raid(self):
+        pass
 
-        # WARNING: THIS WILL NUKE LVM METADATA ON YOUR TEST BOX
-        # TODO: Don't NUKE LVM metadata on test boxes
-        # Solution: Use pvs only, find PVs, and associated volume groups, only for allocated disks
+    def destroy_lvm(self):
         old_vgs = self.lvm.get_volume_groups()
         old_pvs = self.lvm.get_physical_volumes()
         log.debug('Discovered resident lvm data, pvs: %s, lvs: %s' % (old_vgs, old_pvs))
@@ -224,6 +219,7 @@ class Layout(object):
             log.info('Removing old pv: %s' % pv)
             self.lvm.pvremove(pv)
 
+    def apply_lvm(self):
         for volume_group in self.volume_groups:
             devnames = list()
             monitor = self.udev.get_monitor()
@@ -245,6 +241,22 @@ class Layout(object):
                 if lv.file_system:
                     lv.file_system.create(lv.devname)
 
+    def apply(self):
+        """Lots of logging here
+        """
+        log.info('Clearing the device mapper')
+        run('dmsetup remove_all')
+
+        self.apply_standard_partitions()
+            # If we are recreating the same partition table, we will need to nuke any
+            # lvm metadata which is still present on the disk
+
+        # WARNING: THIS WILL NUKE LVM METADATA ON YOUR TEST BOX
+        # TODO: Don't NUKE LVM metadata on test boxes
+        # Solution: Use pvs only, find PVs, and associated volume groups, only for allocated disks
+        self.destroy_lvm()
+
+        self.apply_lvm()
         self.committed = True
 
     def generate_fstab(self, method='UUID'):
