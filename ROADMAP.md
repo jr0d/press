@@ -48,3 +48,7 @@ declaration
     - ESX
     - FreeBSD/OpenBSD
     - Microsoft Windows
+
+# "Elminster" release v1.0
+* Redesign object structure
+    - Class interfaces, ie... IPartitionContainer, when implemented, the class can hold a Partition object, or something along those lines
