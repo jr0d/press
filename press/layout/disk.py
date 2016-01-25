@@ -153,6 +153,8 @@ class PartitionTable(object):
                                                                partition.size.bytes,
                                                                partition.flags))
         self._validate_partition(partition)
+        # allocate the partition (mapped to the physical world)
+        partition.allocated = True
         self.partitions.append(partition)
         self.partition_end += adjusted_size
         log.debug('Partition end: %d, table size %d' % (self.partition_end.bytes,
@@ -208,7 +210,12 @@ class Partition(object):
 
         self.partition_id = None
         self.devname = None
+        self.allocated = False
         self.fsck_option = fsck_option
+
+    @property
+    def is_linked(self):
+        return self.devname and self.partition_id
 
     def generate_fstab_entry(self, method='UUID'):
         if not self.file_system:

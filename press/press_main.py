@@ -14,7 +14,7 @@ log = logging.getLogger('press')
 
 class Press(LayoutMixin, ImageMixin):
     """
-
+    Primary orchestration class for press
     """
     def __init__(self, press_configuration,
                  deployment_root='/mnt/press',
@@ -98,4 +98,3 @@ class Press(LayoutMixin, ImageMixin):
         else:
             log.info('Press configured in layout only mode, finishing up.')
         log.info('Finished', extra={'press_event': 'complete'})
-

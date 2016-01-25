@@ -60,6 +60,8 @@ class Layout(object):
 
         self.mount_handler = None
 
+        self.software_raid_objects = []
+
     def populate_disks(self):
         for udisk in self.udisks:
             device = udisk.get('DEVNAME')
@@ -168,19 +170,32 @@ class Layout(object):
 
     def add_volume_group_from_model(self, model_vg):
         for pv in model_vg.physical_volumes:
-            if not 'lvm' in pv.reference.flags:
-                raise LayoutValidationError('Reference partition is not flagged for LVM use')
-            if not isinstance(pv.reference.size, Size) and not pv.size.bytes:
+            if not pv.reference.allocated:
                 raise LayoutValidationError('Reference partition has not be allocated')
         real_vg = VolumeGroup(model_vg.name, model_vg.physical_volumes, model_vg.pe_size)
         for lv in model_vg.logical_volumes:
             real_vg.add_logical_volume(lv)
         self.volume_groups.append(real_vg)
 
+    def add_software_raid(self, raid_object):
+        """
+        :param raid_object:
+        :return:
+        """
+        raid_object.allocated = True
+        raid_object.calculate_size()
+        log.debug('RAID Volume %s, size: %s' % (raid_object.devname, raid_object.size))
+        self.software_raid_objects.append(raid_object)
+
     def apply_standard_partitions(self):
         log.info('Configuring standard partitions')
         for disk in self.allocated:
             parted = self._get_parted_interface_for_allocated_device(disk)
+
+            log.info('Wiping the old table and zeroing existing mbr/gpt/md metadata')
+            parted.wipe_table()
+            parted.remove_gpt()
+
             partition_table = disk.partition_table
             parted.set_label(partition_table.type)
             for partition in partition_table.partitions:
@@ -205,8 +220,12 @@ class Layout(object):
                 if partition.file_system:
                     partition.file_system.create(partition.devname)
 
-    def build_software_raid(self):
-        pass
+    def apply_software_raid(self):
+        log.info('Building software RAIDs')
+        for raid in self.software_raid_objects:
+            raid.create()
+            if raid.file_system:
+                raid.file_system.create(raid.devname)
 
     def destroy_lvm(self):
         old_vgs = self.lvm.get_volume_groups()
@@ -248,12 +267,14 @@ class Layout(object):
         run('dmsetup remove_all')
 
         self.apply_standard_partitions()
-            # If we are recreating the same partition table, we will need to nuke any
-            # lvm metadata which is still present on the disk
+
+        self.apply_software_raid()
+        # If we are recreating the same partition table, we will need to nuke any
+        # lvm metadata which is still present on the disk
 
         # WARNING: THIS WILL NUKE LVM METADATA ON YOUR TEST BOX
         # TODO: Don't NUKE LVM metadata on test boxes
-        # Solution: Use pvs only, find PVs, and associated volume groups, only for allocated disks
+        # Solution: defined pvs only, find PVs, and associated volume groups, only for allocated disks
         self.destroy_lvm()
 
         self.apply_lvm()

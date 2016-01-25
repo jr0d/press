@@ -33,7 +33,7 @@ class MDADM(object):
                                               result.stderr))
         return result
 
-    def create(self, device, members, level, name='', metadata=DEFAULT_METADATA):
+    def create(self, device, level, members, name='', metadata=DEFAULT_METADATA):
         if not name:
             name = os.path.basename(device)
 
@@ -93,12 +93,14 @@ if __name__ == '__main__':
     pi.remove_mbr()
     mdadm.zero_4k('/dev/loop1')
 
-    result = mdadm.create('/dev/md0', ['/dev/loop0', '/dev/loop1'], level='1', name='Pony')
+    result = mdadm.create('/dev/md0', 1, ['/dev/loop0', '/dev/loop1'], name='Pony')
 
     print result
     print result.stderr
 
     mdadm.info()
+
+    raw_input('Press Enter...')
 
     result = mdadm.stop('/dev/md0')
     print result
