@@ -25,6 +25,11 @@ class Grub2(Target):
         return self.bootloader_configuration.get('kernel_parameters')
 
     @property
+    def disk_targets(self):
+        return self.disk_target if isinstance(self.disk_target, list) else \
+                [self.disk_target]
+
+    @property
     def disk_target(self):
         _target = self.bootloader_configuration.get('target', 'first')
         if _target == 'first':
@@ -78,8 +83,10 @@ class Grub2(Target):
         self.update_kernel_parameters()
 
         log.info('Generating grub configuration')
+        # TODO(mdraid): We may need run grub2-mkconfig on all targets?
         self.chroot('%s -o %s' % (self.grub2_mkconfig_path, self.grub2_config_path))
-        log.info('Installing grub on %s' % self.disk_target)
-        self.chroot(
-            '%s --target=i386-pc --recheck --debug %s' % (self.grub2_install_path,
-                                                          self.disk_target))
+        for disk in self.disk_targets:
+            log.info('Installing grub on %s' % disk)
+            self.chroot(
+                '%s --target=i386-pc --recheck --debug %s' % (self.grub2_install_path,
+                                                              disk))

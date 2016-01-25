@@ -22,7 +22,9 @@ class Ubuntu1404Target(DebianTarget, Grub2):
 
     def update_debconf_for_grub(self):
         log.info('Updating debconf for grub')
-        debconf = 'grub-pc grub-pc/install_devices multiselect %s' % self.disk_target
+        targets = ' '.join(self.disk_targets)
+        # TODO(mdraid): Figure out if multiple grub-pc calls are needed per disk
+        debconf = 'grub-pc grub-pc/install_devices multiselect %s' % targets
         self.chroot('echo %s | debconf-set-selections' % debconf)
 
     def create_default_locale(self):
