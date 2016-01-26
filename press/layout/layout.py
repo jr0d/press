@@ -7,10 +7,10 @@ from press import helpers
 from press.helpers.cli import run
 from press.helpers.parted import PartedInterface, NullDiskException, PartedException
 from press.helpers.lvm import LVM
+from press.helpers.mdadm import MDADM
 from press.helpers.udev import UDevHelper
 from press.layout.disk import Disk
 from press.layout.lvm import VolumeGroup
-from press.layout.size import Size
 from press.exceptions import (
     PhysicalDiskException,
     LayoutValidationError,
@@ -57,6 +57,7 @@ class Layout(object):
 
         self.volume_groups = list()
         self.lvm = LVM()
+        self.mdadm = MDADM()
 
         self.mount_handler = None
 
@@ -192,8 +193,18 @@ class Layout(object):
         for disk in self.allocated:
             parted = self._get_parted_interface_for_allocated_device(disk)
 
+            # Read into existing table and remove any active physical volumes
+
+            udev_partitions = self.udev.find_partitions(disk.devname)
+            for _udev_part in udev_partitions:
+                _udev_devname = _udev_part['DEVNAME']
+                if self.lvm.pv_exists(_udev_devname):
+                    self.lvm.pvremove(_udev_devname)
+                # Also, zero the super block
+                self.mdadm.zero_superblock(_udev_devname)
+                self.mdadm.zero_4k(_udev_devname)
+
             log.info('Wiping the old table and zeroing existing mbr/gpt/md metadata')
-            parted.wipe_table()
             parted.remove_gpt()
 
             partition_table = disk.partition_table
@@ -224,31 +235,40 @@ class Layout(object):
         log.info('Building software RAIDs')
         for raid in self.software_raid_objects:
             raid.create()
+            # Not sure if this is necessary, but it seems to help
+            # TODO: poll /proc/mdstat to determine when the array is ready
+            time.sleep(5)
             if raid.file_system:
                 raid.file_system.create(raid.devname)
 
-    def destroy_lvm(self):
-        old_vgs = self.lvm.get_volume_groups()
-        old_pvs = self.lvm.get_physical_volumes()
-        log.debug('Discovered resident lvm data, pvs: %s, lvs: %s' % (old_vgs, old_pvs))
-        for vg in old_vgs:
-            log.info('Removing old vg: %s' % vg)
-            self.lvm.vgremove(vg)
-        for pv in old_pvs:
-            log.info('Removing old pv: %s' % pv)
-            self.lvm.pvremove(pv)
+    def destroy_volume_groups(self):
+        for volume_group in self.volume_groups:
+            if self.lvm.vg_exists(volume_group.name):
+                log.info('Removing existing volume: %s' % volume_group.name)
+                self.lvm.vgremove(volume_group.name)
+
+    def destroy_physical_volumes(self):
+        for volume_group in self.volume_groups:
+            for pv in volume_group.physical_volumes:
+                if not pv.reference:
+                    continue
+                if self.lvm.pv_exists(pv.reference.devname):
+                    log.info('Removing existing physical volume: %s' % pv.reference.devname)
+                    self.lvm.pvremove(pv.reference.devname)
 
     def apply_lvm(self):
         for volume_group in self.volume_groups:
             devnames = list()
             monitor = self.udev.get_monitor()
             monitor.start()
+
             for pv in volume_group.physical_volumes:
                 if not pv.reference.devname:
                     raise LayoutValidationError('devname is not populated, and it should be')
                 devnames.append(pv.reference.devname)
                 self.lvm.pvcreate(pv.reference.devname)
             self.lvm.vgcreate(volume_group.name, devnames, volume_group.pe_size.bytes)
+
             for lv in volume_group.logical_volumes:
                 self.lvm.lvcreate(lv.extents, volume_group.name, lv.name)
                 log.debug(lv.name)
@@ -260,24 +280,40 @@ class Layout(object):
                 if lv.file_system:
                     lv.file_system.create(lv.devname)
 
+    def clean_software_raid(self):
+        """
+        Attempt to detect and destroy
+        :return:
+        """
+        log.info('[paranoia] Removing existing mdraid and associated physical volumes')
+        for array in self.software_raid_objects:
+            if array.pv_name and self.lvm.pv_exists(array.devname):
+                self.lvm.pvremove(array.devname)
+            array.clean()
+
     def apply(self):
         """Lots of logging here
         """
+
+        # TODO: now that we have some clean up operations, determine if we still need to do this
         log.info('Clearing the device mapper')
         run('dmsetup remove_all')
 
+        # Destroy any volume groups present at boot time
+        self.destroy_volume_groups()
+        self.clean_software_raid()
+
         self.apply_standard_partitions()
 
+        # Now that we've built a partition table, destroy any resident data
+        self.destroy_volume_groups()
+        self.destroy_physical_volumes()
+
+        # Now re-apply from scratch
         self.apply_software_raid()
-        # If we are recreating the same partition table, we will need to nuke any
-        # lvm metadata which is still present on the disk
-
-        # WARNING: THIS WILL NUKE LVM METADATA ON YOUR TEST BOX
-        # TODO: Don't NUKE LVM metadata on test boxes
-        # Solution: defined pvs only, find PVs, and associated volume groups, only for allocated disks
-        self.destroy_lvm()
-
         self.apply_lvm()
+
+        # we've been sent to the loony bin
         self.committed = True
 
     def generate_fstab(self, method='UUID'):

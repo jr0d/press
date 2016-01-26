@@ -26,7 +26,7 @@ class MDADM(object):
 
     def run_mdadm(self, command, raise_on_error=True, ignore_error=False, quiet=False):
         full_command = '%s %s' % (self.mdadm, command)
-        result = run(full_command, ignore_error=ignore_error, quiet=quiet)
+        result = run(full_command, ignore_error=ignore_error, quiet=quiet, _input='yes')
         if result and raise_on_error:
             raise MDADMError('%d: %s : %s' % (result.returncode,
                                               result.stdout,
@@ -59,21 +59,56 @@ class MDADM(object):
     def zero_superblock(self, device):
         log.info('Clearing supper block on: %s' % device)
         command = '--zero-superblock {device}'.format(device=device)
-        return self.run_mdadm(command)
+        return self.run_mdadm(command, ignore_error=True, quiet=True)
 
     @staticmethod
     def zero_4k(device):
         log.info('Removing 4K from the beginning of the device: 1.2 metadata')
-        command = 'dd if=/dev/zero of=%s bs=%d count=1' % (device, 4096)
+        command = 'dd if=/dev/zero of=%s bs=%d count=10' % (device, 4096)
         run(command)
+
+    def remove(self, device):
+        log.info('Removing %s' % device)
+        command = '--remove %s' % device
+        return self.run_mdadm(command)
+
+    def fail_remove_member(self, device, member):
+        command = '%s --fail %s --remove %s' % (device, member, member)
+        return self.run_mdadm(command)
 
     @staticmethod
     def info():
         try:
             with open('/proc/mdstat') as fp:
-                print fp.read()
+                return fp.read()
         except IOError:
             return ''
+
+    def _get_mdstat_line(self, device):
+        info = self.info()
+        if not info:
+            return False
+
+        entries = self.info().split('\n\n')
+
+        for entry in entries:
+            for line in entry.split('\n'):
+                if line.find(os.path.basename(device)) == 0:
+                    return line
+
+    def is_present(self, device):
+        return bool(self._get_mdstat_line(device))
+
+    def get_members(self, device):
+        line = self._get_mdstat_line(device)
+        detail = line.split(':')[1]
+        log.debug('detail0: '+  detail + ' ' + line)
+        if detail.split()[0] == 'inactive':
+            members = detail.split()[1:]
+        else:
+            members = detail.split()[2:]
+        log.debug('members: %s' % members)
+        return ['/dev/%s' % x.split('[')[0] for x in members]
 
 
 if __name__ == '__main__':

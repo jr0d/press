@@ -77,6 +77,38 @@ class MDRaid(SoftwareRAID):
                           spare_partitions,
                           )
 
+    def stop(self):
+        self.mdadm.stop(self.devname)
+
+    def remove(self):
+        self.mdadm.remove(self.devname)
+
+    @property
+    def active(self):
+        return self.mdadm.is_present(self.devname)
+
+    def zero_members(self):
+        for member in self.members + self.spare_members:
+            if not member.devname:
+                continue
+            log.info('Cleaning super block: %s' % member.devname)
+            self.mdadm.zero_superblock(member.devname)
+
+    def clean(self):
+        if self.active:
+            log.info('Cleaning %s' % self.devname)
+            active_members = self.mdadm.get_members(self.devname)
+            log.debug('Found active members: %s' % active_members)
+            self.stop()
+            # for member in active_members:
+            #     self.mdadm.fail_remove_member(self.devname, member)
+            self.remove()
+            import time
+            time.sleep(2)
+            for member in active_members:
+                self.mdadm.zero_superblock(member)
+                self.mdadm.zero_4k(member)
+
     def generate_fstab_entry(self):
         """
         If there is a file system on the volume, we need to be able to generate and fstab
