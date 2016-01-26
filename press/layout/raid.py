@@ -37,6 +37,7 @@ class MDRaid(SoftwareRAID):
         self.size = Size(0)
         self.allocated = False
         self.mdadm = MDADM()
+        self.fsck_option = None
 
     @staticmethod
     def _get_partition_devnames(members):
@@ -109,13 +110,38 @@ class MDRaid(SoftwareRAID):
                 self.mdadm.zero_superblock(member)
                 self.mdadm.zero_4k(member)
 
-    def generate_fstab_entry(self):
-        """
-        If there is a file system on the volume, we need to be able to generate and fstab
-        :return:
-        """
-        assert self
-        pass
+    def generate_fstab_entry(self, method='UUID'):
+        # TODO: Move this shit out of the classes an into a library...
+        if not self.file_system:
+            return
+
+        uuid = self.file_system.fs_uuid
+        if not uuid:
+            return
+
+        label = self.file_system.fs_label
+
+        if (method == 'LABEL') and not label:
+            # To the label - J. Kelly, 2nd shift slogan
+            log.debug('Missing label, can\'t take it there')
+
+        options = self.file_system.generate_mount_options()
+
+        dump = 0
+
+        fsck_option = self.fsck_option
+
+        gen = ''
+        if method == 'UUID':
+            gen += '# DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % (self.devname, label or '', uuid)
+        elif method == 'LABEL' and label:
+            gen += '# DEVNAME=%s\tUUID=%s\nLABEL=%s\t\t' % (self.devname, uuid, label)
+        else:
+            gen += '# UUID=%s\tLABEL=%s\n%s\t\t' % (uuid, label or '', self.devname)
+        gen += '%s\t\t%s\t\t%s\t\t%s %s\n\n' % (
+            self.mount_point or 'none', self.file_system, options, dump, fsck_option)
+
+        return gen
 
     def __repr__(self):
         return '%s : %s' % (self.devname, self.members)

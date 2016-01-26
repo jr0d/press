@@ -185,7 +185,7 @@ class Layout(object):
         """
         raid_object.allocated = True
         raid_object.calculate_size()
-        log.debug('RAID Volume %s, size: %s' % (raid_object.devname, raid_object.size))
+        log.info('Adding RAID Volume %s, size: %s' % (raid_object.devname, raid_object.size))
         self.software_raid_objects.append(raid_object)
 
     def apply_standard_partitions(self):
@@ -193,18 +193,21 @@ class Layout(object):
         for disk in self.allocated:
             parted = self._get_parted_interface_for_allocated_device(disk)
 
+            #########################################################################################
             # Read into existing table and remove any active physical volumes
+            # TODO: This needs a newer version of udev that is currently available in Yolo
+            # Critical Error, /lib64/libudev.so.0: undefined symbol: udev_enumerate_add_match_paren
+            #########################################################################################
+            # udev_partitions = self.udev.find_partitions(disk.devname)
+            # for _udev_part in udev_partitions:
+            #     _udev_devname = _udev_part['DEVNAME']
+            #     if self.lvm.pv_exists(_udev_devname):
+            #         self.lvm.pvremove(_udev_devname)
+            #     # Also, zero the super block
+            #     self.mdadm.zero_superblock(_udev_devname)
+            #     self.mdadm.zero_4k(_udev_devname)
+            #########################################################################################
 
-            udev_partitions = self.udev.find_partitions(disk.devname)
-            for _udev_part in udev_partitions:
-                _udev_devname = _udev_part['DEVNAME']
-                if self.lvm.pv_exists(_udev_devname):
-                    self.lvm.pvremove(_udev_devname)
-                # Also, zero the super block
-                self.mdadm.zero_superblock(_udev_devname)
-                self.mdadm.zero_4k(_udev_devname)
-
-            log.info('Wiping the old table and zeroing existing mbr/gpt/md metadata')
             parted.remove_gpt()
 
             partition_table = disk.partition_table
@@ -346,6 +349,11 @@ class Layout(object):
                 entry = lv.generate_fstab_entry(method)
                 if entry:
                     fstab += entry
+
+        for swraid in self.software_raid_objects:
+            entry = swraid.generate_fstab_entry(method)
+            if entry:
+                fstab += entry
 
         return header + '\n\n' + fstab
 
