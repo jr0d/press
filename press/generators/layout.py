@@ -420,7 +420,8 @@ def generate_software_raid(raid_config):
             spare_members=None,  # We might add support for this later
             file_system=fs_object,
             fsck_option=fsck_option,
-            pv_name=raid.get('pv')
+            pv_name=raid.get('pv'),
+            mount_point=raid.get('mount_point')
         )
         raid_objects.append(mdraid)
 

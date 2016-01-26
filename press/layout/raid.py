@@ -37,7 +37,7 @@ class MDRaid(SoftwareRAID):
         self.size = Size(0)
         self.allocated = False
         self.mdadm = MDADM()
-        self.fsck_option = None
+        self.fsck_option = fsck_option
 
     @staticmethod
     def _get_partition_devnames(members):

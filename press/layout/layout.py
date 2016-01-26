@@ -195,7 +195,7 @@ class Layout(object):
 
             #########################################################################################
             # Read into existing table and remove any active physical volumes
-            # TODO: This needs a newer version of udev that is currently available in Yolo
+            # TODO: This needs a newer version of udev that is not currently available in Yolo
             # Critical Error, /lib64/libudev.so.0: undefined symbol: udev_enumerate_add_match_paren
             #########################################################################################
             # udev_partitions = self.udev.find_partitions(disk.devname)
