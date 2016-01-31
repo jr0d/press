@@ -39,14 +39,14 @@ class LVM(object):
         ]
 
     @staticmethod
-    def __execute(command):
+    def __execute(command, ignore_errors=False, quiet=False):
         """
         Execute a shell command using subprocess, then validate the return
         code and log either stdout or stderror to the logger.
         """
         log.debug('Running: %s' % command)
-        res = run(command)
-        if res.returncode:
+        res = run(command, ignore_error=ignore_errors, quiet=quiet)
+        if res.returncode and not ignore_errors:
             log.error('stdout: %s, stderr: %s' % (res, res.stderr))
             raise LVMError('Return code: %s' % res.returncode)
         return res
@@ -97,6 +97,12 @@ class LVM(object):
         res = self.__execute(command)
         return self.__to_dict(res)
 
+    def pv_exists(self, physical_volume):
+        command = '%s %s' % (self.pvdisplay_command, physical_volume)
+        if self.__execute(command, ignore_errors=True, quiet=True).returncode:
+            return False
+        return True
+
     def vgcreate(self, vg_name, physical_volumes, pe_size=4194304):
         """
         Create a volume group using vgcreate command line tool.
@@ -128,6 +134,12 @@ class LVM(object):
         command = 'vgdisplay -C --separator : --unit b %s' % group_label
         res = self.__execute(command)
         return self.__to_dict(res)
+
+    def vg_exists(self, vg_name):
+        command = 'vgdisplay -C --separator : --unit b %s' % vg_name
+        if self.__execute(command, ignore_errors=True, quiet=True).returncode:
+            return False
+        return True
 
     def lvcreate(self, extents, vg_name, lv_name):
         """

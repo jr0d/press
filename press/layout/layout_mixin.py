@@ -29,10 +29,12 @@ class LayoutMixin(object):
         self.mount_handler.mount_physical()
 
     def mount_pseudo_file_systems(self):
-        self.mount_handler.mount_pseudo()
+        if self.mount_handler:
+            self.mount_handler.mount_pseudo()
 
     def teardown(self):
-        self.mount_handler.teardown()
+        if self.mount_handler:
+            self.mount_handler.teardown()
 
     def write_fstab(self):
         log.info('Writing fstab')

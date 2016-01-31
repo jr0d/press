@@ -26,6 +26,7 @@ from press.layout.filesystems.swap import (
     SWAP
 )
 from press.layout.filesystems.xfs import XFS
+from press.layout.raid import MDRaid
 from press.models.lvm import VolumeGroupModel
 from press.models.partition import PartitionTableModel
 
@@ -36,6 +37,7 @@ MBR_LOGICAL_MAX = 128
 PARTED_PATH = 'parted'
 
 __pv_linker__ = dict()
+__partition_linker__ = dict()
 
 
 def __get_parted_path():
@@ -167,6 +169,9 @@ def generate_partition(type_or_name, partition_dict):
     if 'lvm' in p.flags:
         # We need to preserve this mapping for generating volume groups
         __pv_linker__[partition_dict['name']] = p
+
+    # For software RAID, we need an index to rendered partition objects
+    __partition_linker__[partition_dict['name']] = p
 
     return p
 
@@ -386,6 +391,47 @@ def set_disk_labels(layout, layout_config):
         partition_table['label'] = label
 
 
+def generate_software_raid(raid_config):
+    raid_objects = []
+
+    for raid in raid_config:
+        fs_dict = raid.get('file_system')
+
+        if fs_dict:
+            fs_object = generate_file_system(fs_dict)
+            LOG.debug('Adding %s file system' % fs_object)
+        else:
+            fs_object = None
+
+        mount_point = raid.get('mount_point')
+
+        if fs_object:
+            fsck_option = _fsck_pass(fs_object, raid, mount_point)
+        else:
+            fsck_option = False
+
+        partitions = list()
+        for part_name in raid['partitions']:
+            partitions.append(__partition_linker__[part_name])
+        mdraid = MDRaid(
+            devname=raid['name'],
+            level=raid['level'],
+            members=partitions,
+            spare_members=None,  # We might add support for this later
+            file_system=fs_object,
+            fsck_option=fsck_option,
+            pv_name=raid.get('pv'),
+            mount_point=raid.get('mount_point')
+        )
+        raid_objects.append(mdraid)
+
+        if mdraid.pv_name:
+            LOG.info('Rigging software RAID as PV: %s' % mdraid)
+            __pv_linker__[mdraid.pv_name] = mdraid
+
+    return raid_objects
+
+
 def layout_from_config(layout_config):
     LOG.info('Generating Layout')
     layout = generate_layout_stub(layout_config)
@@ -398,6 +444,12 @@ def layout_from_config(layout_config):
     for pt in partition_tables:
         ptm = generate_partition_table_model(pt)
         layout.add_partition_table_from_model(ptm)
+
+    raid_configuration = layout_config.get('software_raid')
+    if raid_configuration:
+        raid_objects = generate_software_raid(raid_configuration)
+        for raid in raid_objects:
+            layout.add_software_raid(raid)
 
     volume_groups = layout_config.get('volume_groups')
     if volume_groups:

@@ -22,7 +22,9 @@ class Ubuntu1404Target(DebianTarget, Grub2):
 
     def update_debconf_for_grub(self):
         log.info('Updating debconf for grub')
-        debconf = 'grub-pc grub-pc/install_devices multiselect %s' % self.disk_target
+        targets = ' '.join(self.disk_targets)
+        # TODO(mdraid): Figure out if multiple grub-pc calls are needed per disk
+        debconf = 'grub-pc grub-pc/install_devices multiselect %s' % targets
         self.chroot('echo %s | debconf-set-selections' % debconf)
 
     def create_default_locale(self):
@@ -30,12 +32,14 @@ class Ubuntu1404Target(DebianTarget, Grub2):
         _locale = 'LANG=%s\nLC_MESSAGES=C\n' % language
         deployment.write(self.join_root('/etc/default/locale'), _locale)
 
+
     def run(self):
         super(DebianTarget, self).run()
         # Canonical is now setting locale in the image, so commenting out this call
         #self.create_default_locale()
         self.localization()
         self.generate_locales()
+        self.write_mdadm_configuration()
         self.write_interfaces()
         self.update_host_keys()
         self.remove_resolvconf()

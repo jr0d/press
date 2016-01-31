@@ -16,6 +16,8 @@ class DebianTarget(LinuxTarget):
     name = 'debian'
     dist = ''
 
+    mdadm_conf = '/etc/mdadm/mdadm.conf'
+
     __apt_command = 'DEBIAN_FRONTEND=noninteractive apt-get -y'
 
     __query_packages = 'dpkg --get-selections | awk \'{print $1}\''
@@ -133,3 +135,7 @@ class DebianTarget(LinuxTarget):
         if self.network_configuration:
             log.info('Writing network configuration')
             debian_networking.write_interfaces(interfaces_path, self.network_configuration)
+
+    def write_mdadm_configuration(self):
+        self.install_package('mdadm')
+        LinuxTarget.write_mdadm_configuration(self)

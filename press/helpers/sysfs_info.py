@@ -16,6 +16,7 @@ def parse_cookie(path):
     except IOError:
         return ''
 
+
 def append_sys(path):
     return os.path.join('/sys', path.lstrip('/'))
 
@@ -33,6 +34,7 @@ class SysFSInfo(object):
             val = int(val)
         self.attributes[attr] = (val, path)
         return val
+
 
 class AlignmentInfo(SysFSInfo):
     def __init__(self, devpath):
@@ -59,6 +61,7 @@ class AlignmentInfo(SysFSInfo):
     @property
     def optimal_io_size(self):
         return self.magic_set_attr('optimal_io_size')
+
 
 class NetDeviceInfo(SysFSInfo):
     """
@@ -117,6 +120,7 @@ class NetDeviceInfo(SysFSInfo):
         if exclude_loopback and 'lo' in interfaces:
             interfaces.remove('lo')
         return interfaces
+
 
 def has_efi():
     """

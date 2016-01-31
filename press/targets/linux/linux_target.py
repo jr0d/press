@@ -12,6 +12,8 @@ log = logging.getLogger(__name__)
 class LinuxTarget(Target):
     name = 'linux'
 
+    mdadm_conf = '/etc/mdadm.conf'
+
     ssh_protocol_2_key_types = ('rsa', 'ecdsa', 'ed25519', 'dsa')
     locale_command = "/usr/sbin/locale-gen"
 
@@ -218,8 +220,16 @@ class LinuxTarget(Target):
         deployment.write(self.join_root('/etc/resolv.conf'),
                          deployment.read('/etc/resolv.conf'))
 
+    def write_mdadm_configuration(self):
+        if self.press_configuration.get('layout', {}).get('software_raid'):
+            mdraid_data = self.chroot('mdadm --detail --scan')
+            log.info('Writing mdadm.conf')
+            log.debug(mdraid_data)
+            deployment.write(self.join_root(self.mdadm_conf), mdraid_data + '\n', append=True)
+
     def run(self):
         self.authentication()
         self.set_hostname()
         self.update_etc_hosts()
         self.copy_resolvconf()
+
