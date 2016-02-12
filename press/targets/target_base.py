@@ -34,9 +34,9 @@ class Target(object):
 
     name = ''
 
-    def __init__(self, press_configuration, disks, root, chroot_staging_dir):
+    def __init__(self, press_configuration, layout, root, chroot_staging_dir):
         self.press_configuration = press_configuration
-        self.disks = disks
+        self.layout = layout
         self.root = root
         self.chroot_staging_dir = chroot_staging_dir
         self.chroot = Chroot(self.root, self.chroot_staging_dir)

@@ -16,8 +16,8 @@ class RedhatTarget(LinuxTarget):
     yum_config_file = '/etc/yum.conf'
     yum_config_backup = '/etc/yum.conf_bak'
 
-    def __init__(self, press_configuration, disks, root, chroot_staging_dir):
-        super(RedhatTarget, self).__init__(press_configuration, disks, root, chroot_staging_dir)
+    def __init__(self, press_configuration, layout, root, chroot_staging_dir):
+        super(RedhatTarget, self).__init__(press_configuration, layout, root, chroot_staging_dir)
         add_hook(self.add_repos, "pre-extensions", self)
 
     def get_package_list(self):
