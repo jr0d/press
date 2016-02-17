@@ -70,37 +70,39 @@ class SPPRHEL(TargetExtension):
     def install_hp_spp(self):
         self.target.install_packages(spp_packages)
 
-    def baseline_yum(self, os_id, rhel_repo_name, version, proxy):
-        """
-        Check to see if we need proxy, and enable in yum.conf
-        Check if we are 'rhel' and if so add base repo
-        """
-        rhel_repo_url = 'http://intra.mirror.rackspace.com/kickstart/'\
-                            'rhel-x86_64-server-{version}.eus/'.format(version=version)
-        if proxy:
-            self.target.enable_yum_proxy(proxy)
-        if os_id == 'rhel':
-            self.target.add_repo(rhel_repo_name, rhel_repo_url, gpgkey=None)
-
-    def revert_yum(self, os_id, rhel_repo_name, proxy):
-        """
-        Reverts changes from baseline yum:
-        Disabled proxy
-        If 'rhel' removes the base repo
-        """
-        if proxy:
-            self.target.disable_yum_proxy()
-        if os_id == 'rhel':
-            self.target.remove_repo(rhel_repo_name)
-
-
     def run(self):
         self.version = self.target.get_os_release_value('VERSION_ID')
         self.os_id = self.target.get_os_release_value('ID')
-        self.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
+        self.target.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
         self.prepare_repositories()
         self.install_hp_spp()
-        self.revert_yum(self.os_id, self.rhel_repo_name, self.proxy)
+        self.target.revert_yum(self.os_id, self.rhel_repo_name, self.proxy)
 
 class SPPRHEL7(SPPRHEL):
     __extends__ = 'enterprise_linux_7'
+
+
+class SPPRHEL6(SPPRHEL):
+    __extends__ = 'enterprise_linux_6'
+
+    def __init__(self, target_obj, spp_version = 6):
+        self.mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/spp' \
+                          '/RHEL/{version}/x86_64/current/'.format(version=spp_version)
+        self.spp_repo_file = '/etc/yum.repos.d/hp-spp.repo'
+        self.gpgkey = 'http://mirror.rackspace.com/hp/SDR/repo/spp/GPG-KEY-SPP'
+        self.rhel_repo_name = 'rhel_base'
+        self.spp_source = '[spp]\nname=HP SPP\nbaseurl={mirror}\nenabled=1' \
+                          '\ngpgcheck=1\ngpgkey={gpgkey}'.format(mirror=self.mirrorbase, gpgkey=self.gpgkey)
+        self.proxy = self.__configuration__.get('proxy')
+        self.os_id = None
+
+        super(SPPRHEL, self).__init__(target_obj)
+
+    def run(self):
+        self.os_id = self.target.el6_os_id()
+        self.version = self.target.parse_rehdat_release.get('version')
+        self.target.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
+        self.prepare_repositories()
+        self.install_hp_spp()
+        self.target.revert_yum(self.os_id, self.rhel_repo_name, self.proxy)
+

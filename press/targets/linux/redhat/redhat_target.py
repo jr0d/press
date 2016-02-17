@@ -114,8 +114,8 @@ class RedhatTarget(LinuxTarget):
         data = deployment.read(self.join_root('/etc/redhat-release'))
         data = data.strip()
         try:
-            release_info['codename'] = data[-1].strip('()')
-            release_info['version'] = data[-2]
+            release_info['codename'] = data.split()[-1].strip('()')
+            release_info['version'] = data.split()[-2]
             release_info['os'] = data.split('release')[0].strip()
         except IndexError:
             log.error('Error parsing redhat-release')
@@ -140,3 +140,33 @@ class RedhatTarget(LinuxTarget):
         os_release = self.parse_os_release()
         value = os_release.get(key)
         return value
+
+    def baseline_yum(self, os_id, rhel_repo_name, version, proxy):
+        """
+        Check major version an adjust for .eus or .z path on mirror
+        Check to see if we need proxy, and enable in yum.conf
+        Check if we are 'rhel' and if so add base repo
+        """
+        if int(version) == 6:
+            version = str(version) + '.z'
+        if int(version) == 7:
+            version = str(version) + '.eus'
+
+        rhel_repo_url = 'http://intra.mirror.rackspace.com/kickstart/'\
+                            'rhel-x86_64-server-{version}/'.format(version=version)
+        if proxy:
+            self.enable_yum_proxy(proxy)
+        if os_id == 'rhel':
+            self.add_repo(rhel_repo_name, rhel_repo_url, gpgkey=None)
+
+    def revert_yum(self, os_id, rhel_repo_name, proxy):
+        """
+        Reverts changes from baseline yum:
+        Disabled proxy
+        If 'rhel' removes the base repo
+        """
+        if proxy:
+            self.disable_yum_proxy()
+        if os_id == 'rhel':
+            self.remove_repo(rhel_repo_name)
+

@@ -89,6 +89,12 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
             script += 'any net %s gw %s\n' % (routes[idx]['cidr'], routes[idx]['gateway'])
         return script
 
+    def el6_os_id(self):
+        os = self.parse_redhat_release.get('os')
+        if 'Red Hat' in os:
+            return 'rhel'
+        return 'centos'
+
 
     def run(self):
         super(EL6Target, self).run()
