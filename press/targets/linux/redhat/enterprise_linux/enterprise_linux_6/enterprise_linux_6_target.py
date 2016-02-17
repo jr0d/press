@@ -5,7 +5,7 @@ from collections import OrderedDict
 from press.helpers import deployment, networking as net_helper
 from press.targets import GeneralPostTargetError
 from press.targets import util
-from press.targets.linux.grub2_target import Grub
+from press.targets.linux.grub_target import Grub
 from press.targets.linux.redhat.enterprise_linux.enterprise_linux_target \
     import EnterpriseLinuxTarget
 from press.targets.linux.redhat.enterprise_linux.enterprise_linux_7 \
@@ -103,4 +103,4 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
         self.configure_networks()
         self.rebuild_initramfs()
         self.check_for_grub()
-        self.install_grub2()
+        self.install_grub()
