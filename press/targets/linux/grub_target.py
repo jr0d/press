@@ -12,7 +12,7 @@ class Grub(Target):
     grub_cmdline_config_path = '/boot/grub/grub.conf'
     grub_cmdline_name = 'GRUB_CMDLINE_LINUX_DEFAULT'
 
-    grub_path = 'grub'
+    grub_install_path = 'grub-install'
     grubby_path = 'grubby'
 
     @property
@@ -88,9 +88,8 @@ class Grub(Target):
 
         kernels = os.listdir(self.join_root('/lib/modules'))
         for kernel in kernels:
-            self.chroot('%s --args=root=%s --update-kernel=/boot/vmlinuz-%s' % (self.grubby_path, root_uuid, kernel))
+            self.chroot('%s --args=root=UUID=%s --update-kernel=/boot/vmlinuz-%s' % (self.grubby_path, root_uuid, kernel))
         for disk in self.disk_targets:
             log.info('Installing grub on %s' % disk)
             self.chroot(
-                '%s --target=i386-pc --recheck --debug %s' % (self.grubby_path,
-                                                              disk))
+                '%s %s' % (self.grub_install_path, disk))

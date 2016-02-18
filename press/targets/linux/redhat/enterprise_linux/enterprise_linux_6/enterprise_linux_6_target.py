@@ -21,6 +21,8 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
     """
     name = 'enterprise_linux_6'
 
+    ssh_protocol_2_key_types = ('rsa', 'ecdsa', 'dsa')
+    rpm_path = '/bin/rpm'
     network_scripts_path = '/etc/sysconfig/network-scripts'
     grub_cmdline_name = 'GRUB_CMDLINE_LINUX'
 
@@ -32,7 +34,7 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
 
     def rebuild_initramfs(self):
         _required_packages = ['dracut', 'dracut-kernel']
-        if not self.package_exists(_required_packages):
+        if not self.packages_exist(_required_packages):
             if not self.install_package(_required_packages):
                 raise GeneralPostTargetError('Error install required packages for dracut')
 
@@ -88,13 +90,6 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
         for idx in range(len(routes)):
             script += 'any net %s gw %s\n' % (routes[idx]['cidr'], routes[idx]['gateway'])
         return script
-
-    def el6_os_id(self):
-        os = self.parse_redhat_release.get('os')
-        if 'Red Hat' in os:
-            return 'rhel'
-        return 'centos'
-
 
     def run(self):
         super(EL6Target, self).run()

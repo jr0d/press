@@ -121,8 +121,8 @@ class OMSARHEL6(OMSARedHat):
 
 
     def run(self):
-        self.os_id = self.target.el6_os_id()
-        self.version = self.target.parse_rehdat_release.get('version')
+        self.os_id = self.target.get_redhat_release_value('os')
+        self.version = self.target.get_redhat_release_value('version')
         self.target.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
         self.install_wget()
         self.download_and_prepare_repositories()
