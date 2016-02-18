@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 class Grub(Target):
     grub_cmdline_config_path = '/boot/grub/grub.conf'
-    grub_cmdline_name = 'GRUB_CMDLINE_LINUX_DEFAULT'
+    grub_cmdline_name = 'kernel'
 
     grub_install_path = 'grub-install'
     grubby_path = 'grubby'

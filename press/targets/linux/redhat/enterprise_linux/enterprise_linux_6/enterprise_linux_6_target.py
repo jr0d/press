@@ -24,7 +24,6 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
     ssh_protocol_2_key_types = ('rsa', 'ecdsa', 'dsa')
     rpm_path = '/bin/rpm'
     network_scripts_path = '/etc/sysconfig/network-scripts'
-    grub_cmdline_name = 'GRUB_CMDLINE_LINUX'
 
     def check_for_grub(self):
         _required_packages = ['grub', 'grubby']
