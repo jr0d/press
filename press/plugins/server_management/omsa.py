@@ -104,7 +104,7 @@ class OMSARHEL7(OMSARedHat):
     __extends__ = 'enterprise_linux_7'
 
 class OMSARHEL6(OMSARedHat):
-    __extends__ = 'enterprise_linux6'
+    __extends__ = 'enterprise_linux_6'
 
     def __init__(self, target_obj, omsa_version = 6):
         self.omsa_rpm_url = 'http://mirror.rackspace.com/dell/hardware/latest/mirrors.cgi/' \

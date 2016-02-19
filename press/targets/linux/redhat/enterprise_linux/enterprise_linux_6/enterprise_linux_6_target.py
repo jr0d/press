@@ -25,6 +25,7 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
     ssh_protocol_2_key_types = ('rsa', 'ecdsa', 'dsa')
     rpm_path = '/bin/rpm'
     network_scripts_path = '/etc/sysconfig/network-scripts'
+    sysconfig_scripts_path = 'etc/sysconfig'
 
     def check_for_grub(self):
         _required_packages = ['grub', 'grubby']
@@ -63,7 +64,8 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
         deployment.write(script_path, _template.generate())
 
     def write_route_script(self, routes):
-        script_path = '/etc/sysconfig/static-routes'
+        script_name = 'static-routes'
+        script_path = self.join_root(os.path.join(self.sysconfig_scripts_path, script_name))
         log.info('Writing %s' % script_path)
         deployment.write(script_path, self.generate_static_routes(routes))
 
