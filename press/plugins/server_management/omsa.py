@@ -90,14 +90,12 @@ class OMSARedHat(TargetExtension):
         self.target.install_package('wget')
 
     def run(self):
-        self.os_id = self.target.get_os_release_value('ID')
-        self.version = self.target.get_os_release_value('VERSION_ID')
-        self.target.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
+        self.target.baseline_yum(self.proxy)
         self.install_wget()
         self.download_and_prepare_repositories()
         self.install_omsa_repo()
         self.install_openmanage()
-        self.target.revert_yum(self.os_id, self.rhel_repo_name, self.proxy)
+        self.target.revert_yum(self.proxy)
 
 
 class OMSARHEL7(OMSARedHat):

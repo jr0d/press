@@ -71,12 +71,10 @@ class SPPRHEL(TargetExtension):
         self.target.install_packages(spp_packages)
 
     def run(self):
-        self.version = self.target.get_os_release_value('VERSION_ID')
-        self.os_id = self.target.get_os_release_value('ID')
-        self.target.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
+        self.target.baseline_yum(self.proxy)
         self.prepare_repositories()
         self.install_hp_spp()
-        self.target.revert_yum(self.os_id, self.rhel_repo_name, self.proxy)
+        self.target.revert_yum(self.proxy)
 
 class SPPRHEL7(SPPRHEL):
     __extends__ = 'enterprise_linux_7'

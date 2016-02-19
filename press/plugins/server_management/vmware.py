@@ -28,20 +28,12 @@ class VMWareToolsEL(TargetExtension):
         self.target.install_package('open-vm-tools')
 
     def run(self):
-        self.os_id = self.target.get_os_release_value('ID')
-        self.version = self.target.get_os_release_value('VERSION_ID')
-        self.target.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
+        self.target.baseline_yum(self.proxy)
         self.install_vmware_tools()
-        self.target.revert_yum(self.os_id, self.rhel_repo_name, self.proxy)
+        self.target.revert_yum(self.proxy)
 
 class VMWareToolsEL7(VMWareToolsEL):
     __extends__ = 'enterprise_linux_7'
 
 class VMWareToolsEL6(VMWareToolsEL):
     __extends__ = 'enterprise_linux_6'
-
-    def run(self):
-        self.target.baseline_yum(self.proxy)
-        self.install_vmware_tools()
-        self.target.revert_yum(self.proxy)
-

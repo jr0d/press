@@ -178,10 +178,18 @@ class RedhatTarget(LinuxTarget):
         If 'rhel' removes the base repo
         """
         os_id = self.get_redhat_release_value('os')
+        version  = self.get_redhat_release_value('version')
         rhel_repo_name = 'rhel_base'
 
         if proxy:
             self.disable_yum_proxy()
         if os_id == 'rhel':
             self.remove_repo(rhel_repo_name)
+            if int(version) == 6:
+                self.service_control('sblim-sfcb', 'stop')
 
+
+    def service_control(self, service, action):
+        log.info('%sing service %s' % (action, service))
+        command = 'service %s %s' % (service, action)
+        self.chroot(command)
