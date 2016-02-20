@@ -50,9 +50,9 @@ class SPPUbuntu1404(SPPDebian):
 class SPPRHEL(TargetExtension):
     __configuration__ = {} # Filled at runtime
 
-    def __init__(self, target_obj, spp_version = 7):
+    def __init__(self, target_obj):
         self.mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/spp' \
-                          '/RHEL/{version}/x86_64/current/'.format(version=spp_version)
+                          '/RHEL/{version}/x86_64/current/'
         self.spp_repo_file = '/etc/yum.repos.d/hp-spp.repo'
         self.gpgkey = 'http://mirror.rackspace.com/hp/SDR/repo/spp/GPG-KEY-SPP'
         self.rhel_repo_name = 'rhel_base'
@@ -65,7 +65,8 @@ class SPPRHEL(TargetExtension):
 
     def prepare_repositories(self):
         log.debug("Updating repos to add HP-SPP")
-        self.target.chroot('echo "{0}" > "{1}"'.format(self.spp_source, self.spp_repo_file))
+        version  = self.target.get_redhat_release_value('version')
+        self.target.chroot('echo "{0}" > "{1}"'.format(self.spp_source, self.spp_repo_file.format(version=version)))
 
     def install_hp_spp(self):
         self.target.install_packages(spp_packages)
@@ -82,23 +83,4 @@ class SPPRHEL7(SPPRHEL):
 
 class SPPRHEL6(SPPRHEL):
     __extends__ = 'enterprise_linux_6'
-
-    def __init__(self, target_obj, spp_version = 6):
-        self.mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/spp' \
-                          '/RHEL/{version}/x86_64/current/'.format(version=spp_version)
-        self.spp_repo_file = '/etc/yum.repos.d/hp-spp.repo'
-        self.gpgkey = 'http://mirror.rackspace.com/hp/SDR/repo/spp/GPG-KEY-SPP'
-        self.rhel_repo_name = 'rhel_base'
-        self.spp_source = '[spp]\nname=HP SPP\nbaseurl={mirror}\nenabled=1' \
-                          '\ngpgcheck=1\ngpgkey={gpgkey}'.format(mirror=self.mirrorbase, gpgkey=self.gpgkey)
-        self.proxy = self.__configuration__.get('proxy')
-        self.os_id = None
-
-        super(SPPRHEL, self).__init__(target_obj)
-
-    def run(self):
-        self.target.baseline_yum(self.proxy)
-        self.prepare_repositories()
-        self.install_hp_spp()
-        self.target.revert_yum(self.proxy)
 
