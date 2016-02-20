@@ -50,10 +50,10 @@ class OMSAUbuntu1404(OMSADebian):
 class OMSARedHat(TargetExtension):
     __configuration__ = {}  # Filled at runtime
 
-    def __init__(self, target_obj, omsa_version = 7):
+    def __init__(self, target_obj):
         self.omsa_rpm_url = 'http://mirror.rackspace.com/dell/hardware/latest/mirrors.cgi/' \
                             'osname=rhel{version}&basearch=x86_64' \
-                            '&native=1&getrpm=dell-omsa-repository&redirpath='.format(version=omsa_version)
+                            '&native=1&getrpm=dell-omsa-repository&redirpath='
         self.omsa_repo_file = '/etc/yum.repos.d/dell-omsa-repository.repo'
         self.omsa_bootstrap_url = 'http://mirror.rackspace.com/dell/hardware/latest/bootstrap.cgi'
         self.rhel_repo_name = 'rhel_base'
@@ -66,7 +66,8 @@ class OMSARedHat(TargetExtension):
 
     def download_and_prepare_repositories(self):
         log.debug("Updating repos to add OMSA")
-        wget_command = 'wget -O dell-omsa-repository.rpm "{0}"'.format(self.omsa_rpm_url)
+        version  = self.target.get_redhat_release_value('version')
+        wget_command = 'wget -O dell-omsa-repository.rpm "{0}"'.format(self.omsa_rpm_url.format(version=version))
         if self.proxy:
             wget_command = 'http_proxy=http://%s HTTPS_PROXY=http://%s ' % (self.proxy, self.proxy) + wget_command
         self.target.chroot(wget_command)
@@ -103,25 +104,3 @@ class OMSARHEL7(OMSARedHat):
 
 class OMSARHEL6(OMSARedHat):
     __extends__ = 'enterprise_linux_6'
-
-    def __init__(self, target_obj, omsa_version = 6):
-        self.omsa_rpm_url = 'http://mirror.rackspace.com/dell/hardware/latest/mirrors.cgi/' \
-                            'osname=rhel{version}&basearch=x86_64' \
-                            '&native=1&getrpm=dell-omsa-repository&redirpath='.format(version=omsa_version)
-        self.omsa_repo_file = '/etc/yum.repos.d/dell-omsa-repository.repo'
-        self.omsa_bootstrap_url = 'http://mirror.rackspace.com/dell/hardware/latest/bootstrap.cgi'
-        self.rhel_repo_name = 'rhel_base'
-        self.proxy = self.__configuration__.get('proxy')
-        self.os_id = None
-
-        super(OMSARedHat, self).__init__(target_obj)
-
-
-
-    def run(self):
-        self.target.baseline_yum(self.proxy)
-        self.install_wget()
-        self.download_and_prepare_repositories()
-        self.install_omsa_repo()
-        self.install_openmanage()
-        self.target.revert_yum(self.proxy)

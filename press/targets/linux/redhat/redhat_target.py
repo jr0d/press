@@ -187,7 +187,7 @@ class RedhatTarget(LinuxTarget):
             self.disable_yum_proxy()
         if os_id == 'rhel':
             self.remove_repo(rhel_repo_name)
-            
+
     def service_control(self, service, action):
         log.info('%sing service %s' % (action, service))
         command = 'service %s %s' % (service, action)
