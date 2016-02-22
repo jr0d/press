@@ -115,7 +115,8 @@ class RedhatTarget(LinuxTarget):
         data = data.strip()
         try:
             release_info['codename'] = data.split()[-1].strip('()')
-            release_info['version'] = data.split()[-2]
+            version = data.split()[-2]
+            release_info['version'] = version
             # Sometimes need short version, not ones like '7.1.1503'
             # so splitting and then joining [0:2] to get '7.1'
             release_info['short_version'] = '.'.join(version.split('.')[:2])
