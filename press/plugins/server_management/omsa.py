@@ -104,3 +104,7 @@ class OMSARHEL7(OMSARedHat):
 
 class OMSARHEL6(OMSARedHat):
     __extends__ = 'enterprise_linux_6'
+
+    def install_openmanage(self):
+        self.target.install_package('srvadmin-all')
+        self.target.service_control('sblim-sfcb', 'stop')

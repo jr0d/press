@@ -1,5 +1,0 @@
-NETWORKING=yes
-FORWARD_IPV4=false
-HOSTNAME=dev1.kickstart.rackspace.com
-GATEWAY=10.127.8.1
-#GATEWAYDEV=eth1

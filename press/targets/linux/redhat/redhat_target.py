@@ -119,8 +119,6 @@ class RedhatTarget(LinuxTarget):
             release_info['os'] = data.split('release')[0].strip()
         except IndexError:
             log.error('Error parsing redhat-release')
-        if 'Red Hat' in release_info['os']:
-            release_info['os'] = 'rhel'
         return release_info
 
     def parse_os_release(self):
@@ -178,17 +176,14 @@ class RedhatTarget(LinuxTarget):
         If 'rhel' removes the base repo
         """
         os_id = self.get_redhat_release_value('os')
-        version  = self.get_redhat_release_value('version')
         rhel_repo_name = 'rhel_base'
 
-        if int(version) == 6:
-                self.service_control('sblim-sfcb', 'stop')
         if proxy:
             self.disable_yum_proxy()
-        if os_id == 'rhel':
+        if 'Red Hat' in os_id:
             self.remove_repo(rhel_repo_name)
 
     def service_control(self, service, action):
-        log.info('%sing service %s' % (action, service))
+        log.info('Running: service %s %s' % (service, action))
         command = 'service %s %s' % (service, action)
         self.chroot(command)
