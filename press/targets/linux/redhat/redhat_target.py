@@ -156,13 +156,16 @@ class RedhatTarget(LinuxTarget):
         version  = self.get_redhat_release_value('version')
         rhel_repo_name = 'rhel_base'
 
-        if version[0] == 6:
-            version = str(version) + '.z'
-        elif version[0] == 7:
-            version = str(version) + '.eus'
+        # need short version, not ones like '7.1.1503'
+        # so splitting and then joining [0:2] to get '7.1'
+        short_version = '.'.join(version.split('.')[:2])
+        if short_version[0] == 6:
+            short_version = str(short_version) + '.z'
+        elif short_version[0] == 7:
+            short_version = str(short_version) + '.eus'
 
         rhel_repo_url = 'http://intra.mirror.rackspace.com/kickstart/'\
-                            'rhel-x86_64-server-{version}/'.format(version=version)
+                            'rhel-x86_64-server-{version}/'.format(version=short_version)
 
         if proxy:
             self.enable_yum_proxy(proxy)
