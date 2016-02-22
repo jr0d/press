@@ -160,9 +160,9 @@ class RedhatTarget(LinuxTarget):
         short_version  = self.get_redhat_release_value('short_version')
         rhel_repo_name = 'rhel_base'
 
-        if short_version[0] == 6:
+        if short_version[0] == '6':
             short_version = str(short_version) + '.z'
-        elif short_version[0] == 7:
+        elif short_version[0] == '7':
             short_version = str(short_version) + '.eus'
 
         rhel_repo_url = 'http://intra.mirror.rackspace.com/kickstart/'\
