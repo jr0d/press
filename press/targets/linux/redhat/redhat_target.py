@@ -116,6 +116,9 @@ class RedhatTarget(LinuxTarget):
         try:
             release_info['codename'] = data.split()[-1].strip('()')
             release_info['version'] = data.split()[-2]
+            # Sometimes need short version, not ones like '7.1.1503'
+            # so splitting and then joining [0:2] to get '7.1'
+            release_info['short_version'] = '.'.join(version.split('.')[:2])
             release_info['os'] = data.split('release')[0].strip()
         except IndexError:
             log.error('Error parsing redhat-release')
@@ -153,12 +156,9 @@ class RedhatTarget(LinuxTarget):
         Check if we are 'rhel' and if so add base repo
         """
         os_id = self.get_redhat_release_value('os')
-        version  = self.get_redhat_release_value('version')
+        short_version  = self.get_redhat_release_value('short_version')
         rhel_repo_name = 'rhel_base'
 
-        # need short version, not ones like '7.1.1503'
-        # so splitting and then joining [0:2] to get '7.1'
-        short_version = '.'.join(version.split('.')[:2])
         if short_version[0] == 6:
             short_version = str(short_version) + '.z'
         elif short_version[0] == 7:

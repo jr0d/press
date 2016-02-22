@@ -66,8 +66,8 @@ class OMSARedHat(TargetExtension):
 
     def download_and_prepare_repositories(self):
         log.debug("Updating repos to add OMSA")
-        version  = self.target.get_redhat_release_value('version')
-        wget_command = 'wget -O dell-omsa-repository.rpm "{0}"'.format(self.omsa_rpm_url.format(version=version))
+        short_version  = self.target.get_redhat_release_value('short_version')
+        wget_command = 'wget -O dell-omsa-repository.rpm "{0}"'.format(self.omsa_rpm_url.format(version=short_version))
         if self.proxy:
             wget_command = 'http_proxy=http://%s HTTPS_PROXY=http://%s ' % (self.proxy, self.proxy) + wget_command
         self.target.chroot(wget_command)
