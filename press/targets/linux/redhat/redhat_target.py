@@ -115,7 +115,7 @@ class RedhatTarget(LinuxTarget):
         data = data.strip()
         try:
             release_info['codename'] = data.split()[-1].strip('()')
-            release_info['version'] = float(data.split()[-2])
+            release_info['version'] = float(data.split()[-2][:3])
             release_info['os'] = data.split('release')[0].strip()
         except IndexError:
             log.error('Error parsing redhat-release')
