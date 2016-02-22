@@ -166,7 +166,7 @@ class RedhatTarget(LinuxTarget):
 
         if proxy:
             self.enable_yum_proxy(proxy)
-        if os_id == 'rhel':
+        if 'Red Hat' in os_id:
             self.add_repo(rhel_repo_name, rhel_repo_url, gpgkey=None)
 
     def revert_yum(self, proxy):
