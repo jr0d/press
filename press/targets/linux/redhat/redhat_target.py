@@ -115,7 +115,7 @@ class RedhatTarget(LinuxTarget):
         data = data.strip()
         try:
             release_info['codename'] = data.split()[-1].strip('()')
-            release_info['version'] = float(data.split()[-2][:3])
+            release_info['version'] = data.split()[-2]
             release_info['os'] = data.split('release')[0].strip()
         except IndexError:
             log.error('Error parsing redhat-release')
@@ -156,9 +156,9 @@ class RedhatTarget(LinuxTarget):
         version  = self.get_redhat_release_value('version')
         rhel_repo_name = 'rhel_base'
 
-        if int(version) == 6:
+        if version[0] == 6:
             version = str(version) + '.z'
-        elif int(version) == 7:
+        elif version[0] == 7:
             version = str(version) + '.eus'
 
         rhel_repo_url = 'http://intra.mirror.rackspace.com/kickstart/'\
