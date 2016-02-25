@@ -10,6 +10,7 @@ log = logging.getLogger(__name__)
 
 class LayoutMixin(object):
     mount_handler = None
+    perform_teardown = True
 
     def __init__(self, press_configuration, deployment_root):
         self.__layout_configuration = press_configuration.get('layout')
@@ -33,7 +34,7 @@ class LayoutMixin(object):
             self.mount_handler.mount_pseudo()
 
     def teardown(self):
-        if self.mount_handler:
+        if self.mount_handler and self.perform_teardown:
             self.mount_handler.teardown()
 
     def write_fstab(self):

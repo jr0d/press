@@ -4,6 +4,7 @@ import logging
 from press.layout.layout_mixin import LayoutMixin
 from press.generators.image import ImageMixin
 from press.helpers import deployment
+from press.helpers.kexec import kexec
 from press.targets import VendorRegistry
 from press.targets.registration import apply_extension, target_extensions
 from press.hooks.hooks import run_hooks
@@ -95,6 +96,13 @@ class Press(LayoutMixin, ImageMixin):
             log.info('Configuring image', extra={'press_event': 'configuring'})
             run_hooks("pre-post-config", self.configuration)
             self.post_configuration()
+
         else:
             log.info('Press configured in layout only mode, finishing up.')
         log.info('Finished', extra={'press_event': 'complete'})
+
+        # Experimental
+        kexec_config = self.configuration.get('kexec')
+        if kexec_config:
+            self.perform_teardown = False
+            kexec(layout=self.layout, **kexec_config)
