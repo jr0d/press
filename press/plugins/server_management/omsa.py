@@ -2,7 +2,6 @@ import logging
 import os
 from press.helpers import deployment
 from press.targets.target_base import TargetExtension
-from press.plugins.server_management.server_management import get_product_name
 
 pgp_key_file = 'dell_key.1285491434D8786F'
 
@@ -62,7 +61,7 @@ class OMSARedHat(TargetExtension):
         self.os_id = None
         self.base_omsa_packages = ['srvadmin-all']
         self.gen12_omsa_packages = ['srvadmin-idrac7', 'srvadmin-idracadm7']
-        self.product_name = get_product_name()
+        self.target.product_name = get_product_name()
         super(OMSARedHat, self).__init__(target_obj)
 
     def download_and_prepare_repositories(self):

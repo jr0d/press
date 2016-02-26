@@ -227,6 +227,15 @@ class LinuxTarget(Target):
             log.debug(mdraid_data)
             deployment.write(self.join_root(self.mdadm_conf), mdraid_data + '\n', append=True)
 
+    def get_product_name():
+        res = cli.run('dmidecode -s system-product-name', raise_exception=True)
+        for line in res.splitlines():
+            if line.lstrip().startswith('#'):
+                continue
+            return line.strip()
+
+
+
     def run(self):
         self.authentication()
         self.set_hostname()
