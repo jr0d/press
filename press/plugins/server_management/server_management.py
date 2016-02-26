@@ -34,6 +34,13 @@ def get_manufacturer():
             continue
         return line.strip()
 
+def get_product_name():
+    res = cli.run('dmidecode -s system-product-name', raise_exception=True)
+    for line in res.splitlines():
+        if line.lstrip().startswith('#'):
+            continue
+        return line.strip()
+
 
 def plugin_init(configuration):
     log.info('Registering Server Management plugins')
