@@ -81,7 +81,7 @@ class OMSARedHat(TargetExtension):
 
     def install_openmanage(self):
         packages = self.base_omsa_packages
-        if 'R720' or '820' in self.product_name
+        if 'R720' or '820' in self.product_name:
             packages += self.gen12_omsa_packages
         self.target.install_packages(packages)
 
