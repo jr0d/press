@@ -34,7 +34,6 @@ def get_manufacturer():
             continue
         return line.strip()
 
-
 def plugin_init(configuration):
     log.info('Registering Server Management plugins')
     plugin_configuration = configuration.get('server_management', {})
