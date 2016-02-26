@@ -61,7 +61,7 @@ class OMSARedHat(TargetExtension):
         self.os_id = None
         self.base_omsa_packages = ['srvadmin-all']
         self.gen12_omsa_packages = ['srvadmin-idrac7', 'srvadmin-idracadm7']
-        self.target.product_name = get_product_name()
+        self.gen12_chassis = ['R720', 'R820']
         super(OMSARedHat, self).__init__(target_obj)
 
     def download_and_prepare_repositories(self):
@@ -79,9 +79,11 @@ class OMSARedHat(TargetExtension):
         self.target.chroot(rpm_command)
 
     def install_openmanage(self):
+        product_name = self.target.get_product_name()
         packages = self.base_omsa_packages
-        if 'R720' or '820' in self.product_name:
-            packages += self.gen12_omsa_packages
+        for chassis in self.gen12_chassis:
+            if chassis in product_name:
+                packages += self.gen12_omsa_packages
         self.target.install_packages(packages)
 
     def install_wget(self):
