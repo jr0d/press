@@ -20,6 +20,7 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
     """
     name = 'enterprise_linux_7'
 
+    network_file_path = '/etc/sysconfig/network'
     network_scripts_path = '/etc/sysconfig/network-scripts'
     grub2_cmdline_name = 'GRUB_CMDLINE_LINUX'
 
@@ -40,20 +41,40 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
                 log.info('Rebuilding %s' % initramfs_path)
                 self.chroot('dracut -v -f %s %s' % (initramfs_path, kernel))
 
+    def enable_ipv6(self):
+        with open(self.join_root(self.network_file_path)) as f:
+            contents = f.read()
+        if "NETWORKING_IPV6" in contents:
+            if "NETWORKING_IPV6=NO" in contents:
+                contents.replace("NETWORKING_IPV6=NO", "NETWORKING_IPV6=YES")
+            else:
+                return
+        else:
+            contents += "\nNETWORKING_IPV6=YES\n"
+        log.info("Enabling IPv6 in {}".format(self.network_file_path))
+        with open(self.join_root(self.network_file_path), "w") as f:
+            f.write(contents)
+
     def write_network_script(self, device, network_config, dummy=False):
         script_name = 'ifcfg-%s' % device.devname
         script_path = self.join_root(os.path.join(self.network_scripts_path,  script_name))
         if dummy:
             _template = networking.DummyInterfaceTemplate(device.devname)
         else:
+            if network_config.get('is_IPv6'):
+                self.enable_ipv6()
+                interface_template = networking.IPv6InterfaceTemplate
+                cidr_mask = None
+            else:
+                interface_template = networking.InterfaceTemplate
+                cidr_mask = net_helper.mask2cidr(network_config.get('netmask'))
             ip_address = network_config.get('ip_address')
-            cidr_mask = net_helper.mask2cidr(network_config.get('netmask'))
             gateway = network_config.get('gateway')
-            _template = networking.InterfaceTemplate(device.devname,
-                                                     default_route=network_config.get('default_route', False),
-                                                     ip_address=ip_address,
-                                                     cidr_mask=cidr_mask,
-                                                     gateway=gateway)
+            _template = interface_template(device.devname,
+                                           default_route=network_config.get('default_route', False),
+                                           ip_address=ip_address,
+                                           cidr_mask=cidr_mask,
+                                           gateway=gateway)
         log.info('Writing %s' % script_path)
         deployment.write(script_path, _template.generate())
 

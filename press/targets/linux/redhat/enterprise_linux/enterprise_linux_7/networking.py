@@ -73,6 +73,21 @@ class InterfaceTemplate(OrderedDict):
         return b and 'yes' or 'no'
 
 
+class IPv6InterfaceTemplate(InterfaceTemplate):
+    def __init__(self, *args, **kwargs):
+        # Remove ip_address and gateway from kwargs if they are set
+        ip_address = '' if 'ip_address' not in kwargs else kwargs.pop("ip_address")
+        gateway = '' if 'gateway' not in kwargs else kwargs.pop("gateway")
+        kwargs['ipv6init'] = True
+
+        super(IPv6InterfaceTemplate, self).__init__(*args, **kwargs)
+        # Following the logic in parent class of not setting them if not defined
+        if ip_address:
+            self['IPV6ADDR'] = ip_address
+        if gateway:
+            self['IPV6_DEFAULTGW'] = gateway
+
+
 class DummyInterfaceTemplate(InterfaceTemplate):
     def __init__(self, device):
         dummy_dict = dict(type='Ethernet',
