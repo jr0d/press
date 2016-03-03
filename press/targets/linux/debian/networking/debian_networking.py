@@ -2,7 +2,7 @@ import logging
 import os
 
 from press.helpers import deployment
-from press.targets import  util
+from press.targets import util
 
 # TODO: Remove jinja2 dependency
 from jinja2 import Environment
@@ -40,5 +40,6 @@ def write_interfaces(path, network_configuration):
         for network in networks:
             if name == network.get('interface'):
                 network['device'] = device.devname
+                network['type'] = network.get('type', 'AF_INET')
 
     deployment.write(path, render_template(networks))

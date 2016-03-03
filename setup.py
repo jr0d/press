@@ -21,7 +21,8 @@ setup(name='press',
           'pyudev',
           'requests',
           'pyyaml',
-          'jinja2'
+          'jinja2',
+          'ipaddress'
       ],
       entry_points="""
       # -*- Entry points: -*-

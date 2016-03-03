@@ -61,19 +61,19 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
         if dummy:
             _template = networking.DummyInterfaceTemplate(device.devname)
         else:
-            if network_config.get('is_IPv6'):
+            if network_config.get('type', 'AF_INET') == 'AF_INET6':
                 self.enable_ipv6()
                 interface_template = networking.IPv6InterfaceTemplate
-                cidr_mask = None
             else:
                 interface_template = networking.InterfaceTemplate
-                cidr_mask = net_helper.mask2cidr(network_config.get('netmask'))
+
             ip_address = network_config.get('ip_address')
             gateway = network_config.get('gateway')
+            prefix = network_config.get('prefix')
             _template = interface_template(device.devname,
                                            default_route=network_config.get('default_route', False),
                                            ip_address=ip_address,
-                                           cidr_mask=cidr_mask,
+                                           prefix=prefix,
                                            gateway=gateway)
         log.info('Writing %s' % script_path)
         deployment.write(script_path, _template.generate())
