@@ -56,7 +56,7 @@ class Press(LayoutMixin, ImageMixin):
 
         log.info('Running post configuration target')
         obj = self.post_configuration_target(self.configuration,
-                                             self.layout.disks,
+                                             self.layout,
                                              self.deployment_root,
                                              self.staging_dir)
         self.write_fstab()

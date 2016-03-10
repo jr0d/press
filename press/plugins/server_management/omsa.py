@@ -50,10 +50,10 @@ class OMSAUbuntu1404(OMSADebian):
 class OMSARedHat(TargetExtension):
     __configuration__ = {}  # Filled at runtime
 
-    def __init__(self, target_obj, omsa_version = 7):
+    def __init__(self, target_obj):
         self.omsa_rpm_url = 'http://mirror.rackspace.com/dell/hardware/latest/mirrors.cgi/' \
                             'osname=rhel{version}&basearch=x86_64' \
-                            '&native=1&getrpm=dell-omsa-repository&redirpath='.format(version=omsa_version)
+                            '&native=1&getrpm=dell-omsa-repository&redirpath='
         self.omsa_repo_file = '/etc/yum.repos.d/dell-omsa-repository.repo'
         self.omsa_bootstrap_url = 'http://mirror.rackspace.com/dell/hardware/latest/bootstrap.cgi'
         self.rhel_repo_name = 'rhel_base'
@@ -66,7 +66,8 @@ class OMSARedHat(TargetExtension):
 
     def download_and_prepare_repositories(self):
         log.debug("Updating repos to add OMSA")
-        wget_command = 'wget -O dell-omsa-repository.rpm "{0}"'.format(self.omsa_rpm_url)
+        short_version  = self.target.get_redhat_release_value('short_version')
+        wget_command = 'wget -O dell-omsa-repository.rpm "{0}"'.format(self.omsa_rpm_url.format(version=short_version))
         if self.proxy:
             wget_command = 'http_proxy=http://%s HTTPS_PROXY=http://%s ' % (self.proxy, self.proxy) + wget_command
         self.target.chroot(wget_command)
@@ -89,39 +90,21 @@ class OMSARedHat(TargetExtension):
     def install_wget(self):
         self.target.install_package('wget')
 
-    def baseline_yum(self, os_id, rhel_repo_name, version, proxy):
-        """
-        Check to see if we need proxy, and enable in yum.conf
-        Check if we are 'rhel' and if so add base repo
-        """
-        rhel_repo_url = 'http://intra.mirror.rackspace.com/kickstart/'\
-                            'rhel-x86_64-server-{version}.eus/'.format(version=version)
-        if proxy:
-            self.target.enable_yum_proxy(proxy)
-        if os_id == 'rhel':
-            self.target.add_repo(rhel_repo_name, rhel_repo_url, gpgkey=None)
-
-    def revert_yum(self, os_id, rhel_repo_name, proxy):
-        """
-        Reverts changes from baseline yum:
-        Disabled proxy
-        If 'rhel' removes the base repo
-        """
-        if proxy:
-            self.target.disable_yum_proxy()
-        if os_id == 'rhel':
-            self.target.remove_repo(rhel_repo_name)
-
     def run(self):
-        self.os_id = self.target.get_os_release_value('ID')
-        self.version = self.target.get_os_release_value('VERSION_ID')
-        self.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
+        self.target.baseline_yum(self.proxy)
         self.install_wget()
         self.download_and_prepare_repositories()
         self.install_omsa_repo()
         self.install_openmanage()
-        self.revert_yum(self.os_id, self.rhel_repo_name, self.proxy)
+        self.target.revert_yum(self.proxy)
 
 
 class OMSARHEL7(OMSARedHat):
     __extends__ = 'enterprise_linux_7'
+
+class OMSARHEL6(OMSARedHat):
+    __extends__ = 'enterprise_linux_6'
+
+    def install_openmanage(self):
+        self.target.install_package('srvadmin-all')
+        self.target.service_control('sblim-sfcb', 'stop')

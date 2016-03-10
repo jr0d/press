@@ -162,3 +162,15 @@ def tar_extract(archive_path, chdir=''):
 def create_fstab(fstab, target):
     path = os.path.join(target, 'etc/fstab')
     write(path, fstab)
+
+def find_root(layout):
+    for disk in layout.allocated:
+        for partition in disk.partition_table.partitions:
+            if partition.mount_point == '/':
+                return partition
+
+    for volume_group in layout.volume_groups:
+        for logical_volume in volume_group.logical_volumes:
+            if logical_volume.mount_point == '/':
+                return logical_volume
+

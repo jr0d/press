@@ -50,9 +50,9 @@ class SPPUbuntu1404(SPPDebian):
 class SPPRHEL(TargetExtension):
     __configuration__ = {} # Filled at runtime
 
-    def __init__(self, target_obj, spp_version = 7):
+    def __init__(self, target_obj):
         self.mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/spp' \
-                          '/RHEL/{version}/x86_64/current/'.format(version=spp_version)
+                          '/RHEL/{version}/x86_64/current/'
         self.spp_repo_file = '/etc/yum.repos.d/hp-spp.repo'
         self.gpgkey = 'http://mirror.rackspace.com/hp/SDR/repo/spp/GPG-KEY-SPP'
         self.rhel_repo_name = 'rhel_base'
@@ -65,42 +65,22 @@ class SPPRHEL(TargetExtension):
 
     def prepare_repositories(self):
         log.debug("Updating repos to add HP-SPP")
-        self.target.chroot('echo "{0}" > "{1}"'.format(self.spp_source, self.spp_repo_file))
+        short_version  = self.target.get_redhat_release_value('short_version')
+        self.target.chroot('echo "{0}" > "{1}"'.format(self.spp_source.format(version=short_version), self.spp_repo_file))
 
     def install_hp_spp(self):
         self.target.install_packages(spp_packages)
 
-    def baseline_yum(self, os_id, rhel_repo_name, version, proxy):
-        """
-        Check to see if we need proxy, and enable in yum.conf
-        Check if we are 'rhel' and if so add base repo
-        """
-        rhel_repo_url = 'http://intra.mirror.rackspace.com/kickstart/'\
-                            'rhel-x86_64-server-{version}.eus/'.format(version=version)
-        if proxy:
-            self.target.enable_yum_proxy(proxy)
-        if os_id == 'rhel':
-            self.target.add_repo(rhel_repo_name, rhel_repo_url, gpgkey=None)
-
-    def revert_yum(self, os_id, rhel_repo_name, proxy):
-        """
-        Reverts changes from baseline yum:
-        Disabled proxy
-        If 'rhel' removes the base repo
-        """
-        if proxy:
-            self.target.disable_yum_proxy()
-        if os_id == 'rhel':
-            self.target.remove_repo(rhel_repo_name)
-
-
     def run(self):
-        self.version = self.target.get_os_release_value('VERSION_ID')
-        self.os_id = self.target.get_os_release_value('ID')
-        self.baseline_yum(self.os_id, self.rhel_repo_name, self.version, self.proxy)
+        self.target.baseline_yum(self.proxy)
         self.prepare_repositories()
         self.install_hp_spp()
-        self.revert_yum(self.os_id, self.rhel_repo_name, self.proxy)
+        self.target.revert_yum(self.proxy)
 
 class SPPRHEL7(SPPRHEL):
     __extends__ = 'enterprise_linux_7'
+
+
+class SPPRHEL6(SPPRHEL):
+    __extends__ = 'enterprise_linux_6'
+

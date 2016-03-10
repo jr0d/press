@@ -8,13 +8,12 @@ from press.targets import util
 log = logging.getLogger(__name__)
 
 
-class Grub2(Target):
-    grub2_cmdline_config_path = '/etc/default/grub'
-    grub2_cmdline_name = 'GRUB_CMDLINE_LINUX_DEFAULT'
+class Grub(Target):
+    grub_cmdline_config_path = '/boot/grub/grub.conf'
+    grub_cmdline_name = 'kernel'
 
-    grub2_install_path = 'grub2-install'
-    grub2_mkconfig_path = 'grub2-mkconfig'
-    grub2_config_path = '/boot/grub2/grub.cfg'
+    grub_install_path = 'grub-install'
+    grubby_path = 'grubby'
 
     @property
     def bootloader_configuration(self):
@@ -48,7 +47,7 @@ class Grub2(Target):
         if not (appending or removing):
             return
 
-        full_path = self.join_root(self.grub2_cmdline_config_path)
+        full_path = self.join_root(self.grub_cmdline_config_path)
         if not os.path.exists(full_path):
             log.warn('Grub configuration is missing from image')
             return
@@ -63,19 +62,19 @@ class Grub2(Target):
             if line and line[0] == '#':
                 continue
 
-            if self.grub2_cmdline_name in line:
+            if self.grub_cmdline_name in line:
                 data[idx] = util.misc.opts_modifier(line, appending, removing)
                 log.debug('%s > %s' % (line, data[idx]))
                 modified = True
                 continue
 
         if modified:
-            log.info('Updating %s' % self.grub2_cmdline_config_path)
+            log.info('Updating %s' % self.grub_cmdline_config_path)
             deployment.replace_file(full_path, '\n'.join(data) + '\n')
         else:
             log.warn('Grub configuration was not updated, no matches!')
 
-    def install_grub2(self):
+    def install_grub(self):
         if not self.bootloader_configuration:
             log.warn('Bootloader configuration is missing')
             return
@@ -84,9 +83,13 @@ class Grub2(Target):
 
         log.info('Generating grub configuration')
         # TODO(mdraid): We may need run grub2-mkconfig on all targets?
-        self.chroot('%s -o %s' % (self.grub2_mkconfig_path, self.grub2_config_path))
+        root_partition = deployment.find_root(self.layout)
+        root_uuid = root_partition.file_system.fs_uuid
+
+        kernels = os.listdir(self.join_root('/lib/modules'))
+        for kernel in kernels:
+            self.chroot('%s --args=root=UUID=%s --update-kernel=/boot/vmlinuz-%s' % (self.grubby_path, root_uuid, kernel))
         for disk in self.disk_targets:
             log.info('Installing grub on %s' % disk)
             self.chroot(
-                '%s --target=i386-pc --recheck --debug %s' % (self.grub2_install_path,
-                                                              disk))
+                '%s %s' % (self.grub_install_path, disk))

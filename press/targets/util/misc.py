@@ -18,5 +18,4 @@ def opts_modifier(l, appending, removing):
     options = [o for o in options if o not in removing]
     if appending:
         options += appending
-
     return '%s=\"%s\"' % (var, ' '.join(options))

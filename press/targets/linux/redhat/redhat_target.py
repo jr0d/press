@@ -16,8 +16,8 @@ class RedhatTarget(LinuxTarget):
     yum_config_file = '/etc/yum.conf'
     yum_config_backup = '/etc/yum.conf_bak'
 
-    def __init__(self, press_configuration, disks, root, chroot_staging_dir):
-        super(RedhatTarget, self).__init__(press_configuration, disks, root, chroot_staging_dir)
+    def __init__(self, press_configuration, layout, root, chroot_staging_dir):
+        super(RedhatTarget, self).__init__(press_configuration, layout, root, chroot_staging_dir)
         add_hook(self.add_repos, "pre-extensions", self)
 
     def get_package_list(self):
@@ -114,8 +114,12 @@ class RedhatTarget(LinuxTarget):
         data = deployment.read(self.join_root('/etc/redhat-release'))
         data = data.strip()
         try:
-            release_info['codename'] = data[-1].strip('()')
-            release_info['version'] = data[-2]
+            release_info['codename'] = data.split()[-1].strip('()')
+            version = data.split()[-2]
+            release_info['version'] = version
+            # Sometimes need short version, not ones like '7.1.1503'
+            # so splitting and then joining [0:2] to get '7.1'
+            release_info['short_version'] = '.'.join(version.split('.')[:2])
             release_info['os'] = data.split('release')[0].strip()
         except IndexError:
             log.error('Error parsing redhat-release')
@@ -133,6 +137,11 @@ class RedhatTarget(LinuxTarget):
                     os_release[k] = v.strip('"')
         return os_release
 
+    def get_redhat_release_value(self, key):
+        redhat_release = self.parse_redhat_release()
+        value = redhat_release.get(key)
+        return value
+
     def get_os_release_value(self, key):
         """
         parses /etc/os_release and returns the key value passed in
@@ -140,3 +149,45 @@ class RedhatTarget(LinuxTarget):
         os_release = self.parse_os_release()
         value = os_release.get(key)
         return value
+
+    def baseline_yum(self, proxy):
+        """
+        Check major version an adjust for .eus or .z path on mirror
+        Check to see if we need proxy, and enable in yum.conf
+        Check if we are 'rhel' and if so add base repo
+        """
+        os_id = self.get_redhat_release_value('os')
+        short_version  = self.get_redhat_release_value('short_version')
+        rhel_repo_name = 'rhel_base'
+
+        if short_version[0] == '6':
+            short_version = str(short_version) + '.z'
+        elif short_version[0] == '7':
+            short_version = str(short_version) + '.eus'
+
+        rhel_repo_url = 'http://intra.mirror.rackspace.com/kickstart/'\
+                            'rhel-x86_64-server-{version}/'.format(version=short_version)
+
+        if proxy:
+            self.enable_yum_proxy(proxy)
+        if 'Red Hat' in os_id:
+            self.add_repo(rhel_repo_name, rhel_repo_url, gpgkey=None)
+
+    def revert_yum(self, proxy):
+        """
+        Reverts changes from baseline yum:
+        Disabled proxy
+        If 'rhel' removes the base repo
+        """
+        os_id = self.get_redhat_release_value('os')
+        rhel_repo_name = 'rhel_base'
+
+        if proxy:
+            self.disable_yum_proxy()
+        if 'Red Hat' in os_id:
+            self.remove_repo(rhel_repo_name)
+
+    def service_control(self, service, action):
+        log.info('Running: service %s %s' % (service, action))
+        command = 'service %s %s' % (service, action)
+        self.chroot(command)

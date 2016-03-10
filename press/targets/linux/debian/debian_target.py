@@ -25,9 +25,9 @@ class DebianTarget(LinuxTarget):
     __start_hack_script = '#!/bin/sh\nexit 101\n'
     __start_hack_path = '/usr/sbin/policy-rc.d'
 
-    def __init__(self, press_configuration, disks, root, chroot_staging_dir):
+    def __init__(self, press_configuration, layout, root, chroot_staging_dir):
         super(DebianTarget, self).__init__(press_configuration,
-                                           disks, root, chroot_staging_dir)
+                                           layout, root, chroot_staging_dir)
         self.cache_updated = False
         add_hook(self.add_repos, "pre-extensions", self)
 
