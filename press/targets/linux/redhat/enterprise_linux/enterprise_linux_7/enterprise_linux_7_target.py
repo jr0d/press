@@ -1,6 +1,8 @@
 import logging
 import os
 
+import ipaddress
+
 from press.helpers import deployment, networking as net_helper
 from press.targets import GeneralPostTargetError
 from press.targets import util
@@ -70,6 +72,10 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
             ip_address = network_config.get('ip_address')
             gateway = network_config.get('gateway')
             prefix = network_config.get('prefix')
+            if not prefix:
+                prefix = ipaddress.ip_network(
+                    "{ip_address}/{netmask}".format(**network_config)).prefixlen
+
             _template = interface_template(device.devname,
                                            default_route=network_config.get('default_route', False),
                                            ip_address=ip_address,
