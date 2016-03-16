@@ -79,7 +79,8 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
             gateway = network_config.get('gateway')
             prefix = network_config.get('prefix')
             if not prefix:
-                prefix = ipaddress.ip_network("{ip_address}/{netmask}".format(**network_config)).prefixlen
+                prefix = ipaddress.ip_network("{ip_address}/{netmask}".format(
+                    **network_config).decode("utf-8"), strict=False).prefixlen
 
             _template = interface_template(device.devname,
                                            default_route=network_config.get('default_route', False),
