@@ -2,6 +2,8 @@ import logging
 import os
 from collections import OrderedDict
 
+import ipaddress
+
 from press.helpers import deployment, networking as net_helper
 from press.helpers.package import get_press_version
 from press.targets import GeneralPostTargetError
@@ -24,6 +26,7 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
 
     ssh_protocol_2_key_types = ('rsa', 'ecdsa', 'dsa')
     rpm_path = '/bin/rpm'
+    network_file_path = '/etc/sysconfig/network'
     network_scripts_path = '/etc/sysconfig/network-scripts'
     sysconfig_scripts_path = 'etc/sysconfig'
 
@@ -46,20 +49,44 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
                 log.info('Rebuilding %s' % initramfs_path)
                 self.chroot('dracut -v -f %s %s' % (initramfs_path, kernel))
 
+    def enable_ipv6(self):
+        with open(self.join_root(self.network_file_path)) as f:
+            contents = f.read()
+        if "NETWORKING_IPV6" in contents:
+            if "NETWORKING_IPV6=NO" in contents:
+                contents.replace("NETWORKING_IPV6=NO", "NETWORKING_IPV6=YES")
+            else:
+                return
+        else:
+            contents += "\nNETWORKING_IPV6=YES\n"
+        log.info("Enabling IPv6 in {}".format(self.network_file_path))
+        with open(self.join_root(self.network_file_path), "w") as f:
+            f.write(contents)
+
     def write_network_script(self, device, network_config, dummy=False):
         script_name = 'ifcfg-%s' % device.devname
         script_path = self.join_root(os.path.join(self.network_scripts_path,  script_name))
         if dummy:
             _template = networking.DummyInterfaceTemplate(device.devname)
         else:
+            if network_config.get('type', 'AF_INET') == 'AF_INET6':
+                self.enable_ipv6()
+                interface_template = networking.IPv6InterfaceTemplate
+            else:
+                interface_template = networking.InterfaceTemplate
+
             ip_address = network_config.get('ip_address')
-            cidr_mask = net_helper.mask2cidr(network_config.get('netmask'))
             gateway = network_config.get('gateway')
-            _template = networking.InterfaceTemplate(device.devname,
-                                                     default_route=network_config.get('default_route', False),
-                                                     ip_address=ip_address,
-                                                     cidr_mask=cidr_mask,
-                                                     gateway=gateway)
+            prefix = network_config.get('prefix')
+            if not prefix:
+                prefix = ipaddress.ip_network("{ip_address}/{netmask}".format(
+                    **network_config).decode("utf-8"), strict=False).prefixlen
+
+            _template = interface_template(device.devname,
+                                           default_route=network_config.get('default_route', False),
+                                           ip_address=ip_address,
+                                           prefix=prefix,
+                                           gateway=gateway)
         log.info('Writing %s' % script_path)
         deployment.write(script_path, _template.generate())
 

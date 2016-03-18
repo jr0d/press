@@ -9,9 +9,9 @@ iface lo inet loopback
 # Additional network interfaces go below.
 {% for network in networks %}
 auto {{ network.device }}
-iface {{ network.device }} inet static
+iface {{ network.device }} {{'inet6' if network.type == 'AF_INET6' else 'inet'}} static
     address {{ network.ip_address }}
-    netmask {{ network.netmask }}
+    netmask {{ network.prefix or network.netmask }}
 {% if network.gateway %}
     gateway {{ network.gateway }}
 {% endif %}
