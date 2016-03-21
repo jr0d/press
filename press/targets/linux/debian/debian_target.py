@@ -136,10 +136,6 @@ class DebianTarget(LinuxTarget):
             log.info('Writing network configuration')
             debian_networking.write_interfaces(interfaces_path, self.network_configuration)
 
-    def write_mdadm_configuration(self):
-        self.install_package('mdadm')
-        LinuxTarget.write_mdadm_configuration(self)
-
     def update_debconf_for_grub(self):
         log.info('Updating debconf for grub')
         targets = ' '.join(self.disk_targets)
@@ -150,4 +146,9 @@ class DebianTarget(LinuxTarget):
     def remove_resolvconf(self):
         log.info('Removing resolvconf package')
         self.remove_package('resolvconf')
+
+    def write_mdadm_configuration(self):
+        if self.press_configuration.get('layout', {}).get('software_raid'):
+            self.install_package('mdadm')
+            LinuxTarget.write_mdadm_configuration(self)
 
