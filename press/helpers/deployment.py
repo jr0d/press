@@ -118,7 +118,7 @@ def replace_line_matching(data, match, newline):
     for idx in xrange(len(lines)):
         if match in lines[idx]:
             lines[idx] = newline
-    return '\n'.join(lines)
+    return '\n'.join(lines) + '\n'
 
 
 def create_symlink(src, link_name, remove_existing_link=False):
