@@ -79,13 +79,16 @@ class OMSARedHat(TargetExtension):
             rpm_command = 'http_proxy=http://%s HTTPS_PROXY=http://%s ' % (self.proxy, self.proxy) + rpm_command
         self.target.chroot(rpm_command)
 
-    def install_openmanage(self):
+    def open_manage_packages(self):
         product_name = self.target.get_product_name()
         packages = self.base_omsa_packages
         for chassis in self.gen12_chassis:
             if chassis in product_name:
                 packages += self.gen12_omsa_packages
-        self.target.install_packages(packages)
+        return packages
+
+    def install_openmanage(self):
+        self.target.install_packages(self.open_manage_packages())
 
     def install_wget(self):
         self.target.install_package('wget')
@@ -106,5 +109,5 @@ class OMSARHEL6(OMSARedHat):
     __extends__ = 'enterprise_linux_6'
 
     def install_openmanage(self):
-        self.target.install_package('srvadmin-all')
+        self.target.install_packages(self.open_manage_packages())
         self.target.service_control('sblim-sfcb', 'stop')
