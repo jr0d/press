@@ -132,18 +132,11 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
             script += 'any net %s gw %s\n' % (routes[idx]['cidr'], routes[idx]['gateway'])
         return script
 
-    def generate_pseudo_mount_entry(self, entry_dict):
-        options = 'defaults'
-        dump_pass = '0 0'
 
-        filesystem = entry_dict.get('filesystem')
-        directory = entry_dict.get('dir')
-        fs_type = entry_dict.get('type') or entry_dict.get('filesystem')
-        options = entry_dict.get('options') or options
-        dump_pass = entry_dict.get('dump_pass') or dump_pass
+    def generate_pseudo_mount_entry(self, filesystem=None, directory=None, fs_type=None,
+        options='defaults', dump_pass='0 0'):
 
-        entry = '%s\t\t%s\t\t%s\t\t%s\t\t%s\n' % (filesystem, directory, fs_type, options, dump_pass)
-
+        entry = '%s\t\t%s\t\t%s\t\t%s\t\t%s\n' % (filesystem, directory, fs_type or filesystem, options, dump_pass)
         return entry
 
     def add_pseudo_mounts(self):
@@ -155,21 +148,16 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
         sysfs                   /sys                    sysfs   defaults        0 0
         proc                    /proc                   proc    defaults        0 0
         """
-        pseudo_mounts = [dict(filesystem='tmpfs',
-                              dir='/dev/shm',
-                              options='defaults,nosuid,nodev,noexec'),
-                         dict(filesystem='devpts',
-                              dir='/dev/pts',
-                              options='gid=5,mode=620'),
-                         dict(filesystem='sysfs',
-                              dir='/sys'),
-                         dict(filesystem='proc',
-                              dir='/proc')
+        pseudo_mounts = [
+            dict(filesystem='tmpfs', directory='/dev/shm', options='defaults,nosuid,nodev,noexec'),
+            dict(filesystem='devpts', directory='/dev/pts', options='gid=5,mode=620'),
+            dict(filesystem='sysfs', directory='/sys'),
+            dict(filesystem='proc', directory='/proc')
         ]
 
         fstab_entry = ''
         for mount in pseudo_mounts:
-            fstab_entry += self.generate_pseudo_mount_entry(mount)
+            fstab_entry += self.generate_pseudo_mount_entry(**mount)
 
         fstab_file = self.join_root('/etc/fstab')
         log.info('Writing pseudo filesystem mounts to /etc/fstab.')
