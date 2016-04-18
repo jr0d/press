@@ -132,11 +132,43 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
             script += 'any net %s gw %s\n' % (routes[idx]['cidr'], routes[idx]['gateway'])
         return script
 
+
+    def generate_pseudo_mount_entry(self, filesystem=None, directory=None, fs_type=None,
+        options='defaults', dump_pass='0 0'):
+
+        entry = '%s\t\t%s\t\t%s\t\t%s\t\t%s\n' % (filesystem, directory, fs_type or filesystem, options, dump_pass)
+        return entry
+
+    def add_pseudo_mounts(self):
+        """
+        EL6 needs a few items in fstab that other press distros didn't:
+        <filesystem>            <dir>                   <type>  <options>       <dump pass>
+        tmpfs		            /dev/shm		        tmpfs	defaults,nosuid,nodev,noexec    0 0
+        devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
+        sysfs                   /sys                    sysfs   defaults        0 0
+        proc                    /proc                   proc    defaults        0 0
+        """
+        pseudo_mounts = [
+            dict(filesystem='tmpfs', directory='/dev/shm', options='defaults,nosuid,nodev,noexec'),
+            dict(filesystem='devpts', directory='/dev/pts', options='gid=5,mode=620'),
+            dict(filesystem='sysfs', directory='/sys'),
+            dict(filesystem='proc', directory='/proc')
+        ]
+
+        fstab_entry = ''
+        for mount in pseudo_mounts:
+            fstab_entry += self.generate_pseudo_mount_entry(**mount)
+
+        fstab_file = self.join_root('/etc/fstab')
+        log.info('Writing pseudo filesystem mounts to /etc/fstab.')
+        deployment.write(fstab_file, fstab_entry, append=True)
+
     def run(self):
         super(EL6Target, self).run()
         self.localization()
         self.update_host_keys()
         self.configure_networks()
+        self.add_pseudo_mounts()
         self.rebuild_initramfs()
         self.check_for_grub()
         self.install_grub()
