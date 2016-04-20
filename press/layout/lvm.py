@@ -61,11 +61,21 @@ class VolumeGroup(object):
         return self.get_percentage_of_usable_space(percent)
 
     def _validate_volume(self, volume):
+        log.info('Validating volume {}'.format(volume.name))
         if not isinstance(volume, LogicalVolume):
             return ValueError('Expected LogicalVolume instance')
         if self.free_space < volume.size:
-            raise LVMValidationError('There is not enough space for volume: avail: %d, size: %d' % (
-                self.free_space.bytes, volume.size.bytes))
+            adjustment = Size(volume.size.bytes - self.free_space.bytes)
+            raise LVMValidationError(
+                "There is not enough space for volume "
+                "'{}' (avail: {}, requested: {}).  "
+                "Please adjust the size approximately by: {}".format(
+                    volume.name,
+                    self.free_space.bytes,
+                    volume.size.bytes,
+                    adjustment
+                )
+            )
 
     def add_logical_volume(self, volume):
         if volume.percent_string:
@@ -189,4 +199,3 @@ class LogicalVolume(object):
             self.mount_point,
             self.fsck_option
         )
-
