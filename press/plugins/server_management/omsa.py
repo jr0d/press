@@ -51,33 +51,19 @@ class OMSARedHat(TargetExtension):
     __configuration__ = {}  # Filled at runtime
 
     def __init__(self, target_obj):
-        self.omsa_rpm_url = 'http://mirror.rackspace.com/dell/hardware/latest/mirrors.cgi/' \
-                            'osname=rhel{version}&basearch=x86_64' \
-                            '&native=1&getrpm=dell-omsa-repository&redirpath='
-        self.omsa_repo_file = '/etc/yum.repos.d/dell-omsa-repository.repo'
-        self.omsa_bootstrap_url = 'http://mirror.rackspace.com/dell/hardware/latest/bootstrap.cgi'
-        self.rhel_repo_name = 'rhel_base'
+        self.omsa_bootstrap_url = 'http://mirror.rackspace.com/dell/hardware/dsu/bootstrap.cgi'
         self.proxy = self.__configuration__.get('proxy')
-        self.os_id = None
         self.base_omsa_packages = ['srvadmin-all']
         self.gen12_omsa_packages = ['srvadmin-idrac7', 'srvadmin-idracadm7']
         self.gen12_chassis = ['R720', 'R820']
         super(OMSARedHat, self).__init__(target_obj)
 
     def download_and_prepare_repositories(self):
-        log.debug("Updating repos to add OMSA")
-        short_version  = self.target.get_redhat_release_value('short_version')
-        wget_command = 'wget -O dell-omsa-repository.rpm "{0}"'.format(self.omsa_rpm_url.format(version=short_version))
+        log.debug("Configuring Dell System Update repository.")
+        wget_command = 'wget -q -O - %s | bash' % (self.omsa_bootstrap_url, )
         if self.proxy:
             wget_command = 'http_proxy=http://%s HTTPS_PROXY=http://%s ' % (self.proxy, self.proxy) + wget_command
         self.target.chroot(wget_command)
-        self.target.chroot('echo bootstrapurl="{0}" > "{1}"'.format(self.omsa_bootstrap_url, self.omsa_repo_file))
-
-    def install_omsa_repo(self):
-        rpm_command = 'rpm -i dell-omsa-repository.rpm'
-        if self.proxy:
-            rpm_command = 'http_proxy=http://%s HTTPS_PROXY=http://%s ' % (self.proxy, self.proxy) + rpm_command
-        self.target.chroot(rpm_command)
 
     def open_manage_packages(self):
         product_name = self.target.get_product_name()
@@ -97,7 +83,6 @@ class OMSARedHat(TargetExtension):
         self.target.baseline_yum(self.proxy)
         self.install_wget()
         self.download_and_prepare_repositories()
-        self.install_omsa_repo()
         self.install_openmanage()
         self.target.revert_yum(self.proxy)
 
