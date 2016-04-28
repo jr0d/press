@@ -62,7 +62,7 @@ class OMSARedHat(TargetExtension):
         log.debug("Configuring Dell System Update repository.")
         wget_command = 'wget -q -O - %s | bash' % (self.omsa_bootstrap_url, )
         if self.proxy:
-            wget_command = 'http_proxy=http://%s HTTPS_PROXY=http://%s ' % (self.proxy, self.proxy) + wget_command
+            wget_command = 'export http_proxy=http://%s HTTPS_PROXY=http://%s ;' % (self.proxy, self.proxy) + wget_command
         self.target.chroot(wget_command)
 
     def open_manage_packages(self):
