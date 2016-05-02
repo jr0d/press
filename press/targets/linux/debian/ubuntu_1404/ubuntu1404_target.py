@@ -16,10 +16,6 @@ class Ubuntu1404Target(DebianTarget, Grub2):
     grub2_mkconfig_path = 'grub-mkconfig'
     grub2_config_path = '/boot/grub/grub.cfg'
 
-    def remove_resolvconf(self):
-        log.info('Removing resolvconf package')
-        self.remove_package('resolvconf')
-
     def create_default_locale(self):
         language = self.press_configuration.get('localization', {}).get('language', 'C')
         _locale = 'LANG=%s\nLC_MESSAGES=C\n' % language

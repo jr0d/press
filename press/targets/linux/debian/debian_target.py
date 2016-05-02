@@ -146,3 +146,8 @@ class DebianTarget(LinuxTarget):
         # TODO(mdraid): Figure out if multiple grub-pc calls are needed per disk
         debconf = 'grub-pc grub-pc/install_devices multiselect %s' % targets
         self.chroot('echo %s | debconf-set-selections' % debconf)
+
+    def remove_resolvconf(self):
+        log.info('Removing resolvconf package')
+        self.remove_package('resolvconf')
+

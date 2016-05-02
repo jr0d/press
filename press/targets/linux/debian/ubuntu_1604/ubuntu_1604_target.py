@@ -23,5 +23,6 @@ class Ubuntu1604Target(DebianTarget, Grub2):
         self.write_mdadm_configuration()
         self.write_interfaces()
         self.update_host_keys()
+        self.remove_resolvconf()
         self.update_debconf_for_grub()
         self.install_grub2()
