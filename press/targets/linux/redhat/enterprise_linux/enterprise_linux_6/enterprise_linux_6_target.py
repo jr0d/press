@@ -163,12 +163,21 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
         log.info('Writing pseudo filesystem mounts to /etc/fstab.')
         deployment.write(fstab_file, fstab_entry, append=True)
 
+    def copy_udev_rules(self):
+        if not os.path.exists('/etc/udev/rules.d/70-persistent-net.rules'):
+            log.warn('Host 70-persistent-net.rules is missing')
+            return
+        deployment.write(self.join_root('/etc/udev/rules.d/70-persistent-net.rules'),
+                         deployment.read('/etc/udev/rules.d/70-persistent-net.rules'))
+
+
     def run(self):
         super(EL6Target, self).run()
         self.localization()
         self.update_host_keys()
         self.configure_networks()
         self.add_pseudo_mounts()
+        self.copy_udev_rules()
         self.rebuild_initramfs()
         self.check_for_grub()
         self.install_grub()
