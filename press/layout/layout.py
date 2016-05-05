@@ -43,9 +43,7 @@ class Layout(object):
         self.parted_path = parted_path
         self.udev = UDevHelper()
         self.udisks = self.udev.discover_valid_storage_devices(fc_enabled=self.fc_enabled,
-                                                               loop_enabled=True)
-        if loop_only:
-            self.udisks = [udisk for udisk in self.udisks if 'loop' in udisk['DEVNAME']]
+                                                               loop_only=loop_only)
 
         if not self.udisks:
             raise PhysicalDiskException('There are no valid disks.')

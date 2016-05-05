@@ -44,36 +44,44 @@ class UDevHelper(object):
             return None
         return udisk
 
-    def discover_valid_storage_devices(self, fc_enabled=True, loop_enabled=False):
+    def discover_valid_storage_devices(self, fc_enabled=False, loop_only=False):
         """
         Kind of ugly, but gets the job done. It strips devices we don't
         care about, such as cd roms, device mapper block devices, loop, and fibre channel.
 
         """
+        INVALID_ID_TYPE = ['cd', 'usb']
+        INVALID_MAJOR = ['253', '254', '1'] # 253/254 are LVM/DM, 1 is ramdisk
+        LOOP_MAJOR = '7'
 
         disks = self.get_disks()
+
         pruned = list()
+        fc_devices = list()
+        loop_devices = list()
 
         for disk in disks:
-            if not fc_enabled and 'fc' in disk.get('ID_BUS', ''):
+            if '-fc-' in disk.get('ID_PATH', ''):
+                fc_devices.append(disk)
                 continue
 
-            if not loop_enabled and disk.get('MAJOR') == '7':
+            if disk.get('MAJOR') == LOOP_MAJOR:
+                loop_devices.append(disk)
                 continue
 
-            if disk.get('ID_TYPE') == 'cd':
+            if disk.get('ID_TYPE') in INVALID_ID_TYPE:
                 continue
 
-            if disk.get('ID_TYPE') == 'usb':
-                continue
-
-            if disk.get('MAJOR') == '254':  # Device Mapper (LVM)
-                continue
-
-            if os.path.split(disk.get('DEVPATH', ''))[-1].startswith('ram'):
+            if disk.get('MAJOR') in INVALID_MAJOR:
                 continue
 
             pruned.append(disk)
+
+        if loop_only:
+            return loop_devices
+
+        if fc_enabled:
+            return pruned + fc_devices
 
         return pruned
 
