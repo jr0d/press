@@ -50,9 +50,9 @@ class UDevHelper(object):
         care about, such as cd roms, device mapper block devices, loop, and fibre channel.
 
         """
-        INVALID_ID_TYPE = ['cd', 'usb']
-        INVALID_MAJOR = ['253', '254', '1'] # 253/254 are LVM/DM, 1 is ramdisk
-        LOOP_MAJOR = '7'
+        invalid_id_type = ['cd', 'usb']
+        invalid_major = ['253', '254', '1'] # 253/254 are LVM/DM, 1 is ramdisk
+        loop_major = '7'
 
         disks = self.get_disks()
 
@@ -63,19 +63,13 @@ class UDevHelper(object):
         for disk in disks:
             if '-fc-' in disk.get('ID_PATH', ''):
                 fc_devices.append(disk)
-                continue
-
-            if disk.get('MAJOR') == LOOP_MAJOR:
+            elif disk.get('MAJOR') == loop_major:
                 loop_devices.append(disk)
+            elif (disk.get('ID_TYPE') in invalid_id_type or
+                          disk.get('MAJOR') in invalid_major):
                 continue
-
-            if disk.get('ID_TYPE') in INVALID_ID_TYPE:
-                continue
-
-            if disk.get('MAJOR') in INVALID_MAJOR:
-                continue
-
-            pruned.append(disk)
+            else:
+                pruned.append(disk)
 
         if loop_only:
             return loop_devices
