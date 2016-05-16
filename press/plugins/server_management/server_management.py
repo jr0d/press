@@ -67,7 +67,7 @@ def plugin_init(configuration):
         SPPRHEL7.__configuration__ = configuration
         register_extension(SPPRHEL7)
 
-        SPPRHEL7.__configuration__ = configuration
+        SPPRHEL6.__configuration__ = configuration
         register_extension(SPPRHEL6)
 
         register_extension(SPPUbuntu1404)
