@@ -110,7 +110,7 @@ def generate_routes(routes):
     for idx in range(len(routes)):
         i = ipaddress.ip_network(routes[idx]['cidr'].decode("utf-8"))
         d['ADDRESS%d' % idx] = str(i.network_address)
-        d['PREFIX%d' % idx] = i.prefixlen
+        d['NETMASK%d' % idx] = i.netmask
         d['GATEWAY%d' % idx] = routes[idx]['gateway']
     for k, v in d.items():
         script += '%s=%s\n' % (k, v)
