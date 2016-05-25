@@ -175,3 +175,21 @@ def find_root(layout):
             if logical_volume.mount_point == '/':
                 return logical_volume
 
+
+def copy(src, dst, preserve_permissions=True, preserve_meta=True, preserve_owners=True):
+
+    shutil.copy(src, dst)
+
+    if preserve_permissions:
+        shutil.copymode(src, dst)
+
+    if preserve_meta:
+        shutil.copystat(src, dst)
+
+    if preserve_owners:
+        st = os.stat(src)
+
+        uid = st.st_gid
+        gid = st.st_gid
+
+        os.chown(dst, uid, gid)
