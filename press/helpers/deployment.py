@@ -112,12 +112,14 @@ def replace_file(path, data):
     shutil.copy(temp_path, path)
     os.unlink(temp_path)
 
+
 def replace_line_matching(data, match, newline):
     output = ""
     newline = newline if newline.endswith(os.linesep) else (newline + os.linesep)
     for line in data.splitlines(True):
         output += newline if match in line else line
     return output
+
 
 def create_symlink(src, link_name, remove_existing_link=False):
     if os.path.exists(link_name):
@@ -161,6 +163,7 @@ def create_fstab(fstab, target):
     path = os.path.join(target, 'etc/fstab')
     write(path, fstab)
 
+
 def find_root(layout):
     for disk in layout.allocated:
         for partition in disk.partition_table.partitions:
@@ -172,3 +175,21 @@ def find_root(layout):
             if logical_volume.mount_point == '/':
                 return logical_volume
 
+
+def copy(src, dst, preserve_permissions=True, preserve_meta=True, preserve_owners=True):
+
+    shutil.copy(src, dst)
+
+    if preserve_permissions:
+        shutil.copymode(src, dst)
+
+    if preserve_meta:
+        shutil.copystat(src, dst)
+
+    if preserve_owners:
+        st = os.stat(src)
+
+        uid = st.st_gid
+        gid = st.st_gid
+
+        os.chown(dst, uid, gid)

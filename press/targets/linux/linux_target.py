@@ -227,6 +227,7 @@ class LinuxTarget(Target):
             log.debug(mdraid_data)
             deployment.write(self.join_root(self.mdadm_conf), mdraid_data + '\n', append=True)
 
+    # noinspection PyMethodMayBeStatic
     def get_product_name(self):
         res = cli.run('dmidecode -s system-product-name', raise_exception=True)
         for line in res.splitlines():
@@ -234,11 +235,8 @@ class LinuxTarget(Target):
                 continue
             return line.strip()
 
-
-
     def run(self):
         self.authentication()
         self.set_hostname()
         self.update_etc_hosts()
         self.copy_resolvconf()
-
