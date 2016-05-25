@@ -133,7 +133,6 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
             script += 'any net %s gw %s\n' % (routes[idx]['cidr'], routes[idx]['gateway'])
         return script
 
-
     def generate_pseudo_mount_entry(self, filesystem=None, directory=None, fs_type=None,
         options='defaults', dump_pass='0 0'):
 
@@ -171,6 +170,17 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
         deployment.write(self.join_root('/etc/udev/rules.d/70-persistent-net.rules'),
                          deployment.read('/etc/udev/rules.d/70-persistent-net.rules'))
 
+    def set_timezone(self, timezone):
+        log.debug('Setting timezone, EL6 style')
+        localtime_path = self.join_root('/etc/localtime')
+        clock_file_path = self.join_root('/etc/sysconfig/clock')
+        zone_info = self.join_root(os.path.join('/usr/share/zoneinfo/', timezone))
+
+        deployment.copy(zone_info, localtime_path)
+
+        data = 'ZONE="%s"\n' % timezone
+        log.info('Updating /etc/sysconfig/clock: %s' % data)
+        deployment.replace_file(clock_file_path, data)
 
     def run(self):
         super(EL6Target, self).run()
