@@ -112,12 +112,14 @@ def replace_file(path, data):
     shutil.copy(temp_path, path)
     os.unlink(temp_path)
 
+
 def replace_line_matching(data, match, newline):
     output = ""
     newline = newline if newline.endswith(os.linesep) else (newline + os.linesep)
     for line in data.splitlines(True):
         output += newline if match in line else line
     return output
+
 
 def create_symlink(src, link_name, remove_existing_link=False):
     if os.path.exists(link_name):
@@ -160,6 +162,7 @@ def tar_extract(archive_path, chdir=''):
 def create_fstab(fstab, target):
     path = os.path.join(target, 'etc/fstab')
     write(path, fstab)
+
 
 def find_root(layout):
     for disk in layout.allocated:
