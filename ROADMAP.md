@@ -7,6 +7,7 @@
 # "Prime Time" release v0.4.9
 * SSD detection
     - Changes to file system mount options (discard)
+    - SSD "Overprovisioning" https://www.thomas-krenn.com/en/wiki/SSD_Over-provisioning_using_hdparm
 * EFI bootloader support
 * Disto Support
     - RHEL 6/7
