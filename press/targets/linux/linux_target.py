@@ -221,11 +221,10 @@ class LinuxTarget(Target):
                          deployment.read('/etc/resolv.conf'))
 
     def write_mdadm_configuration(self):
-        if self.press_configuration.get('layout', {}).get('software_raid'):
-            mdraid_data = self.chroot('mdadm --detail --scan')
-            log.info('Writing mdadm.conf')
-            log.debug(mdraid_data)
-            deployment.write(self.join_root(self.mdadm_conf), mdraid_data + '\n', append=True)
+        mdraid_data = self.chroot('mdadm --detail --scan')
+        log.info('Writing mdadm.conf')
+        log.debug(mdraid_data)
+        deployment.write(self.join_root(self.mdadm_conf), mdraid_data + '\n', append=True)
 
     # noinspection PyMethodMayBeStatic
     def get_product_name(self):
