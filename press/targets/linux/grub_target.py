@@ -63,7 +63,7 @@ class Grub(Target):
                 continue
 
             if self.grub_cmdline_name in line:
-                data[idx] = util.misc.opts_modifier(line, appending, removing)
+                data[idx] = util.misc.opts_modifier(line, appending, removing, quoted=False)
                 log.debug('%s > %s' % (line, data[idx]))
                 modified = True
                 continue
