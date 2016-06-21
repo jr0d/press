@@ -5,7 +5,7 @@ def join_root(root, path):
     return os.path.join(root, path.lstrip('/'))
 
 
-def opts_modifier(l, appending, removing):
+def opts_modifier(l, appending, removing, quoted=True):
     config_line = l.split('=', 1)
     if not len(config_line) > 1:
         var = config_line[0]
@@ -18,4 +18,6 @@ def opts_modifier(l, appending, removing):
     options = [o for o in options if o not in removing]
     if appending:
         options += appending
-    return '%s=\"%s\"' % (var, ' '.join(options))
+    if quoted:
+        return '%s=\"%s\"' % (var, ' '.join(options))
+    return '%s=%s' % (var, ' '.join(options))
