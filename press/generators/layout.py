@@ -295,7 +295,7 @@ def generate_volume_group_models(volume_group_dict):
             pvs.append(PhysicalVolume(ref))
         vgm = VolumeGroupModel(vg['name'], pvs)
         lv_dicts = vg.get('logical_volumes')
-        lv_dicts.sort(key=lambda s: (s['mount_point']).count('/'))
+        lv_dicts.sort(key=lambda s: (s.get('mount_point', '')).count('/'))
         lvs = list()
         if lv_dicts:
             for lv in lv_dicts:
