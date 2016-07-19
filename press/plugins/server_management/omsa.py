@@ -11,11 +11,12 @@ log = logging.getLogger('press.plugins.server_management')
 class OMSADebian(TargetExtension):
     dist = ''
     mirrorbase = 'http://mirror.rackspace.com/dell/community/ubuntu'
+    component = 'openmanage'
 
     def write_sources(self):
         log.info('Creating OMSA sources file')
         sources_path = self.join_root('/etc/apt/sources.list.d/dell-omsa.list')
-        source = 'deb %s %s openmanage\n' % (OMSADebian.mirrorbase, self.dist)
+        source = 'deb %s %s %s\n' % (OMSADebian.mirrorbase, self.dist, self.component)
         deployment.write(sources_path, source)
 
     def import_key(self):
@@ -46,6 +47,22 @@ class OMSAUbuntu1404(OMSADebian):
     __extends__ = 'ubuntu_1404'
     dist = 'trusty'
 
+class OMSAUbuntu1604(OMSADebian):
+    __extends__ = 'ubuntu_1604'
+    # Will be using trusty repos since Dell doesn't have xenial yet.
+    dist = 'trusty'
+    # specifying version 8.30
+    component = 'openmanage/830'
+    # Also needs a repo for Java 7
+    add_java_apt_repo = "add-apt-repository -y ppa:openjdk-r/ppa"
+
+    def write_sources(self):
+        log.info('Adding Java sources file')
+        self.target.chroot(self.add_java_apt_repo)
+        log.info('Creating OMSA sources file')
+        sources_path = self.join_root('/etc/apt/sources.list.d/dell-omsa.list')
+        source = 'deb %s %s %s\n' % (OMSADebian.mirrorbase, self.dist, self.component)
+        deployment.write(sources_path, source)
 
 class OMSARedHat(TargetExtension):
     __configuration__ = {}  # Filled at runtime
