@@ -46,6 +46,9 @@ class SPPUbuntu1404(SPPDebian):
     __extends__ = 'ubuntu_1404'
     dist = 'trusty'
 
+class SPPUbuntu1604(SPPDebian):
+    __extends__ = 'ubuntu_1604'
+    dist = 'xenial'
 
 class SPPRHEL(TargetExtension):
     __configuration__ = {} # Filled at runtime
