@@ -218,7 +218,7 @@ class Layout(object):
                                                        partition.size.bytes,
                                                        flags=partition.flags)
                 # Dirty race condition hack, need to re-write udev monitor to make it more stable
-                time.sleep(.5)
+                time.sleep(2)
                 # end hack
                 log.debug('Monitoring for devname')
                 partition.devname = self.udev.monitor_partition_by_devname(monitor, partition_id, action='add')
