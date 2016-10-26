@@ -344,7 +344,7 @@ def add_bios_boot_partition(partition_table):
 def set_disk_labels(layout, layout_config):
     """
     Read into configuration and set label to gpt or msdos based on size.
-    If label is present in the configuration, do nothing.
+    If label is present in the configuration and is gpt but not efi, make sure bios boot partition is present.
     :param layout:
     :param layout_config:
     :return:
@@ -352,10 +352,10 @@ def set_disk_labels(layout, layout_config):
     # TODO: Trace disk generator and inject this
     partition_tables = layout_config.get('partition_tables')
     for partition_table in partition_tables:
-        if partition_table.get('label'):
+        label = partition_table.get('label')
+        if label:
             LOG.info('Table: %s is set as %s in configuration' % (
                 partition_table.get('disk', 'undefined'), partition_table['label']))
-            continue
 
         # 'first' and 'any' are valid disk references in the configuration
         # 'first' indicates the first unallocated disk (as sorted by udev (subsystem->sub_id)
@@ -383,6 +383,8 @@ def set_disk_labels(layout, layout_config):
                     # if disk == the first disk or presumed boot disk
                     if layout.disks.keys().index(disk.devname) == 0:
                         add_bios_boot_partition(partition_table)
+            elif label == 'gpt':
+                add_bios_boot_partition(partition_table)
             else:
                 LOG.info('%s is under 2.2TiB, using msdos' % disk.devname)
                 label = 'msdos'
