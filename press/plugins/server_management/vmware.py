@@ -11,7 +11,7 @@ class VMWareToolsDebian(TargetExtension):
 
     def run(self):
         log.info('Install vmware tools')
-        self.target.install_packages(['open-vm-tools', 'open-vm-dkms'])
+        self.target.install_packages(['open-vm-tools', 'open-vm-tools-dkms'])
 
 class VMWareToolsUbuntu1404(VMWareToolsDebian):
     __extends__ = 'ubuntu_1404'
