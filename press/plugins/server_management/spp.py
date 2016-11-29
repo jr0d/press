@@ -4,7 +4,9 @@ from press.helpers import deployment
 from press.targets.target_base import TargetExtension
 
 
-pgp_key_files = ['hpPublicKey1024.pub', 'hpPublicKey2048.pub', 'hpPublicKey2048_key1.pub']
+pgp_key_files = ['hpPublicKey1024.pub',
+                 'hpPublicKey2048.pub',
+                 'hpPublicKey2048_key1.pub']
 
 spp_packages = ['hponcfg', 'hpssacli', 'hp-health', 'hp-snmp-agents']
 
@@ -18,19 +20,23 @@ class SPPDebian(TargetExtension):
     def write_sources(self):
         log.info('Creating SPP sources file')
         sources_path = self.join_root('/etc/apt/sources.list.d/hp-spp.list')
-        source = 'deb %s %s/current non-free\n' % (SPPDebian.mirrorbase, self.dist)
+        source = 'deb %s %s/current non-free\n' % (SPPDebian.mirrorbase,
+                                                   self.dist)
         deployment.write(sources_path, source)
 
     def import_key(self):
         for pgp_key_file in pgp_key_files:
-            key_file_path = os.path.join(os.path.dirname(__file__), pgp_key_file)
+            key_file_path = os.path.join(os.path.dirname(__file__),
+                                         pgp_key_file)
             key_data = deployment.read(key_file_path)
-            destination = os.path.join(self.join_root(self.target.chroot_staging_dir),
-                                       pgp_key_file)
+            destination = os.path.join(
+                self.join_root(self.target.chroot_staging_dir),
+                pgp_key_file)
             deployment.write(destination, key_data)
             log.info('Importing HP public key %s' % (pgp_key_file, ))
-            self.target.chroot('apt-key add %s' % os.path.join(self.target.chroot_staging_dir,
-                                                           pgp_key_file))
+            self.target.chroot('apt-key add %s' % os.path.join(
+                self.target.chroot_staging_dir,
+                pgp_key_file))
 
     def install_spp(self):
         self.target.install_packages(spp_packages)
@@ -46,21 +52,34 @@ class SPPUbuntu1404(SPPDebian):
     __extends__ = 'ubuntu_1404'
     dist = 'trusty'
 
+
 class SPPUbuntu1604(SPPDebian):
     __extends__ = 'ubuntu_1604'
     dist = 'xenial'
 
+
 class SPPRHEL(TargetExtension):
-    __configuration__ = {} # Filled at runtime
+    __configuration__ = {}  # Filled at runtime
 
     def __init__(self, target_obj):
         self.mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/spp' \
                           '/RHEL/{version}/x86_64/current/'
         self.spp_repo_file = '/etc/yum.repos.d/hp-spp.repo'
-        self.gpgkey = 'http://mirror.rackspace.com/hp/SDR/repo/spp/GPG-KEY-SPP'
+        self.hpe_gpgkey = 'http://mirror.rackspace.com/hp/SDR/repo/spp' \
+                          '/GPG-KEY-SPP'
+        self.gpgkey = 'http://mirror.rackspace.com/hp/SDR' \
+                      '/hpPublicKey2048_key1.pub'
         self.rhel_repo_name = 'rhel_base'
-        self.spp_source = '[spp]\nname=HP SPP\nbaseurl={mirror}\nenabled=1' \
-                          '\ngpgcheck=1\ngpgkey={gpgkey}'.format(mirror=self.mirrorbase, gpgkey=self.gpgkey)
+        self.spp_source = '\n'.join([
+            '[spp]',
+            'name=HP SPP',
+            'baseurl={mirror}'.format(mirror=self.mirrorbase),
+            'enabled=1',
+            'gpgcheck=1',
+            'gpgkey={gpgkey_1}\n       {gpgkey_2}'.format(
+                gpgkey_1=self.hpe_gpgkey,
+                gpgkey_2=self.gpgkey)
+        ])
         self.proxy = self.__configuration__.get('proxy')
         self.os_id = None
 
@@ -68,8 +87,9 @@ class SPPRHEL(TargetExtension):
 
     def prepare_repositories(self):
         log.debug("Updating repos to add HP-SPP")
-        short_version  = self.target.get_redhat_release_value('short_version')
-        self.target.chroot('echo "{0}" > "{1}"'.format(self.spp_source.format(version=short_version), self.spp_repo_file))
+        short_version = self.target.get_redhat_release_value('short_version')
+        self.target.chroot('echo "{0}" > "{1}"'.format(
+            self.spp_source.format(version=short_version), self.spp_repo_file))
 
     def install_hp_spp(self):
         self.target.install_packages(spp_packages)
@@ -80,10 +100,10 @@ class SPPRHEL(TargetExtension):
         self.install_hp_spp()
         self.target.revert_yum(self.proxy)
 
+
 class SPPRHEL7(SPPRHEL):
     __extends__ = 'enterprise_linux_7'
 
 
 class SPPRHEL6(SPPRHEL):
     __extends__ = 'enterprise_linux_6'
-
