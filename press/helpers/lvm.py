@@ -48,7 +48,8 @@ class LVM(object):
         res = run(command, ignore_error=ignore_errors, quiet=quiet)
         if res.returncode and not ignore_errors:
             log.error('stdout: %s, stderr: %s' % (res, res.stderr))
-            raise LVMError('Return code: %s' % res.returncode)
+            raise LVMError('LVM command returned status {}: {}, {}'.format(
+                res.returncode, res, res.stderr))
         return res
 
     @staticmethod
