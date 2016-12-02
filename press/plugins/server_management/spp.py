@@ -6,7 +6,8 @@ from press.targets.target_base import TargetExtension
 
 pgp_key_files = ['hpPublicKey1024.pub',
                  'hpPublicKey2048.pub',
-                 'hpPublicKey2048_key1.pub']
+                 'hpPublicKey2048_key1.pub',
+                 'hpePublicKey2048_key1.pub']
 
 spp_packages = ['hponcfg', 'hpssacli', 'hp-health', 'hp-snmp-agents']
 
