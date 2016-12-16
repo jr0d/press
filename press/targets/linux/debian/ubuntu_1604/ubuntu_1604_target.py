@@ -16,6 +16,14 @@ class Ubuntu1604Target(DebianTarget, Grub2):
     grub2_mkconfig_path = 'grub-mkconfig'
     grub2_config_path = '/boot/grub/grub.cfg'
 
+    def set_timezone(self, timezone):
+        timezone_path = '/etc/timezone'
+        localtime_path = '/etc/localtime'
+        deployment.remove_file(self.join_root(timezone_path))
+        deployment.remove_file(self.join_root(localtime_path))
+        deployment.write(self.join_root(timezone_path), timezone)
+        self.reconfigure_package('tzdata')
+
     def run(self):
         super(DebianTarget, self).run()
         self.localization()
