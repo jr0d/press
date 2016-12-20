@@ -137,7 +137,7 @@ def create_symlink(src, link_name, remove_existing_link=False):
 
 
 def remove_file(path):
-    if not os.path.exists(path):
+    if not os.path.lexists(path):
         return
     if os.path.isdir(path):
         log.error('Path is a directory, use recursive_remove')
