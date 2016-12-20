@@ -24,7 +24,6 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
 
     network_file_path = '/etc/sysconfig/network'
     network_scripts_path = '/etc/sysconfig/network-scripts'
-    grub2_cmdline_name = 'GRUB_CMDLINE_LINUX'
 
     def check_for_grub(self):
         _required_packages = ['grub2', 'grub2-tools']

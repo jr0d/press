@@ -33,4 +33,5 @@ class Ubuntu1404Target(DebianTarget, Grub2):
         self.update_host_keys()
         self.remove_resolvconf()
         self.update_debconf_for_grub()
+        self.grub_disable_recovery()
         self.install_grub2()
