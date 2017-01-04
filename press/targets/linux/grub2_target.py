@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 class Grub2(Target):
     grub2_cmdline_config_path = '/etc/default/grub'
-    grub2_cmdline_name = 'GRUB_CMDLINE_LINUX_DEFAULT'
+    grub2_cmdline_name = 'GRUB_CMDLINE_LINUX'
 
     grub2_install_path = 'grub2-install'
     grub2_mkconfig_path = 'grub2-mkconfig'
@@ -81,6 +81,8 @@ class Grub2(Target):
             return
 
         self.update_kernel_parameters()
+        self.clear_grub_cmdline_linux_default()
+
 
         log.info('Generating grub configuration')
         # TODO(mdraid): We may need run grub2-mkconfig on all targets?
@@ -90,3 +92,20 @@ class Grub2(Target):
             self.chroot(
                 '%s --target=i386-pc --recheck --debug %s' % (self.grub2_install_path,
                                                               disk))
+
+    def update_grub_configration(self, match, newvalue):
+        grub_configuration = deployment.read(self.join_root(self.grub2_cmdline_config_path))
+        log.info('Setting {} in {}'.format(newvalue, self.grub2_cmdline_config_path))
+        updated_grub_configuration = deployment.replace_line_matching(grub_configuration, match,
+                                                                      newvalue)
+        deployment.write(self.join_root(self.grub2_cmdline_config_path), updated_grub_configuration)
+
+    def grub_disable_recovery(self):
+        match = 'GRUB_DISABLE_RECOVERY'
+        value = 'GRUB_DISABLE_RECOVERY=true'
+        self.update_grub_configration(match, value)
+
+    def clear_grub_cmdline_linux_default(self):
+        match = 'GRUB_CMDLINE_LINUX_DEFAULT'
+        value = 'GRUB_CMDLINE_LINUX_DEFAULT=""'
+        self.update_grub_configration(match, value)
