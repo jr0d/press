@@ -93,7 +93,7 @@ class IPv6InterfaceTemplate(InterfaceTemplate):
 class DummyInterfaceTemplate(InterfaceTemplate):
     def __init__(self, device):
         dummy_dict = dict(type='Ethernet',
-                          bootproto='static',
+                          bootproto='none',
                           default_route=True,
                           ipv4_failure_fatal=False,
                           ipv6init=True,
