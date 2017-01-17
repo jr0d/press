@@ -120,6 +120,8 @@ class RedhatTarget(LinuxTarget):
             # Sometimes need short version, not ones like '7.1.1503'
             # so splitting and then joining [0:2] to get '7.1'
             release_info['short_version'] = '.'.join(version.split('.')[:2])
+            # Also need major version, like '7' rather than short_version like '7.1'
+            release_info['major_version'] = version.split('.')[0]
             release_info['os'] = data.split('release')[0].strip()
         except IndexError:
             log.error('Error parsing redhat-release')
