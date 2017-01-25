@@ -100,3 +100,4 @@ class OMSARHEL6(OMSARedHat):
     def install_openmanage(self):
         self.target.install_packages(self.open_manage_packages())
         self.target.service_control('sblim-sfcb', 'stop')
+        self.target.service_control('dataeng', 'stop')
