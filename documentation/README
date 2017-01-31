@@ -1,0 +1,7 @@
+Generate reStructured Text Files:
+
+   # sphinx-apidoc -eP -o . ../press
+
+Generate html documentation:
+
+   # make html

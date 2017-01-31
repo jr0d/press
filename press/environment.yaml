@@ -1,0 +1,30 @@
+plugins:
+  scan_directories:
+    - /etc/press/plugins
+    - {{run_path}}/press/plugins
+  enabled:
+    - example
+
+paths:
+  parted: /usr/bin/parted
+
+logging:
+  level: INFO  # ERROR WARN INFO DEBUG
+  console_enabled: True
+  log_path: /tmp/press.log
+  cli_logging_enabled: False
+
+press:
+  deployment_root: /mnt/press
+  staging_directory: /.press
+
+  layout:
+    use_fibre_channel: False
+    loop_only: True
+
+  partition_table:
+    partition_start: 1048576,
+    alignment: 1048576
+
+  volume_group:
+    pe_size: 4MiB

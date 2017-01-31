@@ -1,0 +1,133 @@
+target: debian
+
+image:
+  url: http://newdev.kickstart.rackspace.com/ubuntu/testing/debian-7-wheezy-amd64.tar.gz
+  checksum:
+    hash: 3a23da7bc7636cb101a27a2f9855b427656f4775
+    method: sha1
+  format: tgz
+
+auth:
+  algorithm: sha512
+  users:
+    root:
+      home: /root
+      password: P@55W0RD1
+      password_options:
+        -
+          encrypted: False
+      authorized_keys:
+        - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key
+    rack:
+      home: /home/rack
+      uid: 1000
+      gid: 1000
+      group: rack
+      shell: /bin/zsh
+      skel: http://blah.rackspace.com/press/skels/users/rack.tar.gz
+      password: P@55W0RD1$
+      password_options:
+        -
+          encrypted: False
+
+bootloader:
+  type: grub
+  target: /dev/sda
+  options: debug,console=ttyS01
+
+network:
+  hostname: 191676-www.kickstart.rackspace.com
+  dns:
+    search:
+      - kickstart.rackspace.com
+    nameservers:
+      10.10.1.1
+      10.10.1.2
+  interfaces:
+    -
+      name: EXNET
+      ref:
+        type: pci # mac, pci, smbios, irq,
+        value: 0000:04:01:01 # or eth0, 00:00:00:ff:ff:ff, em0, p4p1, 1
+    -
+      name: SNET
+      ref:
+        type: pci
+        value: 0000:04:01:02
+
+  networks:
+  -
+    interface: EXNET
+    ip_address: 10.10.22.120
+    netmask: 255.255.255.0
+    gateway: 10.10.22.1
+    routes:
+      -
+        cidr: 10.22.56.0/25
+        gateway: 10.22.56.1
+  -
+    interface: SNET
+    ip_address: 10.22.10.55
+    netmask: 255.255.255.0
+    gateway: 10.22.10.1
+    routes:
+      -
+        cidr: 10.22.56.0/25
+        gateway: 10.22.56.1
+
+
+layout:
+  use_fiber_channel: false
+  loop_only: true
+  partition_tables:
+  -
+    disk: /dev/loop0
+    label: msdos
+    partitions:
+    -
+      name: boot
+      flags:
+        - boot
+      mbr_type: primary
+      size: 1073741824
+      mount_point: /boot
+      file_system:
+        type: ext4
+        label: BOOT
+    -
+      name: root_pv
+      flags:
+        - lvm
+      mbr_type: logical
+      size: 100%FREE
+
+  volume_groups:
+  -
+    name: vg_system
+    physical_volumes:
+      - root_pv
+    pe_szie: 4MiB
+    logical_volumes:
+        -
+          name: lv_swap
+          size: 1GiB
+          file_system:
+            type: swap
+            label: SWAP
+        -
+          name: lv_root
+          size: 75%FREE
+          mount_point: /
+          file_system:
+            type: ext4
+            label: ROOT
+            superuser_reserve: 1%
+kserver:
+  url: "http://10.66.4.143:9920"
+  object_id: "5421d866c4cf0025a6c2dfa3"
+
+plugins:
+  - kserver
+
+
+
