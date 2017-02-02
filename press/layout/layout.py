@@ -343,6 +343,8 @@ class Layout(object):
                     fstab += entry
 
         for vg in self.volume_groups:
+            # forcing '/dev/mapper' DEVNAME format for LVM
+            method = 'DEVNAME'
             for lv in vg.logical_volumes:
                 entry = lv.generate_fstab_entry(method)
                 if entry:

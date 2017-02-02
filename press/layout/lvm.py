@@ -153,9 +153,6 @@ class LogicalVolume(object):
     def devlink(self):
         if not self.devlinks:
             return self.devname
-        for link in self.devlinks:
-            if os.path.split(link)[1] == self.name:
-                return link
         return self.devlinks[0]
 
     def generate_fstab_entry(self, method='UUID'):
