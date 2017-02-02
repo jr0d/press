@@ -127,4 +127,4 @@ def has_efi():
     Should be True if booting in EFI mode, False otherwise
     :return: bool
     """
-    return False
+    return os.path.exists("/sys/firmware/efi")

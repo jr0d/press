@@ -26,6 +26,7 @@ from press.layout.filesystems.swap import (
     SWAP
 )
 from press.layout.filesystems.xfs import XFS
+from press.layout.filesystems.fat import FAT32, EFI
 from press.layout.raid import MDRaid
 from press.models.lvm import VolumeGroupModel
 from press.models.partition import PartitionTableModel
@@ -73,7 +74,9 @@ _fs_selector = dict(
     ext3=EXT3,
     ext4=EXT4,
     swap=SWAP,
-    xfs=XFS
+    xfs=XFS,
+    efi=EFI,
+    fat32=FAT32
 )
 
 _volume_group_defaults = dict(
@@ -178,12 +181,13 @@ def generate_partition(type_or_name, partition_dict):
 
 def _generate_mbr_partitions(partition_dicts):
     """
-    There can be four primary partitions unless a logical partition is explicitly
-    defined, in such cases, there can be only three primary partitions.
+    There can be four primary partitions unless a logical partition is
+    explicitly defined, in such cases, there can be only three
+    primary partitions.
 
-    If there are more than four partitions defined and neither primary or logical
-    is explicitly defined, then there will be three primary, one extended, and up to 128
-    logical partitions.
+    If there are more than four partitions defined and neither
+    primary or logical is explicitly defined, then there will be three primary,
+    one extended, and up to 128 logical partitions.
     """
     max_primary = _max_primary(partition_dicts)
 
@@ -191,17 +195,18 @@ def _generate_mbr_partitions(partition_dicts):
     logical_count = 0
 
     partitions = list()
+    max_err = 'Maximum logical partitions have been exceeded'
 
     for partition in partition_dicts:
         explicit_name = partition.get('mbr_type')
         if explicit_name:
             if explicit_name == 'primary':
                 if primary_count >= max_primary:
-                    raise GeneratorError('Maximum primary partitions have been exceeded')
+                    raise GeneratorError(max_err)
                 primary_count += 1
             elif explicit_name == 'logical':
                 if logical_count > MBR_LOGICAL_MAX:
-                    raise GeneratorError('Maximum logical partitions have been exceeded')
+                    raise GeneratorError(max_err)
                 logical_count += 1
 
             partition_type = explicit_name
@@ -211,7 +216,7 @@ def _generate_mbr_partitions(partition_dicts):
                 primary_count += 1
             else:
                 if logical_count > MBR_LOGICAL_MAX:
-                    raise GeneratorError('Maximum logical partitions have been exceeded')
+                    raise GeneratorError(max_err)
                 partition_type = 'logical'
                 logical_count += 1
         partitions.append(generate_partition(partition_type, partition))
@@ -227,7 +232,8 @@ def _generate_gpt_partitions(partition_dicts):
     count = 0
     partitions = list()
     for partition in partition_dicts:
-        partitions.append(generate_partition(partition.get('name', 'p' + str(count)), partition))
+        partitions.append(generate_partition(
+            partition.get('name', 'p' + str(count)), partition))
         count += 1
     return partitions
 
@@ -330,24 +336,38 @@ def generate_layout_stub(layout_config):
 
 
 def add_bios_boot_partition(partition_table):
+    """ Insert a bios boot partition if one is not already defined"""
     partitions = partition_table['partitions']
     if partitions:
         if 'bios_grub' not in partitions[0].get('flags', list()):
             LOG.info('Automatically inserting a BIOS boot partition')
-            bios_boot_partition = dict(name='BIOS boot partition', size='1MiB', flags=['bios_grub'])
+            bios_boot_partition = dict(name='BIOS boot partition',
+                                       size='1MiB', flags=['bios_grub'])
             partitions.insert(0, bios_boot_partition)
         else:
             LOG.info('BIOS boot partition seems to already be present, kudos!')
     partition_table['partitions'] = partitions
 
 
+def add_efi_boot_partition(partition_table):
+    """ Insert an EFI boot partition if one is not already defined"""
+    LOG.debug("Adding EFI boot partition")
+    for partition in partition_table.get('partitions', ()):
+        if partition.get('file_system', {}).get('type') == 'efi':
+            LOG.info('EFI boot partition is already present, kudos!')
+            break
+    else:
+        efi_partition = dict(name='EFI', size='210MiB', flags=['boot'],
+                             file_system=dict(type="efi"),
+                             mount_point="/boot/efi")
+        partition_table.setdefault('partitions', []).insert(0, efi_partition)
+
+
 def set_disk_labels(layout, layout_config):
     """
     Read into configuration and set label to gpt or msdos based on size.
-    If label is present in the configuration and is gpt but not efi, make sure bios boot partition is present.
-    :param layout:
-    :param layout_config:
-    :return:
+    If label is present in the configuration and is gpt but not efi,
+    make sure bios boot partition is present.
     """
     # TODO: Trace disk generator and inject this
     partition_tables = layout_config.get('partition_tables')
@@ -355,11 +375,14 @@ def set_disk_labels(layout, layout_config):
         label = partition_table.get('label')
         if label:
             LOG.info('Table: %s is set as %s in configuration' % (
-                partition_table.get('disk', 'undefined'), partition_table['label']))
+                partition_table.get('disk', 'undefined'),
+                partition_table['label']))
 
         # 'first' and 'any' are valid disk references in the configuration
-        # 'first' indicates the first unallocated disk (as sorted by udev (subsystem->sub_id)
-        # 'any' references that first disk encountered that is large enough to hold the partitions
+        # 'first' indicates the first unallocated disk
+        #       (as sorted by udev (subsystem->sub_id)
+        # 'any' references that first disk encountered
+        #       that is large enough to hold the partitions
         # 'any' is slated for removal in v0.4.0 roadmap
 
         if partition_table['disk'] == 'first':
@@ -367,7 +390,8 @@ def set_disk_labels(layout, layout_config):
         elif partition_table['disk'] == 'any':
             size = Size(0)
             for partition in partition_table.get('partitions'):
-                # Percent strings are relative and cannot be used to calculate total size
+                # Percent strings are relative and
+                # cannot be used to calculate total size
                 if '%' not in partition['size']:
                     size += Size(partition['size'])
             disk = layout.find_device_by_size(size)
@@ -379,7 +403,8 @@ def set_disk_labels(layout, layout_config):
                 LOG.info('%s is over 2.2TiB, using gpt' % disk.devname)
                 label = 'gpt'
                 if not layout_config.get('no_bios_boot_partition'):
-                    # TODO: Add config option to disks, allowing user to specify the boot disk
+                    # TODO: Add config option to disks,
+                    # allowing user to specify the boot disk
                     # if disk == the first disk or presumed boot disk
                     if layout.disks.keys().index(disk.devname) == 0:
                         add_bios_boot_partition(partition_table)
@@ -391,6 +416,8 @@ def set_disk_labels(layout, layout_config):
         else:
             LOG.info('Booting in UEFI mode, using gpt')
             label = 'gpt'
+            add_efi_boot_partition(partition_table)
+
         partition_table['label'] = label
 
 
