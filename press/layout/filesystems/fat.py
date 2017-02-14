@@ -41,8 +41,13 @@ class FAT32(FileSystem):
 
 
 class EFI(FAT32):
-    fs_type = 'efi'
+    fs_type = 'vfat'
 
-    def __init__(self, label=None, mount_options=None, **extra):
-        super(EFI, self).__init__(label, mount_options, **extra)
+    def __init__(self, label=None, mount_options=None, late_uuid=True, **extra):
+        super(EFI, self).__init__(label, mount_options,
+                                  late_uuid=late_uuid, **extra)
         self.full_command = '{command_path} -F 32 {device}'
+
+    def create(self, device):
+        super(EFI, self).create(device)
+        self.fs_uuid = self.blkid_uuid(device)

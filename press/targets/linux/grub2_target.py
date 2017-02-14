@@ -84,7 +84,8 @@ class Grub2(Target):
         self.clear_grub_cmdline_linux_default()
 
         log.info('Generating grub configuration')
-        # TODO(mdraid): We may need run grub2-mkconfig on all targets?
+        self.chroot('{} -o {}'.format(self.grub2_mkconfig_path,
+                                      self.grub2_config_path))
 
         if sysfs_info.has_efi():
             command = ('{} --target=x86_64-efi '
@@ -93,13 +94,7 @@ class Grub2(Target):
                        '--debug'.format(self.grub2_install_path))
             log.info("Installing EFI enabled grub")
             self.chroot(command)
-            log.info('Generating grub configuration')
-            self.chroot('{} -o {}'.format(self.grub2_mkconfig_path,
-                                          self.grub2_config_path))
         else:
-            log.info('Generating grub configuration')
-            self.chroot('{} -o {}'.format(self.grub2_mkconfig_path,
-                                          self.grub2_config_path))
             command = '{} --target=i386-pc --recheck --debug'.format(
                 self.grub2_install_path)
             for disk in self.disk_targets:
