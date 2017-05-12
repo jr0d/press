@@ -67,6 +67,7 @@ class DebianTarget(LinuxTarget):
             log.error('Failed to install packages')
         else:
             log.debug('Installed packages %s' % packages_str)
+        return res.returncode
 
     def packages_missing(self, packages):
         missing = list()

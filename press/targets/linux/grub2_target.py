@@ -16,6 +16,11 @@ class Grub2(Target):
     grub2_mkconfig_path = 'grub2-mkconfig'
     grub2_config_path = '/boot/grub2/grub.cfg'
 
+    grub2_efi_command = ('{} --target=x86_64-efi '
+                         '--efi-directory=/boot/efi '
+                         '--bootloader-id=grub '
+                         '--debug'.format(grub2_install_path))
+
     @property
     def bootloader_configuration(self):
         return self.press_configuration.get('bootloader')
@@ -88,12 +93,8 @@ class Grub2(Target):
                                       self.grub2_config_path))
 
         if sysfs_info.has_efi():
-            command = ('{} --target=x86_64-efi '
-                       '--efi-directory=/boot/efi '
-                       '--bootloader-id=grub '
-                       '--debug'.format(self.grub2_install_path))
             log.info("Installing EFI enabled grub")
-            self.chroot(command)
+            self.chroot(self.grub2_efi_command)
         else:
             command = '{} --target=i386-pc --recheck --debug'.format(
                 self.grub2_install_path)

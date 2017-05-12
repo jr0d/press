@@ -3,7 +3,7 @@ import os
 
 import ipaddress
 
-from press.helpers import deployment, networking as net_helper
+from press.helpers import deployment, sysfs_info, networking as net_helper
 from press.targets import GeneralPostTargetError
 from press.targets import util
 from press.targets.linux.grub2_target import Grub2
@@ -20,6 +20,11 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
     """
     Should work with CentOS and RHEL.
     """
+    grub2_efi_command = ('efibootmgr --create --gpt '
+                         '--disk /dev/sda --part 1 --write-signature '
+                         '--label "Red Hat Enterprise Linux" '
+                         '--loader /EFI/redhat/shim.efi')
+
     name = 'enterprise_linux_7'
 
     network_file_path = '/etc/sysconfig/network'
@@ -27,9 +32,14 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
 
     def check_for_grub(self):
         _required_packages = ['grub2', 'grub2-tools']
+        if sysfs_info.has_efi():
+            _required_packages += ['grub2-efi']
+            self.grub2_config_path = '/boot/efi/EFI/redhat/grub.cfg'
         if not self.packages_exist(_required_packages):
-            if not self.install_packages(_required_packages):
+            self.baseline_yum(self.proxy)
+            if self.install_packages(_required_packages):
                 raise GeneralPostTargetError('Error installing required packages for grub2')
+            self.revert_yum(self.proxy)
 
     def rebuild_initramfs(self):
         if not self.package_exists('dracut-config-generic'):
