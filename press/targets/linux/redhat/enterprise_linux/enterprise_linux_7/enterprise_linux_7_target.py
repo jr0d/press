@@ -20,21 +20,29 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
     """
     Should work with CentOS and RHEL.
     """
-    grub2_efi_command = ('efibootmgr --create --gpt '
-                         '--disk /dev/sda --part 1 --write-signature '
-                         '--label "Red Hat Enterprise Linux" '
-                         '--loader /EFI/redhat/shim.efi')
-
     name = 'enterprise_linux_7'
+
+    grub2_efi_command = None
 
     network_file_path = '/etc/sysconfig/network'
     network_scripts_path = '/etc/sysconfig/network-scripts'
 
+    def get_efi_label(self):
+        os_id = self.get_redhat_release_value('os')
+        if 'red hat' in os_id.lower():
+            return 'redhat', 'Red Hat Enterprise Linux'
+        return 'centos', 'CentOS Linux'
+
     def check_for_grub(self):
         _required_packages = ['grub2', 'grub2-tools']
+        os_id, os_label = self.get_efi_label()
         if sysfs_info.has_efi():
             _required_packages += ['grub2-efi']
-            self.grub2_config_path = '/boot/efi/EFI/redhat/grub.cfg'
+            self.grub2_config_path = '/boot/efi/EFI/{}/grub.cfg'.format(os_id)
+            self.grub2_efi_command = ('efibootmgr --create --gpt '
+                                      '--disk /dev/sda --part 1 --write-signature '
+                                      '--label "{}" '
+                                      '--loader /EFI/{}/shim.efi'.format(os_label, os_id))
         if not self.packages_exist(_required_packages):
             self.baseline_yum(self.proxy)
             if self.install_packages(_required_packages):
