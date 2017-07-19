@@ -1,5 +1,5 @@
 # TODO: re-implement with importlib
-
+from __future__ import absolute_import
 
 import imp
 import logging
