@@ -8,6 +8,7 @@ from press.configuration.util import set_environment_from_file, environment_cach
 from press.log import setup_logging
 from press.plugin_init import init_plugins
 from press.press import Press
+from press.hooks.hooks import clear_hooks
 
 log = logging.getLogger('press')
 
@@ -42,3 +43,4 @@ def entry_main(
     finally:
         if press.layout.committed:
             press.teardown()
+        clear_hooks()

@@ -21,8 +21,14 @@ valid_hook_points = ["post-press-init", "pre-apply-layout", "pre-mount-fs",
                      "pre-target-run", "pre-extensions", "post-extensions"]
 target_hooks = {}
 
+
 for valid_point in valid_hook_points:
     target_hooks[valid_point] = []
+
+
+def clear_hooks():
+    for point in target_hooks:
+        del target_hooks[point][:]
 
 
 def add_hook(func, point, hook_name=None, *args, **kwargs):
