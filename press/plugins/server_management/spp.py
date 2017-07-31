@@ -88,7 +88,7 @@ class SPPRHEL(TargetExtension):
 
     def prepare_repositories(self):
         log.debug("Updating repos to add HP-SPP")
-        major_version = self.target.get_redhat_release_value('major_version')
+        major_version = self.target.get_el_release_value('major_version')
         self.target.chroot('echo "{0}" > "{1}"'.format(
             self.spp_source.format(version=major_version), self.spp_repo_file))
 

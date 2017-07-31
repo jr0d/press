@@ -15,3 +15,4 @@ import linux.redhat.redhat_target
 import linux.redhat.enterprise_linux.enterprise_linux_target
 import linux.redhat.enterprise_linux.enterprise_linux_7.enterprise_linux_7_target
 import linux.redhat.enterprise_linux.enterprise_linux_6.enterprise_linux_6_target
+import linux.redhat.enterprise_linux.enterprise_linux_7.oracle_linux_7

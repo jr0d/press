@@ -3,7 +3,7 @@ import os
 
 import ipaddress
 
-from press.helpers import deployment, sysfs_info, networking as net_helper
+from press.helpers import deployment, sysfs_info
 from press.targets import GeneralPostTargetError
 from press.targets import util
 from press.targets.linux.grub2_target import Grub2
@@ -28,15 +28,15 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
     network_scripts_path = '/etc/sysconfig/network-scripts'
 
     def get_efi_label(self):
-        os_id = self.get_redhat_release_value('os')
+        os_id = self.get_el_release_value('os')
         if 'red hat' in os_id.lower():
             return 'redhat', 'Red Hat Enterprise Linux'
         return 'centos', 'CentOS Linux'
 
     def check_for_grub(self):
         _required_packages = ['grub2', 'grub2-tools']
-        os_id, os_label = self.get_efi_label()
         if sysfs_info.has_efi():
+            os_id, os_label = self.get_efi_label()
             _required_packages += ['grub2-efi']
             self.grub2_config_path = '/boot/efi/EFI/{}/grub.cfg'.format(os_id)
             self.grub2_efi_command = ('efibootmgr --create --gpt '
