@@ -1,6 +1,6 @@
 import logging
 import os
-from press.helpers import deployment
+from press.helpers import deployment, cli
 from press.targets.target_base import TargetExtension
 
 
@@ -13,6 +13,12 @@ spp_packages = ['hponcfg', 'hpssacli', 'hp-health', 'hp-snmp-agents']
 
 log = logging.getLogger('press.plugins.server_management')
 
+
+def get_hp_generation():
+    res = cli.run('dmidecode -s system-product-name', raise_exception=True)
+     # res will be something like 'ProLiant DL380 Gen9\n'
+    for line in res.splitlines():
+        return line.strip().split()[-1].lower()
 
 class SPPDebian(TargetExtension):
     dist = ''
@@ -63,13 +69,11 @@ class SPPRHEL(TargetExtension):
     __configuration__ = {}  # Filled at runtime
 
     def __init__(self, target_obj):
-        self.mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/spp' \
-                          '/RHEL/{version}/x86_64/current/'
+        self.common_url = 'http://mirror.rackspace.com/hp/SDR'
+        self.mirrorbase = '{common_url}/repo/spp/RHEL/{version}/x86_64/current/'
         self.spp_repo_file = '/etc/yum.repos.d/hp-spp.repo'
-        self.hpe_gpgkey = 'http://mirror.rackspace.com/hp/SDR/repo/spp' \
-                          '/GPG-KEY-SPP'
-        self.gpgkey = 'http://mirror.rackspace.com/hp/SDR' \
-                      '/hpPublicKey2048_key1.pub'
+        self.hpe_gpgkey = '{common_url}/hpePublicKey2048_key1.pub'.format(common_url=self.common_url)
+        self.hp_gpgkey = '{common_url}/hpPublicKey2048_key1.pub'.format(common_url=self.common_url)
         self.rhel_repo_name = 'rhel_base'
         self.spp_source = '\n'.join([
             '[spp]',
@@ -79,7 +83,7 @@ class SPPRHEL(TargetExtension):
             'gpgcheck=1',
             'gpgkey={gpgkey_1}\n       {gpgkey_2}'.format(
                 gpgkey_1=self.hpe_gpgkey,
-                gpgkey_2=self.gpgkey)
+                gpgkey_2=self.hp_gpgkey)
         ])
         self.proxy = self.__configuration__.get('proxy')
         self.os_id = None
@@ -90,7 +94,7 @@ class SPPRHEL(TargetExtension):
         log.debug("Updating repos to add HP-SPP")
         major_version = self.target.get_el_release_value('major_version')
         self.target.chroot('echo "{0}" > "{1}"'.format(
-            self.spp_source.format(version=major_version), self.spp_repo_file))
+            self.spp_source.format(common_url=self.common_url, version=major_version), self.spp_repo_file))
 
     def install_hp_spp(self):
         self.target.install_packages(spp_packages)
