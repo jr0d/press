@@ -53,3 +53,6 @@ class NetworkConfigurationError(ConfigurationError):
 
 class HookError(Exception):
     pass
+
+class ServerManagementException(Exception):
+    pass

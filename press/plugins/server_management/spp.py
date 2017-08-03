@@ -1,8 +1,9 @@
 import logging
 import os
-from press.helpers import deployment, cli
-from press.targets.target_base import TargetExtension
 
+from press.exceptions import ServerManagementException
+from press.helpers import deployment
+from press.targets.target_base import TargetExtension
 
 pgp_key_files = ['hpPublicKey1024.pub',
                  'hpPublicKey2048.pub',
@@ -13,12 +14,6 @@ spp_packages = ['hponcfg', 'hpssacli', 'hp-health', 'hp-snmp-agents']
 
 log = logging.getLogger('press.plugins.server_management')
 
-
-def get_hp_generation():
-    res = cli.run('dmidecode -s system-product-name', raise_exception=True)
-     # res will be something like 'ProLiant DL380 Gen9\n'
-    for line in res.splitlines():
-        return line.strip().split()[-1].lower()
 
 class SPPDebian(TargetExtension):
     dist = ''
@@ -87,7 +82,13 @@ class SPPRHEL(TargetExtension):
         ])
         self.proxy = self.__configuration__.get('proxy')
         self.os_id = None
-
+        self.dmi_product_name = '/sys/class/dmi/id/product_name'
+        try:
+            self.generation = deployment.read(self.dmi_product_name).split()[-1].lower()
+        except IOError:
+            raise ServerManagementException(
+                '{} is not present. Verify /sys is present and this is an HP chassis'.format(
+                    self.dmi_product_name))
         super(SPPRHEL, self).__init__(target_obj)
 
     def prepare_repositories(self):
