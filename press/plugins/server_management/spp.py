@@ -1,8 +1,9 @@
 import logging
 import os
+
+from press.exceptions import ServerManagementException
 from press.helpers import deployment
 from press.targets.target_base import TargetExtension
-
 
 pgp_key_files = ['hpPublicKey1024.pub',
                  'hpPublicKey2048.pub',
@@ -63,13 +64,11 @@ class SPPRHEL(TargetExtension):
     __configuration__ = {}  # Filled at runtime
 
     def __init__(self, target_obj):
-        self.mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/spp' \
-                          '/RHEL/{version}/x86_64/current/'
+        self.common_url = 'http://mirror.rackspace.com/hp/SDR'
+        self.mirrorbase = '{common_url}/repo/spp/RHEL/{version}/x86_64/current/'
         self.spp_repo_file = '/etc/yum.repos.d/hp-spp.repo'
-        self.hpe_gpgkey = 'http://mirror.rackspace.com/hp/SDR/repo/spp' \
-                          '/GPG-KEY-SPP'
-        self.gpgkey = 'http://mirror.rackspace.com/hp/SDR' \
-                      '/hpPublicKey2048_key1.pub'
+        self.hpe_gpgkey = '{common_url}/hpePublicKey2048_key1.pub'.format(common_url=self.common_url)
+        self.hp_gpgkey = '{common_url}/hpPublicKey2048_key1.pub'.format(common_url=self.common_url)
         self.rhel_repo_name = 'rhel_base'
         self.spp_source = '\n'.join([
             '[spp]',
@@ -79,18 +78,24 @@ class SPPRHEL(TargetExtension):
             'gpgcheck=1',
             'gpgkey={gpgkey_1}\n       {gpgkey_2}'.format(
                 gpgkey_1=self.hpe_gpgkey,
-                gpgkey_2=self.gpgkey)
+                gpgkey_2=self.hp_gpgkey)
         ])
         self.proxy = self.__configuration__.get('proxy')
         self.os_id = None
-
+        self.dmi_product_name = '/sys/class/dmi/id/product_name'
+        try:
+            self.generation = deployment.read(self.dmi_product_name).split()[-1].lower()
+        except IOError:
+            raise ServerManagementException(
+                '{} is not present. Verify /sys is present and this is an HP chassis'.format(
+                    self.dmi_product_name))
         super(SPPRHEL, self).__init__(target_obj)
 
     def prepare_repositories(self):
         log.debug("Updating repos to add HP-SPP")
         major_version = self.target.get_el_release_value('major_version')
         self.target.chroot('echo "{0}" > "{1}"'.format(
-            self.spp_source.format(version=major_version), self.spp_repo_file))
+            self.spp_source.format(common_url=self.common_url, version=major_version), self.spp_repo_file))
 
     def install_hp_spp(self):
         self.target.install_packages(spp_packages)
