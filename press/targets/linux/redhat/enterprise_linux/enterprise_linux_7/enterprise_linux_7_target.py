@@ -37,7 +37,7 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
         _required_packages = ['grub2', 'grub2-tools']
         if sysfs_info.has_efi():
             os_id, os_label = self.get_efi_label()
-            _required_packages += ['grub2-efi']
+            _required_packages += ['grub2-efi', 'efibootmgr', 'shim']
             self.grub2_config_path = '/boot/efi/EFI/{}/grub.cfg'.format(os_id)
             self.grub2_efi_command = ('efibootmgr --create --gpt '
                                       '--disk /dev/sda --part 1 --write-signature '
