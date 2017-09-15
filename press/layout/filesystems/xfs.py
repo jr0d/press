@@ -40,7 +40,7 @@ class XFS(FileSystem):
                 )
 
         self.full_command = \
-            '{command_path} -f {label_options}{device}'
+            '{command_path} -m uuid={uuid} -f {label_options}{device}'
 
         self.label_options = ''
         if self.fs_label:
@@ -52,6 +52,7 @@ class XFS(FileSystem):
         command = self.full_command.format(
             **dict(
                 command_path=self.command_path,
+                uuid=self.fs_uuid,
                 label_options=self.label_options,
                 device=device
             )
