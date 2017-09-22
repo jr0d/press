@@ -14,10 +14,11 @@ log = logging.getLogger(__name__)
 
 class FAT32(FileSystem):
     fs_type = 'fat'
-    command_name = 'mkfs.fat'
+    command_name = 'mkfs.vfat'
 
     def __init__(self, label=None, mount_options=None, **extra):
-        super(FAT32, self).__init__(label, mount_options, **extra)
+        super(FAT32, self).__init__(label, mount_options,
+                                    extra.get('late_uuid'))
         self.extra = extra
 
         self.command_path = self.locate_command(self.command_name)
@@ -26,16 +27,11 @@ class FAT32(FileSystem):
             raise FileSystemFindCommandException(
                 'Cannot locate {} in PATH'.format(self.command_name))
 
-        self.full_command = '{command_path} -f {label_options}{device}'
-
-        self.label_options = ''
-        if self.fs_label:
-            self.label_options = ' -L {} '.format(self.fs_label)
+        self.full_command = '{command_path} {device}'
 
     def create(self, device):
         command = self.full_command.format(
                 command_path=self.command_path,
-                label_options=self.label_options,
                 device=device)
 
         log.info('Creating filesystem: {}'.format(command))
@@ -45,8 +41,13 @@ class FAT32(FileSystem):
 
 
 class EFI(FAT32):
-    fs_type = 'efi'
+    fs_type = 'vfat'
 
-    def __init__(self, label=None, mount_options=None, **extra):
-        super(EFI, self).__init__(label, mount_options, **extra)
-        self.full_command = '{command_path} -F 32 -f {label_options}{device}'
+    def __init__(self, label=None, mount_options=None, late_uuid=True, **extra):
+        super(EFI, self).__init__(label, mount_options,
+                                  late_uuid=late_uuid, **extra)
+        self.full_command = '{command_path} -F 32 {device}'
+
+    def create(self, device):
+        super(EFI, self).create(device)
+        self.fs_uuid = self.blkid_uuid(device)

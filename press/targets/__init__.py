@@ -15,3 +15,4 @@ from press.targets.linux.redhat import redhat_target
 from press.targets.linux.redhat.enterprise_linux import enterprise_linux_target
 from press.targets.linux.redhat.enterprise_linux.enterprise_linux_6 import enterprise_linux_6_target
 from press.targets.linux.redhat.enterprise_linux.enterprise_linux_7 import enterprise_linux_7_target
+from press.targets.linux.redhat.enterprise_linux.enterprise_linux_7 import oracle_linux_7 
