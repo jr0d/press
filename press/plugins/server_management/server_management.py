@@ -53,6 +53,9 @@ def plugin_init(configuration):
         OMSAUbuntu1604.__configuration__ = configuration
         register_extension(OMSAUbuntu1604)
 
+        OMSADebian9.__configuration__ = configuration
+        register_extension(OMSADebian9)
+
         OMSARHEL7.__configuration__ = configuration
         register_extension(OMSARHEL7)
 
@@ -68,7 +71,7 @@ def plugin_init(configuration):
 
         VMWareToolsEL7.__configuration__ = configuration
         register_extension(VMWareToolsEL7)
-    
+
         VMWareToolsEL6.__configuration__ = configuration
         register_extension(VMWareToolsEL6)
 
@@ -82,3 +85,5 @@ def plugin_init(configuration):
         register_extension(SPPUbuntu1404)
 
         register_extension(SPPUbuntu1604)
+
+        register_extension(SPP

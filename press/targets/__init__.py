@@ -9,6 +9,7 @@ from press.targets import linux
 
 import linux.linux_target
 import linux.debian.debian_target
+import linux.debian.debian_9.debian_9_target
 import linux.debian.ubuntu_1404.ubuntu1404_target
 import linux.debian.ubuntu_1604.ubuntu_1604_target
 import linux.redhat.redhat_target
