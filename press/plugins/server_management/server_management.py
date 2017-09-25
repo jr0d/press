@@ -86,4 +86,4 @@ def plugin_init(configuration):
 
         register_extension(SPPUbuntu1604)
 
-        registeR_extension(SPPDebian9)
+        register_extension(SPPDebian9)
