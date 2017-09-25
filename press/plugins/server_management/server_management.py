@@ -1,8 +1,8 @@
 import logging
 
 from press.helpers import cli
-from press.plugins.server_management.omsa import OMSAUbuntu1404, OMSAUbuntu1604, OMSARHEL7, OMSARHEL6
-from press.plugins.server_management.spp import SPPUbuntu1404, SPPUbuntu1604, SPPRHEL7, SPPRHEL6
+from press.plugins.server_management.omsa import OMSAUbuntu1404, OMSAUbuntu1604, OMSADebian9, OMSARHEL7, OMSARHEL6
+from press.plugins.server_management.spp import SPPUbuntu1404, SPPUbuntu1604, SPPDebian9, SPPRHEL7, SPPRHEL6
 from press.plugins.server_management.vmware import VMWareToolsUbuntu1404, VMWareToolsUbuntu1604, VMWareToolsEL7, VMWareToolsEL6
 from press.targets.registration import register_extension
 
@@ -85,3 +85,5 @@ def plugin_init(configuration):
         register_extension(SPPUbuntu1404)
 
         register_extension(SPPUbuntu1604)
+
+        registeR_extension(SPPDebian9)
