@@ -50,6 +50,11 @@ class SPPDebian(TargetExtension):
         self.install_spp()
 
 
+class SPPDebian9(SPPDebian):
+    __extends__ = 'debian_9'
+    dist = 'stretch'
+
+
 class SPPUbuntu1404(SPPDebian):
     __extends__ = 'ubuntu_1404'
     dist = 'trusty'

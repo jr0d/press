@@ -85,5 +85,3 @@ def plugin_init(configuration):
         register_extension(SPPUbuntu1404)
 
         register_extension(SPPUbuntu1604)
-
-        register_extension(SPP
