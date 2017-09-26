@@ -45,7 +45,7 @@ class OMSADebian(TargetExtension):
 
 class OMSADebian9(OMSADebian):
     __extends__ = 'debian_9'
-    dist = 'stretch'
+    dist = 'xenial'
 
 
 class OMSAUbuntu1404(OMSADebian):

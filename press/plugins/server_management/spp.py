@@ -52,7 +52,7 @@ class SPPDebian(TargetExtension):
 
 class SPPDebian9(SPPDebian):
     __extends__ = 'debian_9'
-    dist = 'stretch'
+    dist = 'xenial'
 
 
 class SPPUbuntu1404(SPPDebian):
