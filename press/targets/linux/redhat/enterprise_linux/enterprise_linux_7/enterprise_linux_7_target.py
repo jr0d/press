@@ -3,7 +3,7 @@ import os
 
 import ipaddress
 
-from press.helpers import deployment, networking as net_helper
+from press.helpers import deployment, sysfs_info
 from press.targets import GeneralPostTargetError
 from press.targets import util
 from press.targets.linux.grub2_target import Grub2
@@ -22,14 +22,32 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
     """
     name = 'enterprise_linux_7'
 
+    grub2_efi_command = None
+
     network_file_path = '/etc/sysconfig/network'
     network_scripts_path = '/etc/sysconfig/network-scripts'
 
+    def get_efi_label(self):
+        os_id = self.get_el_release_value('os')
+        if 'red hat' in os_id.lower():
+            return 'redhat', 'Red Hat Enterprise Linux'
+        return 'centos', 'CentOS Linux'
+
     def check_for_grub(self):
         _required_packages = ['grub2', 'grub2-tools']
+        if sysfs_info.has_efi():
+            os_id, os_label = self.get_efi_label()
+            _required_packages += ['grub2-efi', 'efibootmgr', 'shim']
+            self.grub2_config_path = '/boot/efi/EFI/{}/grub.cfg'.format(os_id)
+            self.grub2_efi_command = ('efibootmgr --create --gpt '
+                                      '--disk /dev/sda --part 1 --write-signature '
+                                      '--label "{}" '
+                                      '--loader /EFI/{}/shim.efi'.format(os_label, os_id))
         if not self.packages_exist(_required_packages):
-            if not self.install_packages(_required_packages):
+            self.baseline_yum(self.proxy)
+            if self.install_packages(_required_packages):
                 raise GeneralPostTargetError('Error installing required packages for grub2')
+            self.revert_yum(self.proxy)
 
     def rebuild_initramfs(self):
         if not self.package_exists('dracut-config-generic'):
@@ -73,7 +91,7 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
             prefix = network_config.get('prefix')
             if not prefix:
                 prefix = ipaddress.ip_network("{ip_address}/{netmask}".format(
-                    **network_config).decode("utf-8"), strict=False).prefixlen
+                    **network_config), strict=False).prefixlen
 
             _template = interface_template(device.devname,
                                            default_route=network_config.get('default_route', False),

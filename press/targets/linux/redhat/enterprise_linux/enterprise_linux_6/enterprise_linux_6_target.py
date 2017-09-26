@@ -1,3 +1,4 @@
+import collections
 import logging
 import os
 
@@ -79,7 +80,7 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
             prefix = network_config.get('prefix')
             if not prefix:
                 prefix = ipaddress.ip_network("{ip_address}/{netmask}".format(
-                    **network_config).decode("utf-8"), strict=False).prefixlen
+                    **network_config), strict=False).prefixlen
 
             _template = interface_template(device.devname,
                                            default_route=network_config.get('default_route', False),
@@ -134,7 +135,7 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
         return script
 
     def generate_pseudo_mount_entry(self, filesystem=None, directory=None, fs_type=None,
-        options='defaults', dump_pass='0 0'):
+                                    options='defaults', dump_pass='0 0'):
 
         entry = '%s\t\t%s\t\t%s\t\t%s\t\t%s\n' % (filesystem, directory, fs_type or filesystem, options, dump_pass)
         return entry
@@ -163,12 +164,53 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
         log.info('Writing pseudo filesystem mounts to /etc/fstab.')
         deployment.write(fstab_file, fstab_entry, append=True)
 
-    def copy_udev_rules(self):
-        if not os.path.exists('/etc/udev/rules.d/70-persistent-net.rules'):
-            log.warn('Host 70-persistent-net.rules is missing')
+    def generate_udev_net_entry(self, subsystem='net', action='add',
+                                drivers='?*', attributes=None,
+                                kernel_iface_name=None, iface_name=None):
+        """ Generate a single udev entry line for a net device """
+        if not attributes or \
+                not all(attributes.get(k) for k in ('address', 'type')):
+            log.error('Missing required information to generate net udev rule')
             return
-        deployment.write(self.join_root('/etc/udev/rules.d/70-persistent-net.rules'),
-                         deployment.read('/etc/udev/rules.d/70-persistent-net.rules'))
+        return 'SUBSYSTEM=="{}", ACTION=="{}", DRIVERS=="{}", ' \
+               'ATTR{{address}}=="{}", ATTR{{type}}=="{}", KERNEL=="{}", ' \
+               'NAME="{}"'.format(subsystem, action, drivers,
+                                  attributes['address'], attributes['type'],
+                                  kernel_iface_name, iface_name)
+
+    def generate_udev_rules(self):
+        """ Generate udev entries for net devices found in /sys/class/net """
+        def probe_net_devices():
+            """ Return a list of tuples, e.g. [(eth0, '00:aa:bb:cc:dd')] """ 
+            devices = list()
+            class_path = '/sys/class/net'
+            NetDevice = collections.namedtuple('NetDevice', 'name mac')
+            for dev in list(set(os.listdir(class_path)) - set(['lo'])):
+                with open(os.path.join(class_path, dev, 'address')) as f:
+                    devices.append(NetDevice(dev, f.read().strip()))
+            log.debug(devices)
+            return devices
+
+        udev_rules = []
+        for device in probe_net_devices():
+            udev_rules.append(
+                self.generate_udev_net_entry(attributes=dict(
+                                                address=device.mac, type=1),
+                                             kernel_iface_name='eth*',
+                                             iface_name=device.name))
+        return udev_rules
+
+    def copy_udev_rules(self, create_if_missing=False):
+        rules_file = '/etc/udev/rules.d/70-persistent-net.rules'
+        if not os.path.exists(rules_file):
+            log.warn('Host 70-persistent-net.rules is missing')
+            if create_if_missing:
+                log.info('Generating 70-persistent-net.rules')
+                deployment.write(self.join_root(rules_file),
+                                 "\n\n".join(self.generate_udev_rules()) + "\n")
+            return
+        deployment.write(self.join_root(rules_file),
+                         deployment.read(rules_file))
 
     def set_timezone(self, timezone):
         log.debug('Setting timezone, EL6 style')
@@ -188,7 +230,7 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
         self.update_host_keys()
         self.configure_networks()
         self.add_pseudo_mounts()
-        self.copy_udev_rules()
+        self.copy_udev_rules(create_if_missing=True)
         self.rebuild_initramfs()
         self.check_for_grub()
         self.install_grub()

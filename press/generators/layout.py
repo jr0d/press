@@ -355,8 +355,9 @@ def add_efi_boot_partition(partition_table):
             LOG.info('EFI boot partition is already present, kudos!')
             break
     else:
-        efi_partition = dict(name='EFI', size='210MiB', flags=['boot'],
-                             file_system=dict(type="efi"))
+        efi_partition = dict(name='EFI', size='253MiB', flags=['boot'],
+                             file_system=dict(type="efi"),
+                             mount_point="/boot/efi")
         partition_table.setdefault('partitions', []).insert(0, efi_partition)
 
 

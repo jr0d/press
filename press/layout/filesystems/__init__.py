@@ -1,6 +1,6 @@
 import uuid
 
-from press.helpers.cli import find_in_path
+from press.helpers.cli import find_in_path, run
 
 
 class FileSystem(object):
@@ -37,5 +37,6 @@ class FileSystem(object):
     def locate_command(cls, command_name):
         return find_in_path(command_name)
 
-
-
+    @staticmethod
+    def blkid_uuid(device):
+        return run("blkid -s UUID -o value {}".format(device)).stdout.strip()

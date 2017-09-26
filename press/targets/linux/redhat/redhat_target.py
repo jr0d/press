@@ -15,6 +15,7 @@ class RedhatTarget(LinuxTarget):
     yum_path = '/usr/bin/yum'
     yum_config_file = '/etc/yum.conf'
     yum_config_backup = '/etc/yum.conf_bak'
+    release_file = '/etc/redhat-release'
 
     def __init__(self, press_configuration, layout, root, chroot_staging_dir):
         super(RedhatTarget, self).__init__(press_configuration, layout, root, chroot_staging_dir)
@@ -103,7 +104,7 @@ class RedhatTarget(LinuxTarget):
     def has_redhat_release(self):
         return os.path.exists(self.join_root('/etc/redhat-release'))
 
-    def parse_redhat_release(self):
+    def parse_el_release(self):
         """
         Heuristic garbage
         :return:
@@ -111,11 +112,14 @@ class RedhatTarget(LinuxTarget):
         release_info = dict()
         if not self.has_redhat_release:
             return release_info
-        data = deployment.read(self.join_root('/etc/redhat-release'))
+        data = deployment.read(self.join_root(self.release_file))
         data = data.strip()
         try:
-            release_info['codename'] = data.split()[-1].strip('()')
-            version = data.split()[-2]
+            if 'oracle' in self.release_file:
+                version = data.split()[-1]
+            else:
+                release_info['codename'] = data.split()[-1].strip('()')
+                version = data.split()[-2]
             release_info['version'] = version
             # Sometimes need short version, not ones like '7.1.1503'
             # so splitting and then joining [0:2] to get '7.1'
@@ -124,7 +128,7 @@ class RedhatTarget(LinuxTarget):
             release_info['major_version'] = version.split('.')[0]
             release_info['os'] = data.split('release')[0].strip()
         except IndexError:
-            log.error('Error parsing redhat-release')
+            log.error('Error parsing {} release file'.format(self.release_file))
         return release_info
 
     def parse_os_release(self):
@@ -139,9 +143,9 @@ class RedhatTarget(LinuxTarget):
                     os_release[k] = v.strip('"')
         return os_release
 
-    def get_redhat_release_value(self, key):
-        redhat_release = self.parse_redhat_release()
-        value = redhat_release.get(key)
+    def get_el_release_value(self, key):
+        el_release = self.parse_el_release()
+        value = el_release.get(key)
         return value
 
     def get_os_release_value(self, key):
@@ -158,8 +162,8 @@ class RedhatTarget(LinuxTarget):
         Check to see if we need proxy, and enable in yum.conf
         Check if we are 'rhel' and if so add base repo
         """
-        os_id = self.get_redhat_release_value('os')
-        short_version  = self.get_redhat_release_value('short_version')
+        os_id = self.get_el_release_value('os')
+        short_version  = self.get_el_release_value('short_version')
         rhel_repo_name = 'rhel_base'
 
         if short_version[0] == '6':
@@ -181,7 +185,7 @@ class RedhatTarget(LinuxTarget):
         Disabled proxy
         If 'rhel' removes the base repo
         """
-        os_id = self.get_redhat_release_value('os')
+        os_id = self.get_el_release_value('os')
         rhel_repo_name = 'rhel_base'
 
         if proxy:

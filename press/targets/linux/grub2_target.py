@@ -1,7 +1,7 @@
 import logging
 import os
 
-from press.helpers import deployment
+from press.helpers import deployment, sysfs_info
 from press.targets import Target
 from press.targets import util
 
@@ -15,6 +15,11 @@ class Grub2(Target):
     grub2_install_path = 'grub2-install'
     grub2_mkconfig_path = 'grub2-mkconfig'
     grub2_config_path = '/boot/grub2/grub.cfg'
+
+    grub2_efi_command = ('{} --target=x86_64-efi '
+                         '--efi-directory=/boot/efi '
+                         '--bootloader-id=grub '
+                         '--debug'.format(grub2_install_path))
 
     @property
     def bootloader_configuration(self):
@@ -83,17 +88,21 @@ class Grub2(Target):
         self.update_kernel_parameters()
         self.clear_grub_cmdline_linux_default()
 
-
         log.info('Generating grub configuration')
-        # TODO(mdraid): We may need run grub2-mkconfig on all targets?
-        self.chroot('%s -o %s' % (self.grub2_mkconfig_path, self.grub2_config_path))
-        for disk in self.disk_targets:
-            log.info('Installing grub on %s' % disk)
-            self.chroot(
-                '%s --target=i386-pc --recheck --debug %s' % (self.grub2_install_path,
-                                                              disk))
+        self.chroot('{} -o {}'.format(self.grub2_mkconfig_path,
+                                      self.grub2_config_path))
 
-    def update_grub_configration(self, match, newvalue):
+        if sysfs_info.has_efi():
+            log.info("Installing EFI enabled grub")
+            self.chroot(self.grub2_efi_command)
+        else:
+            command = '{} --target=i386-pc --recheck --debug'.format(
+                self.grub2_install_path)
+            for disk in self.disk_targets:
+                log.info('Installing grub on {}'.format(disk))
+                self.chroot("{} {}".format(command, disk))
+
+    def update_grub_configuration(self, match, newvalue):
         grub_configuration = deployment.read(self.join_root(self.grub2_cmdline_config_path))
         log.info('Setting {} in {}'.format(newvalue, self.grub2_cmdline_config_path))
         updated_grub_configuration = deployment.replace_line_matching(grub_configuration, match,
@@ -103,9 +112,9 @@ class Grub2(Target):
     def grub_disable_recovery(self):
         match = 'GRUB_DISABLE_RECOVERY'
         value = 'GRUB_DISABLE_RECOVERY=true'
-        self.update_grub_configration(match, value)
+        self.update_grub_configuration(match, value)
 
     def clear_grub_cmdline_linux_default(self):
         match = 'GRUB_CMDLINE_LINUX_DEFAULT'
         value = 'GRUB_CMDLINE_LINUX_DEFAULT=""'
-        self.update_grub_configration(match, value)
+        self.update_grub_configuration(match, value)
