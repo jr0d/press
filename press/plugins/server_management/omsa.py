@@ -43,14 +43,6 @@ class OMSADebian(TargetExtension):
         self.install_openmanage()
 
 
-class OMSADebian9(OMSADebian):
-    __extends__ = 'debian_9'
-    dist = 'xenial'
-
-    def install_openmanage(self):
-        self.target.install_packages(['srvadmin-itunnelprovider', 'srvadmin-all'])
-
-
 class OMSAUbuntu1404(OMSADebian):
     __extends__ = 'ubuntu_1404'
     dist = 'trusty'
