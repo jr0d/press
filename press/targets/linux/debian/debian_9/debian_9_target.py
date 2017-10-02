@@ -27,7 +27,7 @@ class Debian9Target(DebianTarget, Grub2):
 
     def check_for_grub(self):
         if sysfs_info.has_efi():
-            _required_packages = ['shim-signed', 'grub-efi-amd64-signed']
+            _required_packages = ['shim', 'grub-efi-amd64']
             if self.install_packages(_required_packages):
                 raise GeneralPostTargetError('Error installing required packages for grub2')
 
