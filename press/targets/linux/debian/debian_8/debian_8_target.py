@@ -8,7 +8,7 @@ from press.targets.linux.debian.debian_target import DebianTarget
 log = logging.getLogger(__name__)
 
 
-class Debian9Target(DebianTarget, Grub2Debian):
+class Debian8Target(DebianTarget, Grub2Debian):
     name = 'debian_8'
     dist = 'jessie'
 
