@@ -9,8 +9,8 @@ log = logging.getLogger(__name__)
 
 
 class Debian9Target(DebianTarget, Grub2Debian):
-    name = 'debian_9'
-    dist = 'stretch'
+    name = 'debian_8'
+    dist = 'jessie'
 
     def check_for_grub(self):
         if sysfs_info.has_efi():
@@ -19,7 +19,7 @@ class Debian9Target(DebianTarget, Grub2Debian):
                 raise GeneralPostTargetError('Error installing required packages for grub2')
 
     def run(self):
-        super(Debian9Target, self).run()
+        super(Debian8Target, self).run()
         self.grub_disable_recovery()
         self.check_for_grub()
         self.install_grub2()
