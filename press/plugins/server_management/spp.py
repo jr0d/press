@@ -50,6 +50,11 @@ class SPPDebian(TargetExtension):
         self.install_spp()
 
 
+class SPPDebian8(SPPDebian):
+    __extends__ = 'debian_8'
+    dist = 'jessie'
+
+
 class SPPDebian9(SPPDebian):
     __extends__ = 'debian_9'
     dist = 'xenial'

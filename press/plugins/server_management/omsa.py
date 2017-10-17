@@ -33,7 +33,7 @@ class OMSADebian(TargetExtension):
         self.target.install_package('openipmi')
 
     def install_openmanage(self):
-        self.target.install_packages('srvadmin-all')
+        self.target.install_package('srvadmin-all')
 
     def run(self):
         self.write_sources()
@@ -41,6 +41,11 @@ class OMSADebian(TargetExtension):
         self.target.apt_update()
         self.install_openipmi()
         self.install_openmanage()
+
+
+class OMSADebian8(OMSADebian):
+    __extends__ = 'debian_8'
+    dist = 'jessie'
 
 
 class OMSAUbuntu1404(OMSADebian):
