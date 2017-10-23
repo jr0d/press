@@ -46,7 +46,7 @@ class EFI(FAT32):
     def __init__(self, label=None, mount_options=None, late_uuid=True, **extra):
         super(EFI, self).__init__(label, mount_options,
                                   late_uuid=late_uuid, **extra)
-        self.full_command = '{command_path} -F 32 {device}'
+        self.full_command = '{command_path} -s2 -F 32 {device}'
 
     def create(self, device):
         super(EFI, self).create(device)
