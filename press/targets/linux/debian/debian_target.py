@@ -126,9 +126,11 @@ class DebianTarget(LinuxTarget):
         self.chroot(self.__reconfigure_package + package)
 
     def set_timezone(self, timezone):
-        localtime_path = '/etc/timezone'
+        timezone_path = '/etc/timezone'
+        localtime_path = '/etc/localtime'
+        deployment.remove_file(self.join_root(timezone_path))
         deployment.remove_file(self.join_root(localtime_path))
-        deployment.write(self.join_root(localtime_path), timezone)
+        deployment.write(self.join_root(timezone_path), timezone)
         self.reconfigure_package('tzdata')
 
     def write_interfaces(self):
@@ -153,3 +155,12 @@ class DebianTarget(LinuxTarget):
             self.install_package('mdadm')
             LinuxTarget.write_mdadm_configuration(self)
 
+    def run(self):
+        super(DebianTarget, self).run()
+        self.localization()
+        self.generate_locales()
+        self.write_mdadm_configuration()
+        self.write_interfaces()
+        self.update_host_keys()
+        self.remove_resolvconf()
+        self.update_debconf_for_grub()

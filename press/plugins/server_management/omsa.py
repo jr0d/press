@@ -43,13 +43,20 @@ class OMSADebian(TargetExtension):
         self.install_openmanage()
 
 
+class OMSADebian8(OMSADebian):
+    __extends__ = 'debian_8'
+    dist = 'jessie'
+
+
 class OMSAUbuntu1404(OMSADebian):
     __extends__ = 'ubuntu_1404'
     dist = 'trusty'
 
+
 class OMSAUbuntu1604(OMSADebian):
     __extends__ = 'ubuntu_1604'
     dist = 'xenial'
+
 
 class OMSARedHat(TargetExtension):
     __configuration__ = {}  # Filled at runtime

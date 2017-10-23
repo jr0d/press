@@ -57,6 +57,16 @@ class SPPDebian(TargetExtension):
         self.install_hp_packages()
 
 
+class SPPDebian8(SPPDebian):
+    __extends__ = 'debian_8'
+    dist = 'jessie'
+
+
+class SPPDebian9(SPPDebian):
+    __extends__ = 'debian_9'
+    dist = 'xenial'
+
+
 class SPPUbuntu1404(SPPDebian):
     __extends__ = 'ubuntu_1404'
     dist = 'trusty'

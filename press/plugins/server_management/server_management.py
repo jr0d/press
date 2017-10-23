@@ -1,35 +1,14 @@
 import logging
 
 from press.helpers import cli
-from press.plugins.server_management.omsa import OMSAUbuntu1404, OMSAUbuntu1604, OMSARHEL7, OMSARHEL6
-from press.plugins.server_management.spp import SPPUbuntu1404, SPPUbuntu1604, SPPRHEL7, SPPRHEL6
+from press.plugins.server_management.omsa import OMSAUbuntu1404, OMSAUbuntu1604, OMSADebian8, OMSARHEL7, OMSARHEL6
+from press.plugins.server_management.spp import SPPUbuntu1404, SPPUbuntu1604, SPPDebian8, SPPDebian9, SPPRHEL7, SPPRHEL6
 from press.plugins.server_management.vmware import VMWareToolsUbuntu1404, VMWareToolsUbuntu1604, VMWareToolsEL7, VMWareToolsEL6
 from press.targets.registration import register_extension
 
 
 
 log = logging.getLogger('press.plugins.server_management')
-
-extension_mapper = {
-    'Dell Inc.': [
-        OMSAUbuntu1404,
-        OMSAUbuntu1604,
-        OMSARHEL7,
-        OMSARHEL6
-    ],
-    'HP': [
-        SPPUbuntu1404,
-        SPPUbuntu1604,
-        SPPRHEL7,
-        SPPRHEL6
-    ],
-    'VMware, Inc.': [
-        VMWareToolsUbuntu1404,
-        VMWareToolsUbuntu1604,
-        VMWareToolsEL7,
-        VMWareToolsEL6
-    ]
-}
 
 
 def get_manufacturer():
@@ -39,6 +18,7 @@ def get_manufacturer():
         if line.lstrip().startswith('#'):
             continue
         return line.strip()
+
 
 def plugin_init(configuration):
     log.info('Registering Server Management plugins')
@@ -52,6 +32,9 @@ def plugin_init(configuration):
 
         OMSAUbuntu1604.__configuration__ = configuration
         register_extension(OMSAUbuntu1604)
+
+        OMSADebian8.__configuration__ = configuration
+        register_extension(OMSADebian8)
 
         OMSARHEL7.__configuration__ = configuration
         register_extension(OMSARHEL7)
@@ -68,7 +51,7 @@ def plugin_init(configuration):
 
         VMWareToolsEL7.__configuration__ = configuration
         register_extension(VMWareToolsEL7)
-    
+
         VMWareToolsEL6.__configuration__ = configuration
         register_extension(VMWareToolsEL6)
 
@@ -82,3 +65,7 @@ def plugin_init(configuration):
         register_extension(SPPUbuntu1404)
 
         register_extension(SPPUbuntu1604)
+
+        register_extension(SPPDebian8)
+
+        register_extension(SPPDebian9)
