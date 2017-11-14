@@ -67,22 +67,40 @@ class OMSARedHat(TargetExtension):
         self.base_omsa_packages = ['srvadmin-all']
         self.gen12_omsa_packages = ['srvadmin-idrac7', 'srvadmin-idracadm7']
         self.gen12_chassis = ['R720', 'R820']
+        # Dell R740/14G work around
+        self.dell_repos = 'dell-system-update_dependent dell-system-update_independent'
+        self.gen14_chassis = 'R740'
+        self.gen14_gpg_key = 'http://mirror.rackspace.com/dell/hardware/dsu/public.key'
+        # TODO Will need to modify URL in OMSARHEL6() class if/when EL6 verison is available
+        self.gen14_tmp_repo_url = 'http://mirror.rackspace.com/omsa91/EL7/'
+        self.gen14_tmp_repo_name = 'omsa91'
+
         super(OMSARedHat, self).__init__(target_obj)
+        self.product_name = self.target.get_product_name()
+        self.is_gen14 = self.gen14_chassis in self.product_name
+
 
     def download_and_prepare_repositories(self):
         log.debug("Configuring Dell System Update repository.")
-        wget_command = 'wget -q -O - %s | bash' % (self.omsa_bootstrap_url, )
+        wget_command = 'wget -q -O - {} | bash'.format(self.omsa_bootstrap_url)
         if self.proxy:
-            wget_command = 'export http_proxy=http://%s HTTPS_PROXY=http://%s ;' % (self.proxy, self.proxy) + wget_command
+            wget_command = 'export http_proxy=http://{0} HTTPS_PROXY=http://{0} ; {1}'.format(self.proxy, wget_command)
         self.target.chroot(wget_command)
 
     def open_manage_packages(self):
-        product_name = self.target.get_product_name()
         packages = self.base_omsa_packages
         for chassis in self.gen12_chassis:
-            if chassis in product_name:
+            if chassis in self.product_name:
                 packages += self.gen12_omsa_packages
         return packages
+
+    def tmp_gen14_fix(self):
+        self.target.chroot('yum-config-manager --disable ' + self.dell_repos)
+        self.target.add_repo(self.gen14_tmp_repo_name, self.gen14_tmp_repo_url, self.gen14_gpg_key)
+
+    def tmp_gen14_clean(self):
+        self.target.chroot('yum-config-manager --enable ' + self.dell_repos)
+        self.target.remove_repo(self.gen14_tmp_repo_name)
 
     def install_openmanage(self):
         self.target.install_packages(self.open_manage_packages())
@@ -94,7 +112,11 @@ class OMSARedHat(TargetExtension):
         self.target.baseline_yum(self.proxy)
         self.install_wget()
         self.download_and_prepare_repositories()
+        if self.is_gen14:
+            self.tmp_gen14_fix()
         self.install_openmanage()
+        if self.is_gen14:
+            self.tmp_gen14_clean()
         self.target.revert_yum(self.proxy)
 
 
