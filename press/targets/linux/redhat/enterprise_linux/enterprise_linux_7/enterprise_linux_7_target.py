@@ -75,10 +75,18 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
             f.write(contents)
 
     def write_network_script(self, device, network_config, dummy=False):
-        script_name = 'ifcfg-%s' % device.devname
-        script_path = self.join_root(os.path.join(self.network_scripts_path,  script_name))
+        def generate_script_name(devname, vlan=None):
+            if not vlan:
+                return 'ifcfg-{0}'.format(devname)
+            return 'ifcfg-{0}.{1}'.format(devname, vlan)
+
+        def generate_script_path(script_name):
+            return self.join_root(os.path.join(self.network_scripts_path,
+                                               script_name))
+
         if dummy:
             _template = networking.DummyInterfaceTemplate(device.devname)
+            vlan = None
         else:
             if network_config.get('type', 'AF_INET') == 'AF_INET6':
                 self.enable_ipv6()
@@ -89,6 +97,7 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
             ip_address = network_config.get('ip_address')
             gateway = network_config.get('gateway')
             prefix = network_config.get('prefix')
+            vlan = network_config.get('vlan')
             if not prefix:
                 prefix = ipaddress.ip_network("{ip_address}/{netmask}".format(
                     **network_config).decode("utf-8"), strict=False).prefixlen
@@ -97,8 +106,18 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
                                            default_route=network_config.get('default_route', False),
                                            ip_address=ip_address,
                                            prefix=prefix,
-                                           gateway=gateway)
-        log.info('Writing %s' % script_path)
+                                           gateway=gateway,
+                                           vlan=vlan)
+
+        if vlan:
+            script_name = generate_script_name(device.devname)
+            script_path = generate_script_path(script_name)
+            log.info('Writing {0}'.format(script_path))
+            deployment.write(script_path, _template.generate_parent_interface())
+
+        script_name = generate_script_name(device.devname, vlan)
+        script_path = generate_script_path(script_name)
+        log.info('Writing {0}'.format(script_path))
         deployment.write(script_path, _template.generate())
 
     def write_route_script(self, device, routes):

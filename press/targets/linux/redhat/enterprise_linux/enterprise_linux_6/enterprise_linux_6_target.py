@@ -185,7 +185,7 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
             devices = list()
             class_path = '/sys/class/net'
             NetDevice = collections.namedtuple('NetDevice', 'name mac')
-            for dev in list(set(os.listdir(class_path)) - set(['lo'])):
+            for dev in list(set(os.listdir(class_path)) - {'lo'}):
                 with open(os.path.join(class_path, dev, 'address')) as f:
                     devices.append(NetDevice(dev, f.read().strip()))
             log.debug(devices)
