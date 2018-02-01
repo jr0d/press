@@ -81,7 +81,15 @@ class SPPRHEL(TargetExtension):
     __configuration__ = {}  # Filled at runtime
 
     def __init__(self, target_obj):
-        self.hp_repos = {'spp': 'HP Service Pack for Proliant', 'stk': 'HP Proliant Scripting Toolkit'}
+        self.dmi_product_name = '/sys/class/dmi/id/product_name'
+        try:
+            self.generation = deployment.read(self.dmi_product_name).split()[-1].lower()
+        except IOError:
+            raise ServerManagementException(
+                '{} is not present. Verify /sys is present and this is an HP chassis'.format(
+                    self.dmi_product_name))
+        self.hp_repos = {'spp-{generation}'.format(generation=self.generation): 'HP Service Pack for Proliant',
+                         'stk': 'HP Proliant Scripting Toolkit'}
         self.repo_file = '/etc/yum.repos.d/hp-{repo_id}.repo'
         self.repo_template = '\n'.join([
             '[hp-{repo_id}]',
@@ -93,13 +101,6 @@ class SPPRHEL(TargetExtension):
             '         http://mirror.rackspace.com/hp/SDR/hpPublicKey2048_key1.pub\n'
         ])
         self.proxy = self.__configuration__.get('proxy')
-        self.dmi_product_name = '/sys/class/dmi/id/product_name'
-        try:
-            self.generation = deployment.read(self.dmi_product_name).split()[-1].lower()
-        except IOError:
-            raise ServerManagementException(
-                '{} is not present. Verify /sys is present and this is an HP chassis'.format(
-                    self.dmi_product_name))
         super(SPPRHEL, self).__init__(target_obj)
 
     def prepare_repositories(self):
