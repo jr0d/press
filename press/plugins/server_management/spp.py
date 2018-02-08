@@ -97,8 +97,9 @@ class SPPRHEL(TargetExtension):
             'baseurl = http://mirror.rackspace.com/hp/SDR/repo/{repo_id}/rhel/\$releasever/\$basearch/current',
             'enabled = 1',
             'gpgcheck = 1',
-            'gpgkey = http://mirror.rackspace.com/hp/SDR/hpePublicKey2048_key1.pub\n'
-            '         http://mirror.rackspace.com/hp/SDR/hpPublicKey2048_key1.pub\n'
+            'gpgkey = http://mirror.rackspace.com/hp/SDR/hpePublicKey2048_key1.pub',
+            '         http://mirror.rackspace.com/hp/SDR/hpPublicKey2048_key1.pub',
+            'exclude = kmod-elx-lpfc*'
         ])
         self.proxy = self.__configuration__.get('proxy')
         super(SPPRHEL, self).__init__(target_obj)
