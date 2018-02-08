@@ -10,7 +10,7 @@ pgp_key_files = ['hpPublicKey1024.pub',
                  'hpPublicKey2048_key1.pub',
                  'hpePublicKey2048_key1.pub']
 
-hp_packages = ['hponcfg', 'hpssacli', 'hp-health', 'hp-snmp-agents', 'hp-scripting-tools']
+hp_packages = ['hponcfg', 'ssacli', 'hp-health', 'hp-snmp-agents', 'hp-scripting-tools']
 
 log = logging.getLogger('press.plugins.server_management')
 
