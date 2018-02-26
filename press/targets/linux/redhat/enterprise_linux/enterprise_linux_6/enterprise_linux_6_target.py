@@ -4,7 +4,7 @@ import os
 
 import ipaddress
 
-from press.helpers import deployment
+from press.helpers import deployment, sysfs_info
 from press.helpers.package import get_press_version
 from press.targets import GeneralPostTargetError
 from press.targets import util
@@ -30,11 +30,22 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
     network_scripts_path = '/etc/sysconfig/network-scripts'
     sysconfig_scripts_path = 'etc/sysconfig'
 
+    def get_efi_label(self):
+        os_id = self.get_el_release_value('os')
+        if 'red hat' in os_id.lower():
+            return 'redhat', 'Red Hat Enterprise Linux'
+        return 'centos', 'CentOS Linux'
+
     def check_for_grub(self):
         _required_packages = ['grub', 'grubby']
+        if sysfs_info.has_efi():
+            os_id, os_label = self.get_efi_label()
+            self.grub_efi_bootloader_name = os_label
+
         if not self.packages_exist(_required_packages):
             if not self.install_packages(_required_packages):
-                raise GeneralPostTargetError('Error installing required packages for grub')
+                raise GeneralPostTargetError(
+                    'Error installing required packages for grub')
 
     def rebuild_initramfs(self):
         _required_packages = ['dracut', 'dracut-kernel']

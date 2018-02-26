@@ -18,47 +18,58 @@ class RedhatTarget(LinuxTarget):
     release_file = '/etc/redhat-release'
 
     def __init__(self, press_configuration, layout, root, chroot_staging_dir):
-        super(RedhatTarget, self).__init__(press_configuration, layout, root, chroot_staging_dir)
+        super(RedhatTarget, self).__init__(press_configuration, layout,
+                                           root, chroot_staging_dir)
         add_hook(self.add_repos, "pre-extensions", self)
 
     def get_package_list(self):
-        command = '%s --query --all --queryformat \"%%{NAME}\\n\"' % self.rpm_path
+        command = \
+            '%s --query --all --queryformat \"%%{NAME}\\n\"' % self.rpm_path
         out = self.chroot(command, quiet=True)
         return out.splitlines()
 
     def enable_yum_proxy(self, proxy):
         log.info('Enabling global yum proxy: %s' % proxy)
-        self.chroot('/bin/cp %s %s' % (self.yum_config_file, self.yum_config_backup))
-        self.chroot('echo proxy=http://%s >> %s' % (proxy, self.yum_config_file))
+        self.chroot('/bin/cp {} {}'.format(self.yum_config_file,
+                                           self.yum_config_backup))
+        self.chroot('echo proxy=http://{} >> {}'.format(proxy,
+                                                        self.yum_config_file))
 
     def disable_yum_proxy(self):
         log.info('Restoring original yum configuration')
-        self.chroot('/bin/mv %s %s' % (self.yum_config_backup, self.yum_config_file))
+        self.chroot('/bin/mv {} {}'.format(self.yum_config_backup,
+                                           self.yum_config_file))
 
     def install_package(self, package):
-        command = '%s install -y --quiet %s' % (self.yum_path, package)
+        command = '{} install -y --quiet {}'.format(self.yum_path, package)
         res = self.chroot(command)
         if res.returncode:
-            log.error('Failed to install package %s' % package)
+            log.error('Failed to install package {}'.format(package))
         else:
-            log.info('Installed: %s' % package)
+            log.info('Installed: {}'.format(package))
 
     def install_packages(self, packages):
-        command = '%s install -y --quiet %s' % (self.yum_path, ' '.join(packages))
+        command = '{} install -y --quiet {}'.format(self.yum_path,
+                                                    ' '.join(packages))
         res = self.chroot(command)
         if res.returncode:
-            log.error('Failed to install packages: %s' % ' '.join(packages))
+            log.error('Failed to install packages: {}'.format(' '.join(
+                packages)))
         else:
-            log.info('Installed: %s' % ' '.join(packages))
+            log.info('Installed: {}'.format(' '.join(packages)))
         return res.returncode
 
     def add_repo(self, name, mirror, gpgkey):
         path_name = name.lower().replace(" ", "_")
         log.info('Creating repo file for "{name}"'.format(name=name))
-        sources_path = self.join_root('/etc/yum.repos.d/{name}.repo'.format(name=path_name))
-        source = "[{lower_name}]\nname={formal_name}\nbaseurl={mirror}\nenabled=1".format(lower_name=path_name,
-                                                                                          formal_name=name,
-                                                                                          mirror=mirror)
+        sources_path = self.join_root(
+            '/etc/yum.repos.d/{name}.repo'.format(name=path_name))
+        source = "[{lower_name}]\n" \
+                 "name={formal_name}\n" \
+                 "baseurl={mirror}\n" \
+                 "enabled=1".format(lower_name=path_name,
+                                    formal_name=name,
+                                    mirror=mirror)
         if gpgkey:
             source += "\ngpgcheck=1"
             source += "\ngpgkey={gpgkey}".format(gpgkey=gpgkey)
@@ -70,12 +81,15 @@ class RedhatTarget(LinuxTarget):
     def remove_repo(self, name):
         path_name = name.lower().replace(" ", "_")
         log.info('Removing repo file for "{name}"'.format(name=name))
-        sources_path = self.join_root('/etc/yum.repos.d/{name}.repo'.format(name=path_name))
+        sources_path = self.join_root(
+            '/etc/yum.repos.d/{name}.repo'.format(name=path_name))
         deployment.remove_file(sources_path)
 
     def add_repos(self, press_config):
         for repo in press_config.get('repos', []):
-            self.add_repo(repo['name'], repo['mirror'], repo.get('gpgkey', None))
+            self.add_repo(repo['name'],
+                          repo['mirror'],
+                          repo.get('gpgkey', None))
 
     def package_exists(self, package_name):
         for package in self.get_package_list():
@@ -124,7 +138,8 @@ class RedhatTarget(LinuxTarget):
             # Sometimes need short version, not ones like '7.1.1503'
             # so splitting and then joining [0:2] to get '7.1'
             release_info['short_version'] = '.'.join(version.split('.')[:2])
-            # Also need major version, like '7' rather than short_version like '7.1'
+            # Also need major version, like '7'
+            # rather than short_version like '7.1'
             release_info['major_version'] = version.split('.')[0]
             release_info['os'] = data.split('release')[0].strip()
         except IndexError:
@@ -171,8 +186,9 @@ class RedhatTarget(LinuxTarget):
         elif short_version[0] == '7':
             short_version = str(short_version) + '.eus'
 
-        rhel_repo_url = 'http://intra.mirror.rackspace.com/kickstart/'\
-                            'rhel-x86_64-server-{version}/'.format(version=short_version)
+        rhel_repo_url = \
+            'http://intra.mirror.rackspace.com/kickstart/'\
+            'rhel-x86_64-server-{version}/'.format(version=short_version)
 
         if proxy:
             self.enable_yum_proxy(proxy)
@@ -194,6 +210,6 @@ class RedhatTarget(LinuxTarget):
             self.remove_repo(rhel_repo_name)
 
     def service_control(self, service, action):
-        log.info('Running: service %s %s' % (service, action))
-        command = 'service %s %s' % (service, action)
+        log.info('Running: service {} {}'.format(service, action))
+        command = 'service {} {}'.format(service, action)
         self.chroot(command)
