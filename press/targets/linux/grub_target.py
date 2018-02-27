@@ -68,10 +68,11 @@ class Grub(Target):
             # grub1 is not smart to find efi partition,
             # have to force it to find.
             if self.default_grub_root_partition in line and sysfs_info.has_efi():
-                data[idx] = util.misc.replace_grub_root_partition(
-                    line, self.default_grub_root_partition, modifying[0])
-                modified = True
-                continue
+                if modifying:
+                    data[idx] = util.misc.replace_grub_root_partition(
+                        line, self.default_grub_root_partition, modifying[0])
+                    modified = True
+                    continue
 
             if self.grub_cmdline_name in line:
                 data[idx] = util.misc.opts_modifier(line, appending,
