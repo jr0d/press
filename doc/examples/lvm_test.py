@@ -21,4 +21,4 @@ lv3 = LogicalVolume('lv_test3', PercentString('100%FREE'))
 
 vg1.add_logical_volumes([lv1, lv2, lv3])
 
-print vg1
+print(vg1)

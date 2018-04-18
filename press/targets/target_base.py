@@ -2,21 +2,25 @@ import logging
 import os
 import six
 
-
 from press.helpers.cli import run_chroot
 
 log = logging.getLogger('press.targets')
 
 
 class Chroot(object):
+
     def __init__(self, root, staging_dir):
         self.root = root
         self.staging_dir = staging_dir
 
     def __call__(self, command, raise_exception=False, quiet=False, proxy=None):
-        return run_chroot(command, root=self.root, staging_dir=self.staging_dir,
-                          raise_exception=raise_exception, quiet=quiet,
-                          proxy=proxy)
+        return run_chroot(
+            command,
+            root=self.root,
+            staging_dir=self.staging_dir,
+            raise_exception=raise_exception,
+            quiet=quiet,
+            proxy=proxy)
 
 
 class VendorRegistry(type):

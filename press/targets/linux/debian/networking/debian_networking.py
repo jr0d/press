@@ -36,7 +36,8 @@ def write_interfaces(path, network_configuration):
     for interface in interfaces:
         name, device = util.networking.lookup_interface(interface,
                                                         interface.get(
-                                                            'missing_ok', False))
+                                                            'missing_ok',
+                                                            False))
         for network in networks:
             if name == network.get('interface'):
                 network['device'] = device.devname

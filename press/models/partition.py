@@ -10,7 +10,12 @@ class PartitionTableModel(object):
     Mimics PartitionTable structured class but does not contain size attribute.
     Used to stage a partition table prior to knowing physical geometry
     """
-    def __init__(self, table_type, disk='first', partition_start=1048576, alignment=1048576):
+
+    def __init__(self,
+                 table_type,
+                 disk='first',
+                 partition_start=1048576,
+                 alignment=1048576):
         """
         :param table_type: (str) gpt or msdos
         :param disk: (str) first, any, devname (/dev/sda), devlink (/dev/disk/by-id/foobar),
@@ -18,7 +23,8 @@ class PartitionTableModel(object):
             first: The first available disk, regardless of size will be used
             any: Any disk that can accommodate the static allocation of the partitions
         """
-        log.debug('Modeling new Partition Table Model: Type: %s , Disk: %s' % (table_type, disk))
+        log.debug('Modeling new Partition Table Model: Type: %s , Disk: %s' %
+                  (table_type, disk))
         self.partitions = list()
         self.disk = disk
         self.partition_start = partition_start
@@ -35,13 +41,11 @@ class PartitionTableModel(object):
         :param partition: (Partition) should be compatible with a structure.disk.Partition object
         """
         log.debug(
-            'Modeling new partition: %s : %s, size: %s / %d, fs: %s, mount_point: %s' % (
-                self.type == 'gpt' and 'name' or 'type',
-                partition.name,
-                partition.size or partition.percent_string,
-                partition.size and partition.size.bytes or 0,
-                partition.file_system,
-                partition.mount_point))
+            'Modeling new partition: %s : %s, size: %s / %d, fs: %s, mount_point: %s'
+            % (self.type == 'gpt' and 'name' or 'type', partition.name,
+               partition.size or partition.percent_string,
+               partition.size and partition.size.bytes or 0,
+               partition.file_system, partition.mount_point))
         self.partitions.append(partition)
 
     def add_partitions(self, partitions):

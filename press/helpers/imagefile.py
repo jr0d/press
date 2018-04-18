@@ -9,13 +9,19 @@ from press.helpers.deployment import tar_extract
 # noinspection PyUnresolvedReferences
 from six.moves import urllib
 
-
 log = logging.getLogger(__name__)
 
 
 class ImageFile(object):
-    def __init__(self, url, target, hash_method=None, expected_hash=None, download_directory=None,
-                 buffer_size=20480, proxy=None):
+
+    def __init__(self,
+                 url,
+                 target,
+                 hash_method=None,
+                 expected_hash=None,
+                 download_directory=None,
+                 buffer_size=20480,
+                 proxy=None):
         """
         Extending (or renaming really) Chad Catlett's Download class.
 
@@ -56,7 +62,8 @@ class ImageFile(object):
         filename = parsed_url.path
         if self.url_scheme == 'file':
             if not os.path.isfile(filename):
-                raise PressCriticalException('Specified image file is not present')
+                raise PressCriticalException(
+                    'Specified image file is not present')
             self.image_exists = True
             self.full_filename = filename
         else:
@@ -78,10 +85,7 @@ class ImageFile(object):
     def download(self, callback_func):
         byte_count = 0
         if self.proxy:
-            proxies = {
-                'http': self.proxy,
-                'https': self.proxy
-            }
+            proxies = {'http': self.proxy, 'https': self.proxy}
         else:
             proxies = None
 

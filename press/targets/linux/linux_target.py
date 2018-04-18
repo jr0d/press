@@ -22,7 +22,8 @@ class LinuxTarget(Target):
         deployment.write(self.join_root('/etc/locale.conf'), _locale)
 
     def generate_locales(self):
-        language = self.press_configuration.get('localization', {}).get('language', 'en_US.utf8')
+        language = self.press_configuration.get('localization', {}).get(
+            'language', 'en_US.utf8')
         cmd = '%s %s' % (self.locale_command, language)
         self.chroot(cmd)
 
@@ -54,8 +55,7 @@ class LinuxTarget(Target):
     def set_time(ntp_server):
         # TODO: Make utility function
         # TODO: --utc/--local or setting the hardware clock at all should be configurable
-        time_cmds = ['ntpdate %s' % ntp_server,
-                     'hwclock --utc --systohc']
+        time_cmds = ['ntpdate %s' % ntp_server, 'hwclock --utc --systohc']
         for cmd in time_cmds:
             result = cli.run(cmd)
             if result.returncode:
@@ -95,14 +95,13 @@ class LinuxTarget(Target):
 
                 if not util.auth.user_exists(user, self.root):
                     log.info('Creating user: %s' % user)
-                    self.chroot(util.auth.format_useradd(user,
-                                                         _u.get('uid'),
-                                                         _u.get('group'),
-                                                         _u.get('groups'),
-                                                         home_dir,
-                                                         _u.get('shell'),
-                                                         _u.get('create_home', True),
-                                                         _u.get('system', False)))
+                    self.chroot(
+                        util.auth.format_useradd(user, _u.get('uid'),
+                                                 _u.get('group'),
+                                                 _u.get('groups'), home_dir,
+                                                 _u.get('shell'),
+                                                 _u.get('create_home', True),
+                                                 _u.get('system', False)))
                 else:
                     log.warn('Defined user, %s, already exists' % user)
 
@@ -115,7 +114,9 @@ class LinuxTarget(Target):
                 password_options = _u.get('password_options', dict())
                 is_encrypted = password_options.get('encrypted', True)
                 log.info('Setting password for %s' % user)
-                self.chroot(util.auth.format_change_password(user, password, is_encrypted))
+                self.chroot(
+                    util.auth.format_change_password(user, password,
+                                                     is_encrypted))
             else:
                 log.warn('User %s has no password defined' % user)
 
@@ -129,22 +130,26 @@ class LinuxTarget(Target):
                     deployment.recursive_makedir(ssh_config_path, mode=0o700)
 
                 if authorized_keys:
-                    public_keys_string = '\n'.join(authorized_keys).strip() + '\n'
+                    public_keys_string = '\n'.join(
+                        authorized_keys).strip() + '\n'
                     log.debug('Adding public key: %s' % public_keys_string)
-                    deployment.write(os.path.join(ssh_config_path, 'authorized_keys'),
-                                     public_keys_string,
-                                     append=True)
+                    deployment.write(
+                        os.path.join(ssh_config_path, 'authorized_keys'),
+                        public_keys_string,
+                        append=True)
 
         # Create system groups
 
         groups = configuration.get('groups')
         if groups:
             for group in groups:
-                _g = groups[group] or dict()  # a group with no options will be null
+                _g = groups[group] or dict(
+                )  # a group with no options will be null
                 self.__groupadd(group, _g.get('gid'), _g.get('system'))
 
     def set_hostname(self):
-        network_configuration = self.press_configuration.get('networking', dict())
+        network_configuration = self.press_configuration.get(
+            'networking', dict())
         hostname = network_configuration.get('hostname')
         if not hostname:
             log.warn('Hostname not defined')
@@ -153,7 +158,8 @@ class LinuxTarget(Target):
         deployment.write(self.join_root('/etc/hostname'), hostname + '\n')
 
     def write_resolvconf(self):
-        network_configuration = self.press_configuration.get('networking', dict())
+        network_configuration = self.press_configuration.get(
+            'networking', dict())
         dns_config = network_configuration.get('dns')
         if not dns_config:
             log.warn('Static DNS configuration is missing')
@@ -192,18 +198,26 @@ class LinuxTarget(Target):
             if default_route:
                 data = '%s %s\n' % (network.get('ip_address'), hostname)
                 log.info('Adding %s to /etc/hosts' % data)
-                deployment.write(self.join_root('/etc/hosts'), data, append=True)
+                deployment.write(
+                    self.join_root('/etc/hosts'), data, append=True)
                 break
 
-    def ssh_keygen(self, path, key_type, passphrase='', comment='localhost.localdomain'):
+    def ssh_keygen(self,
+                   path,
+                   key_type,
+                   passphrase='',
+                   comment='localhost.localdomain'):
         deployment.remove_file(self.join_root(path))
-        command = 'ssh-keygen -f %s -t%s -Cpress@%s -N \"%s\"' % (
-            path, key_type, comment, passphrase)
+        command = 'ssh-keygen -f %s -t%s -Cpress@%s -N \"%s\"' % (path,
+                                                                  key_type,
+                                                                  comment,
+                                                                  passphrase)
         self.chroot(command)
 
     def update_host_keys(self):
         log.info('Updating SSH host keys')
-        hostname = self.network_configuration.get('hostname', 'localhost.localdomain')
+        hostname = self.network_configuration.get('hostname',
+                                                  'localhost.localdomain')
         for f in glob.glob(self.join_root('/etc/ssh/ssh_host*')):
             log.info('Removing: %s' % f)
             deployment.remove_file(f)
@@ -216,14 +230,16 @@ class LinuxTarget(Target):
         if not os.path.exists('/etc/resolv.conf'):
             log.warn('Host resolv.conf is missing')
             return
-        deployment.write(self.join_root('/etc/resolv.conf'),
-                         deployment.read('/etc/resolv.conf'))
+        deployment.write(
+            self.join_root('/etc/resolv.conf'),
+            deployment.read('/etc/resolv.conf'))
 
     def write_mdadm_configuration(self):
         mdraid_data = self.chroot('mdadm --detail --scan')
         log.info('Writing mdadm.conf')
         log.debug(mdraid_data)
-        deployment.write(self.join_root(self.mdadm_conf), mdraid_data + '\n', append=True)
+        deployment.write(
+            self.join_root(self.mdadm_conf), mdraid_data + '\n', append=True)
 
     # noinspection PyMethodMayBeStatic
     def get_product_name(self):

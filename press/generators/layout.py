@@ -1,27 +1,15 @@
 import logging
 
 from press.helpers import sysfs_info
-from press.configuration.util import environment_cache
 
 from press.layout import (
     Layout,
     Partition,
 )
-from press.exceptions import (
-    GeneratorError
-)
-from press.layout.lvm import (
-    PhysicalVolume,
-    LogicalVolume
-)
-from press.layout.filesystems.extended import (
-    EXT2,
-    EXT3,
-    EXT4
-)
-from press.layout.filesystems.swap import (
-    SWAP
-)
+from press.exceptions import (GeneratorError)
+from press.layout.lvm import (PhysicalVolume, LogicalVolume)
+from press.layout.filesystems.extended import (EXT2, EXT3, EXT4)
+from press.layout.filesystems.swap import (SWAP)
 from press.layout.filesystems.xfs import XFS
 from press.layout.filesystems.fat import FAT32, EFI
 from press.layout.raid import MDRaid
@@ -41,54 +29,14 @@ PARTED_PATH = 'parted'
 __pv_linker__ = dict()
 __partition_linker__ = dict()
 
+fs_selector = dict(
+    ext2=EXT2, ext3=EXT3, ext4=EXT4, swap=SWAP, xfs=XFS, efi=EFI, fat32=FAT32)
 
-def __get_parted_path():
-    return environment_cache.get('paths', {}).get('parted') or PARTED_PATH
-
-press_env = environment_cache.get('press', {})
-
-_layout_defaults = dict(
-    use_fibre_channel=False,
-    loop_only=False,
-)
-_layout_defaults.update(press_env.get('layout', {}))
-
-_partition_table_defaults = dict(
-    # TODO: Alignment will be calculated by the orchestrator using sysfs
-    partition_start=1048576,
-    alignment=1048576
-)
-_partition_table_defaults.update(press_env.get('partition_table', {}))
-
-_partition_defaults = dict(
-    flags=list()
-)
-
-_partition_defaults.update(press_env.get('partition', {}))
-
-_volume_group_defaults = dict(
-    pe_size='4MiB'
-)
-_partition_defaults.update(press_env.get('volume_group', {}))
-
-_fs_selector = dict(
-    ext2=EXT2,
-    ext3=EXT3,
-    ext4=EXT4,
-    swap=SWAP,
-    xfs=XFS,
-    efi=EFI,
-    fat32=FAT32
-)
+default_use_fibre_channel = False
+default_loop_only = False
 
 
-def _fill_defaults(d, defaults):
-    for k in defaults:
-        if k not in d:
-            d[k] = defaults[k]
-
-
-def _has_logical(partitions):
+def has_logical(partitions):
     for partition in partitions:
         if partition.get('mbr_type') == 'logical':
             return True
@@ -99,13 +47,13 @@ def _has_logical(partitions):
     return False
 
 
-def _max_primary(partitions):
-    if _has_logical(partitions):
+def get_max_primary(partitions):
+    if has_logical(partitions):
         return 3
     return 4
 
 
-def _fsck_pass(fs_object, lv_or_part, mount_point):
+def fsck_pass(fs_object, lv_or_part, mount_point):
     if 'fsck_option' not in lv_or_part:
         if fs_object.require_fsck and mount_point:
             # root should fsck on pass 1
@@ -133,7 +81,7 @@ def generate_size(size):
 def generate_file_system(fs_dict):
     fs_type = fs_dict.get('type', 'undefined')
 
-    fs_class = _fs_selector.get(fs_type)
+    fs_class = fs_selector.get(fs_type)
     if not fs_class:
         raise GeneratorError('%s type is not supported!' % fs_type)
 
@@ -154,18 +102,17 @@ def generate_partition(type_or_name, partition_dict):
     mount_point = partition_dict.get('mount_point')
 
     if fs_object:
-        fsck_option = _fsck_pass(fs_object, partition_dict, mount_point)
+        fsck_option = fsck_pass(fs_object, partition_dict, mount_point)
     else:
         fsck_option = False
 
     p = Partition(
         type_or_name=type_or_name,
         size_or_percent=generate_size(partition_dict['size']),
-        flags=partition_dict.get('flags'),
+        flags=partition_dict.get('flags', []),
         file_system=fs_object,
         mount_point=mount_point,
-        fsck_option=fsck_option
-    )
+        fsck_option=fsck_option)
 
     if 'lvm' in p.flags:
         # We need to preserve this mapping for generating volume groups
@@ -187,7 +134,7 @@ def _generate_mbr_partitions(partition_dicts):
     primary or logical is explicitly defined, then there will be three primary,
     one extended, and up to 128 logical partitions.
     """
-    max_primary = _max_primary(partition_dicts)
+    max_primary = get_max_primary(partition_dicts)
 
     primary_count = 0
     logical_count = 0
@@ -230,15 +177,14 @@ def _generate_gpt_partitions(partition_dicts):
     count = 0
     partitions = list()
     for partition in partition_dicts:
-        partitions.append(generate_partition(
-            partition.get('name', 'p' + str(count)), partition))
+        partitions.append(
+            generate_partition(
+                partition.get('name', 'p' + str(count)), partition))
         count += 1
     return partitions
 
 
 def generate_partitions(table_type, partition_dicts):
-    for p in partition_dicts:
-        _fill_defaults(p, _partition_defaults)
     if table_type == 'msdos':
         return _generate_mbr_partitions(partition_dicts)
     if table_type == 'gpt':
@@ -247,11 +193,13 @@ def generate_partitions(table_type, partition_dicts):
         raise GeneratorError('Table type is invalid: %s' % table_type)
 
 
-def generate_partition_table_model(partition_table_dict):
+def generate_partition_table_model(partition_table_dict,
+                                   default_partition_start, default_alignment):
     """
     Generate a PartitionTableModel, a PartitionTable without a disk association
 
-    Note: if label is not specified, the Press object will determine label based off:
+    Note: if label is not specified, the Press object will determine label based
+     off:
         1. Device booted in UEFI mode
         2. A disk is larger then 2.2TiB
 
@@ -259,36 +207,39 @@ def generate_partition_table_model(partition_table_dict):
     or what their gpt names are, so we'll care for them.
 
     :param partition_table_dict:
+    :param default_alignment:
+    :param default_partition_start:
+
     :return: PartitionTableModel
     """
-    _fill_defaults(partition_table_dict, _partition_table_defaults)
     table_type = partition_table_dict['label']
 
     pm = PartitionTableModel(
         table_type=table_type,
         disk=partition_table_dict['disk'],
-        partition_start=partition_table_dict['partition_start'],
-        alignment=partition_table_dict['alignment']
-    )
+        partition_start=partition_table_dict.get('partition_start',
+                                                 default_partition_start),
+        alignment=partition_table_dict.get('alignment', default_alignment))
 
-    partition_dicts = partition_table_dict['partitions']
+    partition_dicts = partition_table_dict.get('partitions')
     if partition_dicts:
         partitions = generate_partitions(table_type, partition_dicts)
         pm.add_partitions(partitions)
     return pm
 
 
-def generate_volume_group_models(volume_group_dict):
+def generate_volume_group_models(volume_group_dict, default_pe_size):
     """
     We use __pv_linker__ to reference partition objects by name
+    :param default_pe_size:
     :param volume_group_dict:
     :return:
     """
     if not __pv_linker__:
-        raise GeneratorError('__pv_linker__ is null, have you flagged any partitions with LVM?')
+        raise GeneratorError(
+            '__pv_linker__ is null, have you flagged any partitions with LVM?')
     vgs = list()
     for vg in volume_group_dict:
-        _fill_defaults(vg, _volume_group_defaults)
         pvs = list()
         if not vg.get('physical_volumes'):
             raise GeneratorError('No physical volumes are defined')
@@ -297,7 +248,7 @@ def generate_volume_group_models(volume_group_dict):
             if not ref:
                 raise GeneratorError('invalid ref: %s' % pv)
             pvs.append(PhysicalVolume(ref))
-        vgm = VolumeGroupModel(vg['name'], pvs)
+        vgm = VolumeGroupModel(vg['name'], pvs, pe_size=default_pe_size)
         lv_dicts = vg.get('logical_volumes')
         lv_dicts.sort(key=lambda s: (s.get('mount_point', '')).count('/'))
         lvs = list()
@@ -309,26 +260,25 @@ def generate_volume_group_models(volume_group_dict):
                     fs = None
                 mount_point = lv.get('mount_point')
 
-                fsck_option = _fsck_pass(fs, lv, mount_point)
-                lvs.append(LogicalVolume(
-                    name=lv['name'],
-                    size_or_percent=generate_size(lv['size']),
-                    file_system=fs,
-                    mount_point=mount_point,
-                    fsck_option=fsck_option
-                ))
+                fsck_option = fsck_pass(fs, lv, mount_point)
+                lvs.append(
+                    LogicalVolume(
+                        name=lv['name'],
+                        size_or_percent=generate_size(lv['size']),
+                        file_system=fs,
+                        mount_point=mount_point,
+                        fsck_option=fsck_option))
             vgm.add_logical_volumes(lvs)
         vgs.append(vgm)
     return vgs
 
 
-def generate_layout_stub(layout_config):
-    _fill_defaults(layout_config, _layout_defaults)
-    parted_path = __get_parted_path()
+def generate_layout_stub(layout_config, parted_path):
     LOG.debug('Using parted at: %s' % parted_path)
     return Layout(
-        use_fibre_channel=layout_config['use_fibre_channel'],
-        loop_only=layout_config['loop_only'],
+        use_fibre_channel=layout_config.get('use_fibre_channel',
+                                            default_use_fibre_channel),
+        loop_only=layout_config.get('loop_only', default_loop_only),
         parted_path=parted_path,
     )
 
@@ -339,8 +289,8 @@ def add_bios_boot_partition(partition_table):
     if partitions:
         if 'bios_grub' not in partitions[0].get('flags', list()):
             LOG.info('Automatically inserting a BIOS boot partition')
-            bios_boot_partition = dict(name='BIOS boot partition',
-                                       size='1MiB', flags=['bios_grub'])
+            bios_boot_partition = dict(
+                name='BIOS boot partition', size='1MiB', flags=['bios_grub'])
             partitions.insert(0, bios_boot_partition)
         else:
             LOG.info('BIOS boot partition seems to already be present, kudos!')
@@ -355,9 +305,12 @@ def add_efi_boot_partition(partition_table):
             LOG.info('EFI boot partition is already present, kudos!')
             break
     else:
-        efi_partition = dict(name='EFI', size='253MiB', flags=['boot'],
-                             file_system=dict(type="efi"),
-                             mount_point="/boot/efi")
+        efi_partition = dict(
+            name='EFI',
+            size='253MiB',
+            flags=['boot'],
+            file_system=dict(type="efi"),
+            mount_point="/boot/efi")
         partition_table.setdefault('partitions', []).insert(0, efi_partition)
 
 
@@ -372,9 +325,9 @@ def set_disk_labels(layout, layout_config):
     for partition_table in partition_tables:
         label = partition_table.get('label')
         if label:
-            LOG.info('Table: %s is set as %s in configuration' % (
-                partition_table.get('disk', 'undefined'),
-                partition_table['label']))
+            LOG.info('Table: %s is set as %s in configuration' %
+                     (partition_table.get('disk', 'undefined'),
+                      partition_table['label']))
 
         # 'first' and 'any' are valid disk references in the configuration
         # 'first' indicates the first unallocated disk
@@ -434,7 +387,7 @@ def generate_software_raid(raid_config):
         mount_point = raid.get('mount_point')
 
         if fs_object:
-            fsck_option = _fsck_pass(fs_object, raid, mount_point)
+            fsck_option = fsck_pass(fs_object, raid, mount_point)
         else:
             fsck_option = False
 
@@ -449,8 +402,7 @@ def generate_software_raid(raid_config):
             file_system=fs_object,
             fsck_option=fsck_option,
             pv_name=raid.get('pv'),
-            mount_point=raid.get('mount_point')
-        )
+            mount_point=raid.get('mount_point'))
         raid_objects.append(mdraid)
 
         if mdraid.pv_name:
@@ -465,10 +417,14 @@ def clear_linkers():
     __partition_linker__.clear()
 
 
-def layout_from_config(layout_config):
+def layout_from_config(layout_config,
+                       parted_path='parted',
+                       partition_start=1048576,
+                       alignment=1048576,
+                       pe_size='4MiB'):
     LOG.info('Generating Layout')
     clear_linkers()  # Long running processes will leave these behind
-    layout = generate_layout_stub(layout_config)
+    layout = generate_layout_stub(layout_config, parted_path)
     partition_tables = layout_config.get('partition_tables')
     if not partition_tables:
         raise GeneratorError('No partition tables have been defined')
@@ -476,7 +432,7 @@ def layout_from_config(layout_config):
     set_disk_labels(layout, layout_config)
 
     for pt in partition_tables:
-        ptm = generate_partition_table_model(pt)
+        ptm = generate_partition_table_model(pt, partition_start, alignment)
         layout.add_partition_table_from_model(ptm)
 
     raid_configuration = layout_config.get('software_raid')
@@ -487,7 +443,7 @@ def layout_from_config(layout_config):
 
     volume_groups = layout_config.get('volume_groups')
     if volume_groups:
-        vg_objects = generate_volume_group_models(volume_groups)
+        vg_objects = generate_volume_group_models(volume_groups, pe_size)
 
         for vg in vg_objects:
             layout.add_volume_group_from_model(vg)

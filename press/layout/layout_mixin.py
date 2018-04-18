@@ -4,7 +4,6 @@ from press.generators.layout import layout_from_config
 from press.helpers import deployment
 from press.layout.layout import MountHandler
 
-
 log = logging.getLogger(__name__)
 
 
@@ -12,14 +11,14 @@ class LayoutMixin(object):
     mount_handler = None
     perform_teardown = True
 
-    def __init__(self, press_configuration, deployment_root):
-        self.__layout_configuration = press_configuration.get('layout')
+    def __init__(self, press_configuration, deployment_root, parted_path):
+        layout_configuration = press_configuration.get('layout')
         self.deployment_root = deployment_root
 
-        if not self.__layout_configuration:
+        if not layout_configuration:
             raise ConfigurationError('Layout is missing!')
 
-        self.layout = layout_from_config(self.__layout_configuration)
+        self.layout = layout_from_config(layout_configuration)
 
     def apply_layout(self):
         log.info('Applying layout')

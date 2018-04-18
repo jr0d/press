@@ -29,7 +29,8 @@ class VolumeGroup(object):
 
         self.name = name
         self.physical_volumes = physical_volumes
-        self.pv_raw_size = Size(sum([pv.reference.size.bytes for pv in self.physical_volumes]))
+        self.pv_raw_size = Size(
+            sum([pv.reference.size.bytes for pv in self.physical_volumes]))
         self.pe_size = Size(pe_size)
         self.extents = self.pv_raw_size.bytes / self.pe_size.bytes
         self.size = Size(self.pe_size.bytes * self.extents)
@@ -70,23 +71,18 @@ class VolumeGroup(object):
                 "There is not enough space for volume "
                 "'{}' (avail: {}, requested: {}).  "
                 "Please adjust the size approximately by: {}".format(
-                    volume.name,
-                    self.free_space.bytes,
-                    volume.size.bytes,
-                    adjustment
-                )
-            )
+                    volume.name, self.free_space.bytes, volume.size.bytes,
+                    adjustment))
 
     def add_logical_volume(self, volume):
         if volume.percent_string:
-            volume.size = self.convert_percent_to_size(volume.percent_string.value,
-                                                       volume.percent_string.free)
+            volume.size = self.convert_percent_to_size(
+                volume.percent_string.value, volume.percent_string.free)
         self._validate_volume(volume)
         extents = int(volume.size.bytes / self.pe_size.bytes)
         unused = volume.size % self.pe_size
-        log.info('Adding logical volume <%s>: %d / %d LE, unusable: %s' % (volume.name,
-                                                                           volume.size.bytes,
-                                                                           extents, unused))
+        log.info('Adding logical volume <%s>: %d / %d LE, unusable: %s' %
+                 (volume.name, volume.size.bytes, extents, unused))
         allocated_pe = self.current_pe + extents
         log.debug('allocated: %d , total: %d' % (allocated_pe, self.extents))
         if allocated_pe == self.extents:
@@ -130,7 +126,12 @@ class LogicalVolume(object):
     Very similar to Partition, device is the /dev/link after the device is created.
     """
 
-    def __init__(self, name, size_or_percent, file_system=None, mount_point=None, fsck_option=0):
+    def __init__(self,
+                 name,
+                 size_or_percent,
+                 file_system=None,
+                 mount_point=None,
+                 fsck_option=0):
         self.name = name
         if isinstance(size_or_percent, PercentString):
             self.size = None
@@ -180,22 +181,22 @@ class LogicalVolume(object):
 
         gen = ''
         if method == 'UUID':
-            gen += '# DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % (self.devlink, label or '', uuid)
+            gen += '# DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % (self.devlink,
+                                                            label or '', uuid)
         elif method == 'LABEL' and label:
-            gen += '# DEVNAME=%s\tUUID=%s\nLABEL=%s\t\t' % (self.devlink, uuid, label)
+            gen += '# DEVNAME=%s\tUUID=%s\nLABEL=%s\t\t' % (self.devlink, uuid,
+                                                            label)
         else:
-            gen += '# UUID=%s\tLABEL=%s\n%s\t\t' % (uuid, label or '', self.devlink)
-        gen += '%s\t\t%s\t\t%s\t\t%s %s\n\n' % (
-            self.mount_point or 'none', self.file_system, options, dump, fsck_option)
+            gen += '# UUID=%s\tLABEL=%s\n%s\t\t' % (uuid, label or '',
+                                                    self.devlink)
+        gen += '%s\t\t%s\t\t%s\t\t%s %s\n\n' % (self.mount_point or 'none',
+                                                self.file_system, options, dump,
+                                                fsck_option)
 
         return gen
 
     def __repr__(self):
         return "device: %s, name: %s, size: %s, fs: %s, mount point: %s, fsck_option: %s" % (
-            self.devlinks and self.devlinks[-1] or 'unlinked',
-            self.name,
-            self.size or self.percent_string,
-            self.file_system,
-            self.mount_point,
-            self.fsck_option
-        )
+            self.devlinks and self.devlinks[-1] or 'unlinked', self.name,
+            self.size or self.percent_string, self.file_system,
+            self.mount_point, self.fsck_option)

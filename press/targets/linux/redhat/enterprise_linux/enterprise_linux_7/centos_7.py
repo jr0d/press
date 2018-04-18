@@ -9,4 +9,3 @@ log = logging.getLogger(__name__)
 class CentOS7Target(EL7Target):
     name = 'centos_7'
     release_file = '/etc/centos-release'
-

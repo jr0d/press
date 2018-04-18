@@ -2,8 +2,7 @@ from press.helpers.sysfs_info import NetDeviceInfo
 
 
 def cidr2mask(prefix):
-    return [(0xffffffff << (32 - prefix) >> i) & 0xff
-            for i in [24, 16, 8, 0]]
+    return [(0xffffffff << (32 - prefix) >> i) & 0xff for i in [24, 16, 8, 0]]
 
 
 def mask2cidr(mask):
@@ -48,6 +47,7 @@ def get_device_by_mac(mac):
         ndi = NetDeviceInfo(interface)
         if ndi.address and ndi.address.lower() == mac:
             return ndi
+
 
 # get_device_by_pci
 # get_device_by_smbios_name

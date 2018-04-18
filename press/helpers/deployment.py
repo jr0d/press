@@ -94,7 +94,8 @@ def replace_file(path, data):
     log.info('Replacing %s' % path)
 
     if not os.path.exists(path):
-        log.warn('The file you want to replace does not exist, writing a new file')
+        log.warn(
+            'The file you want to replace does not exist, writing a new file')
         return write(path, data.encode())
 
     if os.path.isdir(path):
@@ -115,7 +116,8 @@ def replace_file(path, data):
 
 def replace_line_matching(data, match, newline):
     output = ""
-    newline = newline if newline.endswith(os.linesep) else (newline + os.linesep)
+    newline = newline if newline.endswith(
+        os.linesep) else (newline + os.linesep)
     for line in data.splitlines(True):
         output += newline if match in line else line
     return output
@@ -155,8 +157,9 @@ def tar_extract(archive_path, chdir=''):
     if use_bzip:
         compress_method = 'j'
 
-    return cli.run('%s -%sxf %s%s' % (base_tar_cmd, compress_method, archive_path,
-                                       chdir and ' -C %s' % chdir or ''))
+    return cli.run('%s -%sxf %s%s' %
+                   (base_tar_cmd, compress_method, archive_path,
+                    chdir and ' -C %s' % chdir or ''))
 
 
 def create_fstab(fstab, target):
@@ -176,7 +179,11 @@ def find_root(layout):
                 return logical_volume
 
 
-def copy(src, dst, preserve_permissions=True, preserve_meta=True, preserve_owners=True):
+def copy(src,
+         dst,
+         preserve_permissions=True,
+         preserve_meta=True,
+         preserve_owners=True):
 
     shutil.copy(src, dst)
 

@@ -8,7 +8,6 @@ from press.layout.filesystems import FileSystem
 from press.exceptions import FileSystemCreateException, \
     FileSystemFindCommandException
 
-
 log = logging.getLogger(__name__)
 
 
@@ -31,8 +30,7 @@ class FAT32(FileSystem):
 
     def create(self, device):
         command = self.full_command.format(
-                command_path=self.command_path,
-                device=device)
+            command_path=self.command_path, device=device)
 
         log.info('Creating filesystem: {}'.format(command))
         result = run(command)
@@ -44,9 +42,9 @@ class EFI(FAT32):
     fs_type = 'vfat'
 
     def __init__(self, label=None, mount_options=None, late_uuid=True, **extra):
-        super(EFI, self).__init__(label, mount_options,
-                                  late_uuid=late_uuid, **extra)
-        self.full_command = '{command_path} -F 32 {device}'
+        super(EFI, self).__init__(
+            label, mount_options, late_uuid=late_uuid, **extra)
+        self.full_command = '{command_path} -s2 -F 32 {device}'
 
     def create(self, device):
         super(EFI, self).create(device)

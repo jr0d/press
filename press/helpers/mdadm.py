@@ -24,16 +24,21 @@ class MDADM(object):
         if not find_in_path(self.mdadm):
             raise MDADMError('Missing mdadm binary: %s' % self.mdadm)
 
-    def run_mdadm(self, command, raise_on_error=True, ignore_error=False, quiet=False):
+    def run_mdadm(self,
+                  command,
+                  raise_on_error=True,
+                  ignore_error=False,
+                  quiet=False):
         full_command = '%s %s' % (self.mdadm, command)
-        result = run(full_command, ignore_error=ignore_error, quiet=quiet, _input='yes')
+        result = run(
+            full_command, ignore_error=ignore_error, quiet=quiet, _input='yes')
         if result and raise_on_error:
-            raise MDADMError('%d: %s : %s' % (result.returncode,
-                                              result.stdout,
+            raise MDADMError('%d: %s : %s' % (result.returncode, result.stdout,
                                               result.stderr))
         return result
 
-    def create(self, device, level, members, name='', metadata=DEFAULT_METADATA):
+    def create(self, device, level, members, name='',
+               metadata=DEFAULT_METADATA):
         if not name:
             name = os.path.basename(device)
 
@@ -48,7 +53,8 @@ class MDADM(object):
                                      name=name,
                                      members=' '.join(members))
 
-        log.info('Creating software RAID: %s [%s]' % (device, ', '.join(members)))
+        log.info('Creating software RAID: %s [%s]' % (device,
+                                                      ', '.join(members)))
         return self.run_mdadm(command)
 
     def stop(self, device):
@@ -102,7 +108,7 @@ class MDADM(object):
     def get_members(self, device):
         line = self._get_mdstat_line(device)
         detail = line.split(':')[1]
-        log.debug('detail0: '+  detail + ' ' + line)
+        log.debug('detail0: ' + detail + ' ' + line)
         if detail.split()[0] == 'inactive':
             members = detail.split()[1:]
         else:
@@ -128,7 +134,8 @@ if __name__ == '__main__':
     pi.remove_mbr()
     mdadm.zero_4k('/dev/loop1')
 
-    result = mdadm.create('/dev/md0', 1, ['/dev/loop0', '/dev/loop1'], name='Pony')
+    result = mdadm.create(
+        '/dev/md0', 1, ['/dev/loop0', '/dev/loop1'], name='Pony')
 
     print(result)
     print(result.stderr)

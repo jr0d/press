@@ -11,12 +11,8 @@ from press.helpers.mdadm import MDADM
 from press.helpers.udev import UDevHelper
 from press.layout.disk import Disk
 from press.layout.lvm import VolumeGroup
-from press.exceptions import (
-    PhysicalDiskException,
-    LayoutValidationError,
-    GeneralValidationException
-)
-
+from press.exceptions import (PhysicalDiskException, LayoutValidationError,
+                              GeneralValidationException)
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +22,8 @@ class Layout(object):
     """
 
     def __init__(self,
-                 use_fibre_channel=False, loop_only=False,
+                 use_fibre_channel=False,
+                 loop_only=False,
                  parted_path='/sbin/parted'):
         """
         Docs, maybe later
@@ -42,8 +39,8 @@ class Layout(object):
         self.fc_enabled = use_fibre_channel
         self.parted_path = parted_path
         self.udev = UDevHelper()
-        self.udisks = self.udev.discover_valid_storage_devices(fc_enabled=self.fc_enabled,
-                                                               loop_only=loop_only)
+        self.udisks = self.udev.discover_valid_storage_devices(
+            fc_enabled=self.fc_enabled, loop_only=loop_only)
 
         if not self.udisks:
             raise PhysicalDiskException('There are no valid disks.')
@@ -55,7 +52,7 @@ class Layout(object):
 
         self.volume_groups = list()
         self.lvm = LVM()
-        self.mdadm = MDADM()
+        self.mdadm = None
 
         self.mount_handler = None
 
@@ -74,11 +71,12 @@ class Layout(object):
                 continue
 
             size = parted.get_size()
-            disk = Disk(devname=device,
-                        devlinks=udisk.get('DEVLINKS'),
-                        devpath=udisk.get('DEVPATH'),
-                        size=size,
-                        sector_size=parted.sector_size.get('logical', 512))
+            disk = Disk(
+                devname=device,
+                devlinks=udisk.get('DEVLINKS'),
+                devpath=udisk.get('DEVPATH'),
+                size=size,
+                sector_size=parted.sector_size.get('logical', 512))
             self.disks[device] = disk
 
     def find_device_by_ref(self, ref):
@@ -114,10 +112,11 @@ class Layout(object):
         """
         if not disk.partition_table:
             raise LayoutValidationError('Disk is not allocated')
-        return PartedInterface(device=disk.devname,
-                               parted_path=self.parted_path,
-                               partition_start=disk.partition_table.partition_start.bytes,
-                               alignment=disk.partition_table.alignment.bytes)
+        return PartedInterface(
+            device=disk.devname,
+            parted_path=self.parted_path,
+            partition_start=disk.partition_table.partition_start.bytes,
+            alignment=disk.partition_table.alignment.bytes)
 
     @property
     def allocated(self):
@@ -146,16 +145,20 @@ class Layout(object):
         elif partition_table.disk == 'any':
             disk = self.find_device_by_size(partition_table.allocated_space)
             if not disk:
-                raise PhysicalDiskException('There is no suitable disk, table is too big')
+                raise PhysicalDiskException(
+                    'There is no suitable disk, table is too big')
 
         else:
             disk = self.find_device_by_ref(partition_table.disk)
             if not disk:
-                raise PhysicalDiskException('Could not associate disk, %s was not found' %
-                                            partition_table.disk)
+                raise PhysicalDiskException(
+                    'Could not associate disk, %s was not found' %
+                    partition_table.disk)
 
-        disk.new_partition_table(partition_table.type, partition_start=partition_table.partition_start,
-                                 alignment=partition_table.alignment)
+        disk.new_partition_table(
+            partition_table.type,
+            partition_start=partition_table.partition_start,
+            alignment=partition_table.alignment)
 
         for partition in partition_table.partitions:
             disk.partition_table.add_partition(partition)
@@ -164,14 +167,17 @@ class Layout(object):
         # make this part of UDevHelper?
         partitions = self.udev.find_partitions(disk.devname)
         for partition in partitions:
-            if int(partition.get('UDISKS_PARTITION_NUMBER', -1)) == partition_id:
+            if int(partition.get('UDISKS_PARTITION_NUMBER',
+                                 -1)) == partition_id:
                 return partition.get('DEVNAME')
 
     def add_volume_group_from_model(self, model_vg):
         for pv in model_vg.physical_volumes:
             if not pv.reference.allocated:
-                raise LayoutValidationError('Reference partition has not be allocated')
-        real_vg = VolumeGroup(model_vg.name, model_vg.physical_volumes, model_vg.pe_size)
+                raise LayoutValidationError(
+                    'Reference partition has not be allocated')
+        real_vg = VolumeGroup(model_vg.name, model_vg.physical_volumes,
+                              model_vg.pe_size)
         for lv in model_vg.logical_volumes:
             real_vg.add_logical_volume(lv)
         self.volume_groups.append(real_vg)
@@ -181,9 +187,14 @@ class Layout(object):
         :param raid_object:
         :return:
         """
+        # instantiate mdadm object only once and only when we have to
+        if not self.mdadm:
+            self.mdadm = MDADM()
+
         raid_object.allocated = True
         raid_object.calculate_size()
-        log.info('Adding RAID Volume %s, size: %s' % (raid_object.devname, raid_object.size))
+        log.info('Adding RAID Volume %s, size: %s' % (raid_object.devname,
+                                                      raid_object.size))
         self.software_raid_objects.append(raid_object)
 
     def apply_standard_partitions(self):
@@ -214,20 +225,22 @@ class Layout(object):
                 monitor = self.udev.get_monitor()
                 monitor.start()
                 log.debug(str(type(monitor)))
-                partition_id = parted.create_partition(partition.name,
-                                                       partition.size.bytes,
-                                                       flags=partition.flags)
+                partition_id = parted.create_partition(
+                    partition.name, partition.size.bytes, flags=partition.flags)
                 # Dirty race condition hack, need to re-write udev monitor to make it more stable
                 time.sleep(2)
                 # end hack
                 log.debug('Monitoring for devname')
-                partition.devname = self.udev.monitor_partition_by_devname(monitor, partition_id, action='add')
+                partition.devname = self.udev.monitor_partition_by_devname(
+                    monitor, partition_id, action='add')
                 log.debug('Found %s' % partition.devname)
                 partition.partition_id = partition_id
 
                 if not partition.devname:
-                    log.error('%s %s %s' % (partition.devname, disk, partition_id))
-                    raise PhysicalDiskException('Could not relate partition id to devname')
+                    log.error('%s %s %s' % (partition.devname, disk,
+                                            partition_id))
+                    raise PhysicalDiskException(
+                        'Could not relate partition id to devname')
 
                 if partition.file_system:
                     partition.file_system.create(partition.devname)
@@ -254,7 +267,8 @@ class Layout(object):
                 if not pv.reference:
                     continue
                 if self.lvm.pv_exists(pv.reference.devname):
-                    log.info('Removing existing physical volume: %s' % pv.reference.devname)
+                    log.info('Removing existing physical volume: %s' %
+                             pv.reference.devname)
                     self.lvm.pvremove(pv.reference.devname)
 
     def apply_lvm(self):
@@ -265,10 +279,12 @@ class Layout(object):
 
             for pv in volume_group.physical_volumes:
                 if not pv.reference.devname:
-                    raise LayoutValidationError('devname is not populated, and it should be')
+                    raise LayoutValidationError(
+                        'devname is not populated, and it should be')
                 devnames.append(pv.reference.devname)
                 self.lvm.pvcreate(pv.reference.devname)
-            self.lvm.vgcreate(volume_group.name, devnames, volume_group.pe_size.bytes)
+            self.lvm.vgcreate(volume_group.name, devnames,
+                              volume_group.pe_size.bytes)
 
             for lv in volume_group.logical_volumes:
                 self.lvm.lvcreate(lv.extents, volume_group.name, lv.name)
@@ -286,7 +302,9 @@ class Layout(object):
         Attempt to detect and destroy
         :return:
         """
-        log.info('[paranoia] Removing existing mdraid and associated physical volumes')
+        log.info(
+            '[paranoia] Removing existing mdraid and associated physical volumes'
+        )
         for array in self.software_raid_objects:
             if array.pv_name and self.lvm.pv_exists(array.devname):
                 self.lvm.pvremove(array.devname)
@@ -331,7 +349,8 @@ class Layout(object):
             raise GeneralValidationException('Method not supported')
 
         log.info('Generating %s partition table.' % method)
-        header = '# Generated by Press v' + str(helpers.package.get_press_version())
+        header = '# Generated by Press v' + str(
+            helpers.package.get_press_version())
         fstab = ''
 
         for disk in self.allocated:
@@ -400,6 +419,7 @@ class MountHandler(object):
     """
     mount_points is an OrderedDict
     """
+
     def __init__(self, target, layout):
         self.target = target
         self.mount_points = OrderedDict()
@@ -412,58 +432,52 @@ class MountHandler(object):
             raise GeneralValidationException('root mount point is missing')
         root_device = mount_point_index.get('/').devname
         if not root_device:
-            raise GeneralValidationException('root partition is not linked to a physical device')
+            raise GeneralValidationException(
+                'root partition is not linked to a physical device')
 
-        self.mount_points[mp_list.pop(idx)] = dict(mount_point='/',
-                                                   level=1,
-                                                   mounted=False,
-                                                   device=root_device)
+        self.mount_points[mp_list.pop(idx)] = dict(
+            mount_point='/', level=1, mounted=False, device=root_device)
         mp_list.sort(key=lambda s: s.count('/'))
         for mp in mp_list:
             device = mount_point_index.get(mp).devname
             if not device:
-                raise GeneralValidationException('%s is missing physical device' % mp)
-            self.mount_points[mp] = dict(mount_point=mp,
-                                         level=mp.count('/'),
-                                         mounted=False,
-                                         device=device)
+                raise GeneralValidationException(
+                    '%s is missing physical device' % mp)
+            self.mount_points[mp] = dict(
+                mount_point=mp,
+                level=mp.count('/'),
+                mounted=False,
+                device=device)
 
     def join(self, path):
         return os.path.join(self.target, path.lstrip('/'))
 
     def mount(self, path, device='none', bind=False, mount_type=''):
         full_path = self.join(path)
-        command = 'mount %s%s%s %s' % (bind and '--bind ' or '',
-                                       mount_type and '-t %s ' % mount_type or '',
-                                       device,
-                                       full_path)
+        command = 'mount %s%s%s %s' % (
+            bind and '--bind ' or '',
+            mount_type and '-t %s ' % mount_type or '', device, full_path)
         run(command, raise_exception=True)
         self.mount_points[path]['mounted'] = True
         log.info('Mounted %s' % full_path)
 
     def mount_proc(self):
         self.create_directory(self.join('/proc'))
-        self.mount_points['/proc'] = dict(mount_point='/proc',
-                                          level=1,
-                                          mounted=False,
-                                          device=None)
+        self.mount_points['/proc'] = dict(
+            mount_point='/proc', level=1, mounted=False, device=None)
         self.mount('/proc', mount_type='proc')
 
     def mount_sys(self):
         # mounting sys may not be needed
         self.create_directory(self.join('/sys'))
-        self.mount_points['/sys'] = dict(mount_point='/sys',
-                                         level=1,
-                                         mounted=False,
-                                         device=None)
+        self.mount_points['/sys'] = dict(
+            mount_point='/sys', level=1, mounted=False, device=None)
         self.mount('/sys', mount_type='sysfs')
 
     def bind_dev(self):
         self.create_directory(self.join('/dev'))
-        self.mount_points['/dev'] = dict(mount_point='/dev',
-                                         level=1,
-                                         mounted=False,
-                                         device=None)
+        self.mount_points['/dev'] = dict(
+            mount_point='/dev', level=1, mounted=False, device=None)
         self.mount('/dev', '/dev', bind=True)
 
     def umount(self, path):
@@ -478,7 +492,11 @@ class MountHandler(object):
         return set([self.mount_points[d]['level'] for d in self.mount_points])
 
     def get_level(self, level):
-        return [self.mount_points[d] for d in self.mount_points if self.mount_points[d]['level'] == level]
+        return [
+            self.mount_points[d]
+            for d in self.mount_points
+            if self.mount_points[d]['level'] == level
+        ]
 
     @staticmethod
     def create_directory(full_path):

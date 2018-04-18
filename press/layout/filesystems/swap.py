@@ -5,7 +5,6 @@ from . import FileSystem
 from press.exceptions import FileSystemCreateException, FileSystemFindCommandException
 from press.helpers.udev import UDevHelper
 
-
 log = logging.getLogger(__name__)
 
 
@@ -40,8 +39,7 @@ class SWAP(FileSystem):
             command_path=self.command_path,
             label_option=self.label_option,
             device=device,
-            uuid=self.fs_uuid
-        ))
+            uuid=self.fs_uuid))
         log.info("Creating filesystem: %s" % command)
         result = run(command)
 

@@ -12,7 +12,6 @@ from press.targets.linux.redhat.enterprise_linux.enterprise_linux_target \
 from press.targets.linux.redhat.enterprise_linux.enterprise_linux_7 \
     import networking
 
-
 log = logging.getLogger(__name__)
 
 
@@ -39,14 +38,16 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
             os_id, os_label = self.get_efi_label()
             _required_packages += ['grub2-efi', 'efibootmgr', 'shim']
             self.grub2_config_path = '/boot/efi/EFI/{}/grub.cfg'.format(os_id)
-            self.grub2_efi_command = ('efibootmgr --create --gpt '
-                                      '--disk /dev/sda --part 1 --write-signature '
-                                      '--label "{}" '
-                                      '--loader /EFI/{}/shim.efi'.format(os_label, os_id))
+            self.grub2_efi_command = (
+                'efibootmgr --create --gpt '
+                '--disk /dev/sda --part 1 --write-signature '
+                '--label "{}" '
+                '--loader /EFI/{}/shim.efi'.format(os_label, os_id))
         if not self.packages_exist(_required_packages):
             self.baseline_yum(self.proxy)
             if self.install_packages(_required_packages):
-                raise GeneralPostTargetError('Error installing required packages for grub2')
+                raise GeneralPostTargetError(
+                    'Error installing required packages for grub2')
             self.revert_yum(self.proxy)
 
     def rebuild_initramfs(self):
@@ -75,10 +76,19 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
             f.write(contents)
 
     def write_network_script(self, device, network_config, dummy=False):
-        script_name = 'ifcfg-%s' % device.devname
-        script_path = self.join_root(os.path.join(self.network_scripts_path,  script_name))
+
+        def generate_script_name(devname, vlan=None):
+            if not vlan:
+                return 'ifcfg-{0}'.format(devname)
+            return 'ifcfg-{0}.{1}'.format(devname, vlan)
+
+        def generate_script_path(script_name):
+            return self.join_root(
+                os.path.join(self.network_scripts_path, script_name))
+
         if dummy:
             _template = networking.DummyInterfaceTemplate(device.devname)
+            vlan = None
         else:
             if network_config.get('type', 'AF_INET') == 'AF_INET6':
                 self.enable_ipv6()
@@ -89,21 +99,35 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
             ip_address = network_config.get('ip_address')
             gateway = network_config.get('gateway')
             prefix = network_config.get('prefix')
+            vlan = network_config.get('vlan')
             if not prefix:
-                prefix = ipaddress.ip_network("{ip_address}/{netmask}".format(
-                    **network_config), strict=False).prefixlen
+                prefix = ipaddress.ip_network(
+                    "{ip_address}/{netmask}".format(**network_config),
+                    strict=False).prefixlen
 
-            _template = interface_template(device.devname,
-                                           default_route=network_config.get('default_route', False),
-                                           ip_address=ip_address,
-                                           prefix=prefix,
-                                           gateway=gateway)
-        log.info('Writing %s' % script_path)
+            _template = interface_template(
+                device.devname,
+                default_route=network_config.get('default_route', False),
+                ip_address=ip_address,
+                prefix=prefix,
+                gateway=gateway,
+                vlan=vlan)
+
+        if vlan:
+            script_name = generate_script_name(device.devname)
+            script_path = generate_script_path(script_name)
+            log.info('Writing {0}'.format(script_path))
+            deployment.write(script_path, _template.generate_parent_interface())
+
+        script_name = generate_script_name(device.devname, vlan)
+        script_path = generate_script_path(script_name)
+        log.info('Writing {0}'.format(script_path))
         deployment.write(script_path, _template.generate())
 
     def write_route_script(self, device, routes):
         script_name = 'route-%s' % device.devname
-        script_path = self.join_root(os.path.join(self.network_scripts_path,  script_name))
+        script_path = self.join_root(
+            os.path.join(self.network_scripts_path, script_name))
         log.info('Writing %s' % script_path)
         deployment.write(script_path, networking.generate_routes(routes))
 
@@ -116,11 +140,13 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
         interfaces = network_configuration.get('interfaces', list())
         networks = network_configuration.get('networks')
         for interface in interfaces:
-            name, device = util.networking.lookup_interface(interface, interface.get('missing_ok', False))
+            name, device = util.networking.lookup_interface(
+                interface, interface.get('missing_ok', False))
 
             for network in networks:
                 if name == network.get('interface'):
-                    self.write_network_script(device, network, dummy=network.get('dummy', False))
+                    self.write_network_script(
+                        device, network, dummy=network.get('dummy', False))
                     routes = network.get('routes')
                     if routes:
                         self.write_route_script(device, routes)

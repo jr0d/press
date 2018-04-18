@@ -8,6 +8,7 @@ log = logging.getLogger(__name__)
 
 
 class AttributeString(str):
+
     def __init__(self, x):
         """
         For introspection
@@ -30,8 +31,14 @@ class CLIException(Exception):
     pass
 
 
-def run(command, bufsize=1048567, dry_run=False, raise_exception=False, ignore_error=False,
-        quiet=False, env=None, _input=''):
+def run(command,
+        bufsize=1048567,
+        dry_run=False,
+        raise_exception=False,
+        ignore_error=False,
+        quiet=False,
+        env=None,
+        _input=None):
     """Runs a command and stores the important bits in an attribute string.
 
     :param command: Command to execute.
@@ -42,6 +49,11 @@ def run(command, bufsize=1048567, dry_run=False, raise_exception=False, ignore_e
 
     :param dry_run: Should we perform a dry run of the command.
     :type dry_run: bool.
+    :param raise_exception:
+    :param ignore_error:
+    :param quiet:
+    :param env:
+    :param _input:
 
     :returns: :func:`press.cli.AttributeString`.
 
@@ -53,34 +65,26 @@ def run(command, bufsize=1048567, dry_run=False, raise_exception=False, ignore_e
     cmd = shlex.split(str(command))
 
     if not dry_run:
-        if _input:
-            p = subprocess.Popen(cmd,
-                                 stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 bufsize=bufsize,
-                                 env=our_env)
-            out, err = p.communicate(input=_input)
-        else:
-            p = subprocess.Popen(cmd,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 bufsize=bufsize,
-                                 env=our_env)
-            out, err = p.communicate()
+        p = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE if _input else None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=bufsize,
+            env=our_env)
+        out, err = p.communicate(input=_input)
         ret = p.returncode
     else:
-        out, err, ret = '', '', 0
+        out, err, ret = b'', b'', 0
 
     if not quiet:
         log.debug('Return Code: %d' % ret)
         if out:
             log.debug('stdout: \n%s' % out.strip().decode('utf-8'))
     if ret and not ignore_error:
-        log.error('Return: %d running: %s stdout: %s\nstderr: \n%s' % (ret,
-                                                                       command,
-                                                                       out.strip().decode('utf-8'),
-                                                                       err.strip().decode('utf-8')))
+        log.error('Return: %d running: %s stdout: %s\nstderr: \n%s' %
+                  (ret, command, out.strip().decode('utf-8'),
+                   err.strip().decode('utf-8')))
         if raise_exception:
             raise CLIException(err)
 
@@ -117,13 +121,14 @@ def run_chroot(command,
                proxy=None):
 
     pre = \
-        'export PATH=\"/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin\"\n'
+        'export PATH=\"/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:' \
+        '/usr/local/sbin\"\n'
     if proxy:
-        pre += 'export HTTP_PROXY=http://%s\nexport HTTPS_PROXY=http://%s\nexport http_proxy=http://%s\n' % (
-            proxy, proxy, proxy)
+        pre += 'export HTTP_PROXY=http://%s\nexport HTTPS_PROXY=http://%s\n' \
+               'export http_proxy=http://%s\n' % (proxy, proxy, proxy)
     abs_path = os.path.join(root, staging_dir.lstrip('/'))
-    f = tempfile.NamedTemporaryFile(mode='w', suffix='.sh', prefix='press-',
-                                    dir=abs_path, delete=False)
+    f = tempfile.NamedTemporaryFile(
+        mode='w', suffix='.sh', prefix='press-', dir=abs_path, delete=False)
     f.write('#!/bin/bash\n%s%s\n' % (pre, command.strip()))
     f.flush()
     f.close()

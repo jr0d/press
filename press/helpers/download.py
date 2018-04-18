@@ -13,8 +13,15 @@ log = logging.getLogger(__name__)
 
 
 class Download(object):
-    def __init__(self, url, hash_method=None, expected_hash=None, download_directory=None, filename=None,
-                 chunk_size=20480, proxy=None):
+
+    def __init__(self,
+                 url,
+                 hash_method=None,
+                 expected_hash=None,
+                 download_directory=None,
+                 filename=None,
+                 chunk_size=20480,
+                 proxy=None):
         """A Download that also generates the checksum while downloading.
 
         Rarely will this clean be used directly.
@@ -59,12 +66,13 @@ class Download(object):
             else:
                 self.filename = '%d.tmp' % time.time()
 
-        self.full_filename = os.path.join(self.download_directory, self.filename)
+        self.full_filename = os.path.join(self.download_directory,
+                                          self.filename)
 
     def __repr__(self):
         output = []
-        for attr_name in ('url', 'hash_method', 'expected_hash', 'download_directory',
-                          'filename', 'chunk_size'):
+        for attr_name in ('url', 'hash_method', 'expected_hash',
+                          'download_directory', 'filename', 'chunk_size'):
             attr = getattr(self, attr_name)
             output.append('%s=%s' % (attr_name, attr))
         return 'Download(%s)' % ', '.join(output)
@@ -93,10 +101,7 @@ class Download(object):
 
         byte_count = 0
         if self.proxy:
-            proxies = {
-                'http': self.proxy,
-                'https': self.proxy
-            }
+            proxies = {'http': self.proxy, 'https': self.proxy}
         else:
             proxies = None
 

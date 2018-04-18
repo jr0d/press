@@ -15,11 +15,15 @@ class PartedInterface(object):
     Once I can use libparted directly, I will move to that.
     """
 
-    def __init__(self, device, parted_path='parted', partition_start=1048576,
+    def __init__(self,
+                 device,
+                 parted_path='parted',
+                 partition_start=1048576,
                  alignment=1048576):
         self.parted_path = parted_path
         if not find_in_path(self.parted_path):
-            raise PartedInterfaceException('%s does not exist.' % self.parted_path)
+            raise PartedInterfaceException(
+                '%s does not exist.' % self.parted_path)
         self.device = device
         self.partition_start = partition_start
         self.alignment = alignment
@@ -37,23 +41,30 @@ class PartedInterface(object):
         path = append_sys(devpath)
         return AlignmentInfo(path)
 
-    def run_parted(self, command, raise_on_error=True, ignore_error=False, quiet=False):
+    def run_parted(self,
+                   command,
+                   raise_on_error=True,
+                   ignore_error=False,
+                   quiet=False):
         """
         parted does not use meaningful return codes. It pretty much returns 1 on
         any error and then prints an error message on to standard error stream.
         """
-        result = run(self.parted + command, ignore_error=ignore_error, quiet=quiet)
+        result = run(
+            self.parted + command, ignore_error=ignore_error, quiet=quiet)
         if result and raise_on_error:
             raise PartedException(result.stderr)
         return result
 
     def make_partition(self, type_or_name, start, end):
-        log.info("Creating partition type %s, start %d, end %d" % (type_or_name, start, end))
+        log.info("Creating partition type %s, start %d, end %d" % (type_or_name,
+                                                                   start, end))
         command = 'mkpart %s %d %d' % (type_or_name, start, end)
         return self.run_parted(command)
 
     def get_table(self, raw=False):
-        result = self.run_parted('print', raise_on_error=False, ignore_error=True, quiet=True)
+        result = self.run_parted(
+            'print', raise_on_error=False, ignore_error=True, quiet=True)
         if result.returncode:
             if not result.stderr:
                 #  udev sometimes maps /dev/loop devices before they are linked
@@ -61,7 +72,8 @@ class PartedInterface(object):
                 #  with an no output. I need to find a better way to determine if a loop
                 #  device is linked, ie, use losetup, ioctl, or /proc/partitions
                 #  for now, we'll assume that missing output means the device is null
-                raise NullDiskException('Cannot get table for uninitialized device')
+                raise NullDiskException(
+                    'Cannot get table for uninitialized device')
             elif 'unrecognised disk label' in result.stderr:
                 pass
             else:
@@ -193,7 +205,8 @@ class PartedInterface(object):
         # The --script command line parser does not work properly, making it necessary to do some
         # silly escaping in order to support gpt partition names with spaces
         # name: BIOS boot partition becomes \'BIOS\ boot\ partition\', like I said, it is silly
-        self.run_parted('name %d \\\'%s\\\'' % (number, name.replace(' ', '\\ ')))
+        self.run_parted('name %d \\\'%s\\\'' % (number,
+                                                name.replace(' ', '\\ ')))
 
     def set_flag(self, number, flag):
         log.info('Setting %s on partition #%d' % (flag, number))
@@ -236,15 +249,14 @@ class PartedInterface(object):
 
         end = start + part_size
 
-        log.debug('Partition start: %d, partition size: %d, end: %d, table size: %d' % (start,
-                                                                                        part_size,
-                                                                                        end,
-                                                                                        table_size))
+        log.debug(
+            'Partition start: %d, partition size: %d, end: %d, table size: %d' %
+            (start, part_size, end, table_size))
         if end > table_size:
             #  Should be >= for msdos and end >= table_size - 34 sectors for gpt
-            raise PartedInterfaceException('The partition is too big. %d > %d (%d bytes)' % (end,
-                                                                                             table_size,
-                                                                                             end - table_size))
+            raise PartedInterfaceException(
+                'The partition is too big. %d > %d (%d bytes)' %
+                (end, table_size, end - table_size))
 
         if type_or_name == 'logical' and label == 'msdos':
             if not self.extended_partition:
@@ -278,7 +290,8 @@ class PartedInterface(object):
 
     def remove_mbr(self):
         mbr_bytes = 512
-        command = 'dd if=/dev/zero of=%s bs=%d count=1' % (self.device, mbr_bytes)
+        command = 'dd if=/dev/zero of=%s bs=%d count=1' % (self.device,
+                                                           mbr_bytes)
         run(command)
 
     def remove_gpt(self):
@@ -289,7 +302,8 @@ class PartedInterface(object):
         16KiB Backup Table
         """
         gpt_bytes = 33792
-        command = 'dd if=/dev/zero of=%s bs=%d count=1' % (self.device, gpt_bytes)
+        command = 'dd if=/dev/zero of=%s bs=%d count=1' % (self.device,
+                                                           gpt_bytes)
         run(command)
 
 

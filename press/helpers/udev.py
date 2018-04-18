@@ -13,6 +13,7 @@ log = logging.getLogger(__name__)
 
 
 class UDevHelper(object):
+
     def __init__(self):
         self.context = pyudev.Context()
 
@@ -35,7 +36,8 @@ class UDevHelper(object):
         """
 
         devices = self.get_partitions()
-        return devices.match_parent(pyudev.Device.from_device_file(self.context, device))
+        return devices.match_parent(
+            pyudev.Device.from_device_file(self.context, device))
 
     def get_device_by_name(self, devname):
         try:
@@ -51,7 +53,7 @@ class UDevHelper(object):
 
         """
         invalid_id_type = ['cd', 'usb']
-        invalid_major = ['253', '254', '1'] # 253/254 are LVM/DM, 1 is ramdisk
+        invalid_major = ['253', '254', '1']  # 253/254 are LVM/DM, 1 is ramdisk
         loop_major = '7'
 
         disks = self.get_disks()
@@ -66,7 +68,7 @@ class UDevHelper(object):
             elif disk.get('MAJOR') == loop_major:
                 loop_devices.append(disk)
             elif (disk.get('ID_TYPE') in invalid_id_type or
-                          disk.get('MAJOR') in invalid_major):
+                  disk.get('MAJOR') in invalid_major):
                 continue
             else:
                 pruned.append(disk)
@@ -91,11 +93,13 @@ class UDevHelper(object):
         for _, device in monitor:
             log.debug('Seen: %s' % list(device.items()))
             if action and device.get('ACTION') != action:
-                log.debug('Action, %s, does not match %s' % (action, device.get('ACTION')))
+                log.debug('Action, %s, does not match %s' %
+                          (action, device.get('ACTION')))
                 continue
             elif device.get('UDISKS_PARTITION_NUMBER') == str(partition_id):
                 return str(device['DEVNAME'])
-            elif not device.get('UDISKS_PARTITION_NUMBER') and device.get('ID_PART_ENTRY_NUMBER') == str(partition_id):
+            elif not device.get('UDISKS_PARTITION_NUMBER') and device.get(
+                    'ID_PART_ENTRY_NUMBER') == str(partition_id):
                 return str(device['DEVNAME'])
 
     def get_network_devices(self):

@@ -2,6 +2,7 @@ from size import Size
 
 
 class VolumeGroupModel(object):
+
     def __init__(self, name, physical_volumes, pe_size='4MiB'):
         self.logical_volumes = list()
 

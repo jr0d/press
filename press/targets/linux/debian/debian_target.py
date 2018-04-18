@@ -26,15 +26,17 @@ class DebianTarget(LinuxTarget):
     __start_hack_path = '/usr/sbin/policy-rc.d'
 
     def __init__(self, press_configuration, layout, root, chroot_staging_dir):
-        super(DebianTarget, self).__init__(press_configuration,
-                                           layout, root, chroot_staging_dir)
+        super(DebianTarget, self).__init__(press_configuration, layout, root,
+                                           chroot_staging_dir)
         self.cache_updated = False
         add_hook(self.add_repos, "pre-extensions", self)
 
     def insert_no_start_hack(self):
         log.info('Inserting NOSTART hack')
-        deployment.write(self.join_root(self.__start_hack_path),
-                         self.__start_hack_script, mode=0o755)
+        deployment.write(
+            self.join_root(self.__start_hack_path),
+            self.__start_hack_script,
+            mode=0o755)
 
     def remove_no_start_hack(self):
         log.info('Removing NOSTART hack')
@@ -42,7 +44,7 @@ class DebianTarget(LinuxTarget):
 
     def get_package_list(self):
         out = self.chroot(self.__query_packages, quiet=True)
-        return [s.strip() for s in out.splitlines()]
+        return map(lambda s: s.strip(), out.splitlines())
 
     def apt_update(self):
         res = self.chroot(self.__apt_command + ' update', proxy=self.proxy)
@@ -80,7 +82,8 @@ class DebianTarget(LinuxTarget):
     def add_source(self, name, mirror):
         path_name = name.lower().replace(" ", "_")
         log.info('Creating "{name}" sources file'.format(name=name))
-        sources_path = self.join_root('/etc/apt/sources.list.d/{name}.list'.format(name=path_name))
+        sources_path = self.join_root(
+            '/etc/apt/sources.list.d/{name}.list'.format(name=path_name))
         source = 'deb %s %s openmanage\n' % (mirror, self.dist)
         deployment.write(sources_path, source)
 
@@ -94,10 +97,12 @@ class DebianTarget(LinuxTarget):
             r = requests.get(gpgkey, stream=True)
             key_data = r.content
 
-        destination = os.path.join(self.join_root(self.chroot_staging_dir), key_name)
+        destination = os.path.join(
+            self.join_root(self.chroot_staging_dir), key_name)
         deployment.write(destination, key_data)
         log.info('Importing public key "{gpgkey}"'.format(gpgkey=gpgkey))
-        self.chroot('apt-key add %s' % os.path.join(self.chroot_staging_dir, key_name))
+        self.chroot(
+            'apt-key add %s' % os.path.join(self.chroot_staging_dir, key_name))
 
     def add_repo(self, name, mirror, gpgkey):
         log.info("Adding repo '{name}'".format(name=name))
@@ -105,37 +110,44 @@ class DebianTarget(LinuxTarget):
         if gpgkey:
             if gpgkey.startswith("/") or gpgkey.startswith("\\"):
                 if not os.path.exists(gpgkey):
-                    raise Exception("Cannot find local gpgpkey at '{gpgkey}'".format(gpgkey=gpgkey))
+                    raise Exception(
+                        "Cannot find local gpgpkey at '{gpgkey}'".format(
+                            gpgkey=gpgkey))
                 self.add_key(gpgkey, local=True)
             else:
                 self.add_key(gpgkey)
 
     def add_repos(self, press_config):
         for repo in press_config.get('repos', []):
-            self.add_repo(repo['name'], repo['mirror'], repo.get('gpgkey', None))
+            self.add_repo(repo['name'], repo['mirror'], repo.get(
+                'gpgkey', None))
 
     def remove_package(self, package):
         self.remove_packages([package])
 
     def remove_packages(self, packages):
         log.info('Removing packages: %s' % ' '.join(packages))
-        self.chroot(self.__apt_command + ' remove --purge %s' % ' '.join(packages))
+        self.chroot(
+            self.__apt_command + ' remove --purge %s' % ' '.join(packages))
 
     def reconfigure_package(self, package):
         log.info('Reconfiguring package: %s' % package)
         self.chroot(self.__reconfigure_package + package)
 
     def set_timezone(self, timezone):
-        localtime_path = '/etc/timezone'
+        timezone_path = '/etc/timezone'
+        localtime_path = '/etc/localtime'
+        deployment.remove_file(self.join_root(timezone_path))
         deployment.remove_file(self.join_root(localtime_path))
-        deployment.write(self.join_root(localtime_path), timezone)
+        deployment.write(self.join_root(timezone_path), timezone)
         self.reconfigure_package('tzdata')
 
     def write_interfaces(self):
         interfaces_path = self.join_root('/etc/network/interfaces')
         if self.network_configuration:
             log.info('Writing network configuration')
-            debian_networking.write_interfaces(interfaces_path, self.network_configuration)
+            debian_networking.write_interfaces(interfaces_path,
+                                               self.network_configuration)
 
     def update_debconf_for_grub(self):
         log.info('Updating debconf for grub')
@@ -153,3 +165,12 @@ class DebianTarget(LinuxTarget):
             self.install_package('mdadm')
             LinuxTarget.write_mdadm_configuration(self)
 
+    def run(self):
+        super(DebianTarget, self).run()
+        self.localization()
+        self.generate_locales()
+        self.write_mdadm_configuration()
+        self.write_interfaces()
+        self.update_host_keys()
+        self.remove_resolvconf()
+        self.update_debconf_for_grub()

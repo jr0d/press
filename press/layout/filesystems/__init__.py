@@ -20,7 +20,8 @@ class FileSystem(object):
         :param device:
         :raise NotImplemented:
         """
-        raise NotImplemented('%s base class should not be used.' % self.__name__)
+        raise NotImplemented(
+            '%s base class should not be used.' % self.__name__)
 
     def generate_mount_options(self):
         if hasattr(self, 'mount_options'):
