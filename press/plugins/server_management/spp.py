@@ -18,7 +18,7 @@ log = logging.getLogger('press.plugins.server_management')
 class SPPDebian(TargetExtension):
     dist = ''
     sources_to_add = {'mcp': 'HP Management Component Pack', 'stk': 'HP Proliant Scripting Toolkit'}
-    mirrorbase = 'http://mirror.rackspace.com/hp/SDR/repo/{source_name}/'
+    mirrorbase = 'https://mirror.rackspace.com/hp/SDR/repo/{source_name}/'
 
     def write_sources(self):
         for source_name, source_description in self.sources_to_add.items():
@@ -94,11 +94,11 @@ class SPPRHEL(TargetExtension):
         self.repo_template = '\n'.join([
             '[hp-{repo_id}]',
             'name = {repo_name}',
-            'baseurl = http://mirror.rackspace.com/hp/SDR/repo/{repo_id}/rhel/\$releasever/\$basearch/current',
+            'baseurl = https://mirror.rackspace.com/hp/SDR/repo/{repo_id}/rhel/\$releasever/\$basearch/current',
             'enabled = 1',
             'gpgcheck = 1',
-            'gpgkey = http://mirror.rackspace.com/hp/SDR/hpePublicKey2048_key1.pub',
-            '         http://mirror.rackspace.com/hp/SDR/hpPublicKey2048_key1.pub',
+            'gpgkey = https://mirror.rackspace.com/hp/SDR/hpePublicKey2048_key1.pub',
+            '         https://mirror.rackspace.com/hp/SDR/hpPublicKey2048_key1.pub',
             'exclude = kmod-elx-lpfc*'
         ])
         self.proxy = self.__configuration__.get('proxy')

@@ -10,7 +10,7 @@ log = logging.getLogger('press.plugins.server_management')
 
 class OMSADebian(TargetExtension):
     dist = ''
-    mirrorbase = 'http://mirror.rackspace.com/dell/community/ubuntu'
+    mirrorbase = 'https://mirror.rackspace.com/dell/community/ubuntu'
     component = 'openmanage'
 
     def write_sources(self):
@@ -65,7 +65,7 @@ class OMSARedHat(TargetExtension):
 
     def __init__(self, target_obj):
         self.omsa_bootstrap_url = \
-            'http://mirror.rackspace.com/dell/hardware/dsu/bootstrap.cgi'
+            'https://mirror.rackspace.com/dell/hardware/dsu/bootstrap.cgi'
         self.proxy = self.__configuration__.get('proxy')
         self.base_omsa_packages = ['srvadmin-all']
         self.gen12_omsa_packages = ['srvadmin-idrac7', 'srvadmin-idracadm7']
@@ -75,11 +75,11 @@ class OMSARedHat(TargetExtension):
                           'dell-system-update_independent'
         self.gen14_chassis = 'R740'
         self.gen14_gpg_key = \
-            'http://linux.dell.com/repo/hardware/dsu/public.key'
+            'https://linux.dell.com/repo/hardware/dsu/public.key'
         # TODO Will need to modify URL in OMSARHEL6() class if/when EL6 verison is available
-        self.gen14_tmp_repo_url = 'http://mirror.rackspace.com/omsa91/EL7/'
+        self.gen14_tmp_repo_url = 'https://mirror.rackspace.com/omsa91/EL7/'
         self.gen14_tmp_boorstrap_url = \
-            'http://linux.dell.com/repo/hardware/dsu/bootstrap.cgi'
+            'https://linux.dell.com/repo/hardware/dsu/bootstrap.cgi'
         self.gen14_tmp_repo_name = 'omsa91'
 
         super(OMSARedHat, self).__init__(target_obj)
@@ -91,7 +91,7 @@ class OMSARedHat(TargetExtension):
         wget_command = 'wget -q -O - {} | bash'.format(url)
         if self.proxy:
             wget_command = 'export http_proxy=http://{0} ' \
-                           'HTTPS_PROXY=http://{0} ; {1}'.format(self.proxy,
+                           'HTTPS_PROXY=https://{0} ; {1}'.format(self.proxy,
                                                                  wget_command)
         self.target.chroot(wget_command)
 
