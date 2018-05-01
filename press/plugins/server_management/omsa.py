@@ -91,7 +91,7 @@ class OMSARedHat(TargetExtension):
         wget_command = 'wget -q -O - {} | bash'.format(url)
         if self.proxy:
             wget_command = 'export http_proxy=http://{0} ' \
-                           'HTTPS_PROXY=https://{0} ; {1}'.format(self.proxy,
+                           'https_proxy=http://{0} ; {1}'.format(self.proxy,
                                                                  wget_command)
         self.target.chroot(wget_command)
 
