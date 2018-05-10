@@ -1,4 +1,5 @@
-#
+
+INTERFACES_TEMPLATE = """#
 # https://wiki.debian.org/NetworkConfiguration
 #
 
@@ -39,3 +40,4 @@ iface {{ network.device }} {{'inet6' if network.type == 'AF_INET6' else 'inet'}}
 {% endfor %}
 {% endif %}
 {% endfor %}
+"""
