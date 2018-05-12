@@ -1,4 +1,5 @@
 class FileSystemCreateException(Exception):
+
     def __init__(self, fs_type, fs_command, attr_str):
         self.fs_type = fs_type
         self.fs_command = fs_command
@@ -52,4 +53,8 @@ class NetworkConfigurationError(ConfigurationError):
 
 
 class HookError(Exception):
+    pass
+
+
+class PressOrchestrationError(Exception):
     pass

@@ -11,6 +11,7 @@ log = logging.getLogger(__name__)
 
 class LVMError(Exception):
     """Base class for exceptions in this module."""
+
     def __init__(self, msg):
         self.msg = msg
 
@@ -32,10 +33,9 @@ class LVM(object):
         """
         # List of required system binaries
         self.binaries = [
-            'pvcreate', 'pvremove', 'pvdisplay',
-            'vgcreate', 'vgremove', 'vgdisplay',
-            'lvcreate', 'lvremove', 'lvdisplay',
-            'vgchange', 'pvs', 'vgs'
+            'pvcreate', 'pvremove', 'pvdisplay', 'vgcreate', 'vgremove',
+            'vgdisplay', 'lvcreate', 'lvremove', 'lvdisplay', 'vgchange', 'pvs',
+            'vgs'
         ]
 
     @staticmethod
@@ -114,9 +114,11 @@ class LVM(object):
         # physical_volumeS should always be a list becaouse it is plural
         # Justification: 'Explicit is better than implicit' PEP 20
         pe_size = self.bytestring(pe_size)
-        log.info('Creating VG: %s, PV: %s, PE/LE Size: %s' % (vg_name, physical_volumes, pe_size))
+        log.info('Creating VG: %s, PV: %s, PE/LE Size: %s' %
+                 (vg_name, physical_volumes, pe_size))
         physical_volumes = ' '.join(physical_volumes)
-        command = 'vgcreate --physicalextentsize %s %s %s' % (pe_size, vg_name, physical_volumes)
+        command = 'vgcreate --physicalextentsize %s %s %s' % (pe_size, vg_name,
+                                                              physical_volumes)
         return self.__execute(command)
 
     def vgremove(self, group_label):
@@ -146,8 +148,11 @@ class LVM(object):
         """
         Create a logical volume using lvcreate command line tool.
         """
-        log.info('Creating Volume Group: %s, Extents: %s, VG: %s' % (lv_name, extents, vg_name))
-        create_command = 'lvcreate --yes --extents %s -n %s %s' % (extents, lv_name, vg_name)
+        log.info('Creating Volume Group: %s, Extents: %s, VG: %s' %
+                 (lv_name, extents, vg_name))
+        create_command = 'lvcreate --yes --extents %s -n %s %s' % (extents,
+                                                                   lv_name,
+                                                                   vg_name)
         self.__execute(create_command)
 
     def lvdisplay(self, combined_label=''):
@@ -200,5 +205,3 @@ class LVM(object):
         if not out.stdout:
             return list()
         return [pv.strip() for pv in out.splitlines()]
-
-

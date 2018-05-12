@@ -3,7 +3,6 @@ from press.exceptions import PressCriticalException
 from press.helpers.mdadm import MDADM
 from size import Size
 
-
 log = logging.getLogger(__name__)
 
 
@@ -14,8 +13,16 @@ class SoftwareRAID(object):
 class MDRaid(SoftwareRAID):
     raid_type = 'mdadm'
 
-    def __init__(self, devname, level, members, spare_members=None, size=0, file_system=None, mount_point=None,
-                 fsck_option=0, pv_name=None):
+    def __init__(self,
+                 devname,
+                 level,
+                 members,
+                 spare_members=None,
+                 size=0,
+                 file_system=None,
+                 mount_point=None,
+                 fsck_option=0,
+                 pv_name=None):
         """
         Logical representation of a mdadm controlled RAID
         :param devname: /dev/mdX
@@ -45,7 +52,8 @@ class MDRaid(SoftwareRAID):
 
         for partition in members:
             if not partition.allocated:
-                raise PressCriticalException('Attempted to use unlinked partition')
+                raise PressCriticalException(
+                    'Attempted to use unlinked partition')
             disks.append(partition.devname)
 
         return disks
@@ -53,7 +61,8 @@ class MDRaid(SoftwareRAID):
     def calculate_size(self):
         for member in self.members:
             if not member.allocated:
-                raise PressCriticalException('Member is not allocated, cannot calculate size')
+                raise PressCriticalException(
+                    'Member is not allocated, cannot calculate size')
 
         if self.level == 0:
             accumulated_size = Size(0)
@@ -72,11 +81,12 @@ class MDRaid(SoftwareRAID):
         spare_partitions = self._get_partition_devnames(self.spare_members)
 
         log.info('Building Software RAID %s' % self.devname)
-        self.mdadm.create(self.devname,
-                          self.level,
-                          member_partitions,
-                          spare_partitions,
-                          )
+        self.mdadm.create(
+            self.devname,
+            self.level,
+            member_partitions,
+            spare_partitions,
+        )
 
     def stop(self):
         self.mdadm.stop(self.devname)
@@ -133,13 +143,17 @@ class MDRaid(SoftwareRAID):
 
         gen = ''
         if method == 'UUID':
-            gen += '# DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % (self.devname, label or '', uuid)
+            gen += '# DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % (self.devname,
+                                                            label or '', uuid)
         elif method == 'LABEL' and label:
-            gen += '# DEVNAME=%s\tUUID=%s\nLABEL=%s\t\t' % (self.devname, uuid, label)
+            gen += '# DEVNAME=%s\tUUID=%s\nLABEL=%s\t\t' % (self.devname, uuid,
+                                                            label)
         else:
-            gen += '# UUID=%s\tLABEL=%s\n%s\t\t' % (uuid, label or '', self.devname)
-        gen += '%s\t\t%s\t\t%s\t\t%s %s\n\n' % (
-            self.mount_point or 'none', self.file_system, options, dump, fsck_option)
+            gen += '# UUID=%s\tLABEL=%s\n%s\t\t' % (uuid, label or '',
+                                                    self.devname)
+        gen += '%s\t\t%s\t\t%s\t\t%s %s\n\n' % (self.mount_point or 'none',
+                                                self.file_system, options, dump,
+                                                fsck_option)
 
         return gen
 

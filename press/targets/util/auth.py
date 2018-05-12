@@ -35,7 +35,14 @@ def format_groupadd(name, gid=None, system=False):
     return 'groupadd %s %s' % (' '.join(options), name)
 
 
-def format_useradd(name, uid=None, group='', groups=(), home_dir='', shell='', create_home=True, system=False):
+def format_useradd(name,
+                   uid=None,
+                   group='',
+                   groups=(),
+                   home_dir='',
+                   shell='',
+                   create_home=True,
+                   system=False):
     options = list()
     if uid is not None:
         options.append('--uid %d' % uid)

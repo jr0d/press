@@ -1,11 +1,8 @@
 import json
-import os
 import yaml
+import yaml.scanner
 
-SEARCH_PATHS = ['.', os.path.expanduser('~/.press'), '/etc/press']
-ENVIRONMENT_FILENAME = 'environment.yaml'
-
-environment_cache = {}
+from press.exceptions import PressCriticalException
 
 
 def configuration_from_yaml(data):
@@ -16,33 +13,34 @@ def configuration_from_json(data):
     return json.loads(data)
 
 
-def configuration_from_file(path, config_type='yaml'):
+def deduce_from_extension(path):
+    yaml_extensions = ['yml', 'yaml']
+    extension = path.split('.')[-1].lower()
+
+    if extension in yaml_extensions:
+        return 'yaml'
+    if extension == 'json':
+        return 'json'
+
+
+def configuration_from_file(path, config_type=None):
+    if not config_type:
+        config_type = deduce_from_extension(path)
+
     with open(path) as fp:
         if config_type == 'yaml':
             return configuration_from_yaml(fp.read())
-        if config_type == 'json':
+        elif config_type == 'json':
             return configuration_from_json(fp.read())
+        else:
+            # Brute force
+            try:
+                return configuration_from_yaml(fp.read())
+            except yaml.scanner.ScannerError:
+                pass
 
-
-def find_environment_configuration():
-    for d in SEARCH_PATHS:
-        filename = os.path.join(d, ENVIRONMENT_FILENAME)
-        if os.path.isfile(filename):
-            return filename
-
-
-def set_environment_from_file(path=None):
-    global environment_cache
-
-    if not path:
-        path = find_environment_configuration()
-
-    try:
-        set_environment(configuration_from_file(path, config_type='yaml'))
-    except OSError:
-        pass
-
-
-def set_environment(environment):
-    global environment_cache
-    environment_cache.update(environment)
+            try:
+                return configuration_from_json(fp.read())
+            except ValueError:
+                raise PressCriticalException(
+                    'Could not parse configuration file at {}'.format(path))

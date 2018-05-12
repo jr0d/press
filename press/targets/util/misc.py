@@ -1,6 +1,7 @@
 import os
 import shlex
 
+
 def join_root(root, path):
     return os.path.join(root, path.lstrip('/'))
 
@@ -19,5 +20,13 @@ def opts_modifier(l, appending, removing, quoted=True):
     if appending:
         options += appending
     if quoted:
-        return '%s=\"%s\"' % (var, ' '.join(options))
-    return '%s=%s' % (var, ' '.join(options))
+        return '{}=\"{}\"'.format(var, ' '.join(options))
+    return '{}={}'.format(var, ' '.join(options))
+
+
+def replace_grub_root_partition(line, default_grub_root_partition, modifying):
+    """
+        This function will force grub to detect EFI partition.
+        As grub is not smart enough to detect EFI partition
+    """
+    return line.replace(default_grub_root_partition, modifying)

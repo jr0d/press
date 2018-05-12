@@ -11,7 +11,13 @@ log = logging.getLogger(__name__)
 
 
 class Disk(object):
-    def __init__(self, devname=None, devlinks=None, devpath=None, partition_table=None, size=0,
+
+    def __init__(self,
+                 devname=None,
+                 devlinks=None,
+                 devpath=None,
+                 partition_table=None,
+                 size=0,
                  sector_size=512):
         """
         """
@@ -22,21 +28,31 @@ class Disk(object):
         self.partition_table = partition_table
         self.sector_size = sector_size
 
-    def new_partition_table(self, table_type, partition_start=1048576, alignment=1048576):
+    def new_partition_table(self,
+                            table_type,
+                            partition_start=1048576,
+                            alignment=1048576):
         """Instantiate and link a PartitionTable object to Disk instance
         """
-        self.partition_table = PartitionTable(table_type,
-                                              self.size.bytes,
-                                              partition_start=partition_start,
-                                              alignment=alignment,
-                                              sector_size=self.sector_size)
+        self.partition_table = PartitionTable(
+            table_type,
+            self.size.bytes,
+            partition_start=partition_start,
+            alignment=alignment,
+            sector_size=self.sector_size)
 
     def __repr__(self):
         return '%s: %s' % (self.devname, self.size.humanize)
 
 
 class PartitionTable(object):
-    def __init__(self, table_type, size, partition_start=1048576, alignment=1048576, sector_size=512):
+
+    def __init__(self,
+                 table_type,
+                 size,
+                 partition_start=1048576,
+                 alignment=1048576,
+                 sector_size=512):
         """Logical representation of a partition
         """
 
@@ -61,10 +77,12 @@ class PartitionTable(object):
         if self.partitions:
             if self.size < self.current_usage + partition.size:
                 raise PartitionValidationError(
-                    'The partition is too big. %s < %s' % (self.size - self.current_usage, partition.size))
+                    'The partition is too big. %s < %s' %
+                    (self.size - self.current_usage, partition.size))
         elif self.size < partition.size + self.partition_start:
-            raise PartitionValidationError(
-                'The partition is too big. %s < %s' % (self.size - self.current_usage, partition.size))
+            raise PartitionValidationError('The partition is too big. %s < %s' %
+                                           (self.size - self.current_usage,
+                                            partition.size))
 
     def calculate_aligned_size(self, size):
         return size + self.alignment - size % self.alignment
@@ -98,7 +116,8 @@ class PartitionTable(object):
             return self.partition_start
         usage = self.partition_start
         for partition in self.partitions:
-            usage += partition.size + (self.alignment - partition.size % self.alignment)
+            usage += partition.size + (
+                self.alignment - partition.size % self.alignment)
         return usage
 
     @property
@@ -121,7 +140,10 @@ class PartitionTable(object):
 
     @property
     def physical_volumes(self):
-        return [partition for partition in self.partitions if 'lvm' in partition.flags]
+        return [
+            partition for partition in self.partitions
+            if 'lvm' in partition.flags
+        ]
 
     def add_partition(self, partition):
         if partition.percent_string:
@@ -142,23 +164,23 @@ class PartitionTable(object):
         if self.is_gpt \
                 and self.partition_end.bytes + adjusted_size.bytes > self.size.bytes - GPT_BACKUP_SIZE:
             # parted reserves 17408 bytes for a gpt backup at the end of the disk
-            adjusted_size -= self.partition_end + adjusted_size - self.size - Size(GPT_BACKUP_SIZE)
+            adjusted_size -= self.partition_end + adjusted_size - self.size - Size(
+                GPT_BACKUP_SIZE)
 
         if self.is_msdos and self.partition_end + adjusted_size == self.size:
             # 100% full - 1, the last byte overruns disk geometry
             adjusted_size.bytes -= 1
 
         partition.size = adjusted_size
-        log.info('Adding partition: %s size: %d, flags: %s' % (partition.name,
-                                                               partition.size.bytes,
-                                                               partition.flags))
+        log.info('Adding partition: %s size: %d, flags: %s' %
+                 (partition.name, partition.size.bytes, partition.flags))
         self._validate_partition(partition)
         # allocate the partition (mapped to the physical world)
         partition.allocated = True
         self.partitions.append(partition)
         self.partition_end += adjusted_size
-        log.debug('Partition end: %d, table size %d' % (self.partition_end.bytes,
-                                                        self.size.bytes))
+        log.debug('Partition end: %d, table size %d' %
+                  (self.partition_end.bytes, self.size.bytes))
         if self.size < self.partition_end:
             raise PartitionValidationError('Logic is wrong, this is too big')
             # update partition size
@@ -173,7 +195,8 @@ class PartitionTable(object):
         return Size((self.size - self.partition_start).bytes * percent)
 
     def __repr__(self):
-        out = 'Table: %s (%s / %s)\n' % (self.type, self.current_usage, self.size)
+        out = 'Table: %s (%s / %s)\n' % (self.type, self.current_usage,
+                                         self.size)
         for idx, partition in enumerate(self.partitions):
             out += '%d: %s %s\n' % (idx, partition.name, partition.size)
         return out
@@ -187,8 +210,13 @@ class Partition(object):
     enumerate the /dev/link
     """
 
-    def __init__(self, type_or_name, size_or_percent, flags=None,
-                 file_system=None, mount_point=None, fsck_option=0):
+    def __init__(self,
+                 type_or_name,
+                 size_or_percent,
+                 flags=None,
+                 file_system=None,
+                 mount_point=None,
+                 fsck_option=0):
         """
         Constructor:
 
@@ -239,13 +267,17 @@ class Partition(object):
 
         gen = ''
         if method == 'UUID':
-            gen += '# DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % (self.devname, label or '', uuid)
+            gen += '# DEVNAME=%s\tLABEL=%s\nUUID=%s\t\t' % (self.devname,
+                                                            label or '', uuid)
         elif method == 'LABEL' and label:
-            gen += '# DEVNAME=%s\tUUID=%s\nLABEL=%s\t\t' % (self.devname, uuid, label)
+            gen += '# DEVNAME=%s\tUUID=%s\nLABEL=%s\t\t' % (self.devname, uuid,
+                                                            label)
         else:
-            gen += '# UUID=%s\tLABEL=%s\n%s\t\t' % (uuid, label or '', self.devname)
-        gen += '%s\t\t%s\t\t%s\t\t%s %s\n\n' % (
-            self.mount_point or 'none', self.file_system, options, dump, fsck_option)
+            gen += '# UUID=%s\tLABEL=%s\n%s\t\t' % (uuid, label or '',
+                                                    self.devname)
+        gen += '%s\t\t%s\t\t%s\t\t%s %s\n\n' % (self.mount_point or 'none',
+                                                self.file_system, options, dump,
+                                                fsck_option)
 
         return gen
 

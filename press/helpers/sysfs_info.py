@@ -37,6 +37,7 @@ class SysFSInfo(object):
 
 
 class AlignmentInfo(SysFSInfo):
+
     def __init__(self, devpath):
         self.attributes = {
             'alignment_offset': (None, 'alignment_offset'),

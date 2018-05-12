@@ -1,7 +1,6 @@
 import logging
 from press.helpers.cli import run
 
-
 log = logging.getLogger(__name__)
 
 
@@ -24,11 +23,7 @@ def kexec(kernel, initrd, layout, kernel_type='bzImage', append=None):
     append = append or []
     append.append('root=UUID=%s' % root_uuid)
     command = 'kexec --type=%s --initrd=%s --append="%s" %s' % (
-        kernel_type,
-        initrd,
-        ' '.join(append),
-        kernel
-    )
+        kernel_type, initrd, ' '.join(append), kernel)
     log.info('Kexec command: %s' % command)
     log.info('Goodbye cruel world')
     run(command)

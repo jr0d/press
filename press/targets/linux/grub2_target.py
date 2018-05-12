@@ -103,11 +103,15 @@ class Grub2(Target):
                 self.chroot("{} {}".format(command, disk))
 
     def update_grub_configuration(self, match, newvalue):
-        grub_configuration = deployment.read(self.join_root(self.grub2_cmdline_config_path))
-        log.info('Setting {} in {}'.format(newvalue, self.grub2_cmdline_config_path))
-        updated_grub_configuration = deployment.replace_line_matching(grub_configuration, match,
-                                                                      newvalue)
-        deployment.write(self.join_root(self.grub2_cmdline_config_path), updated_grub_configuration)
+        grub_configuration = deployment.read(
+            self.join_root(self.grub2_cmdline_config_path))
+        log.info('Setting {} in {}'.format(newvalue,
+                                           self.grub2_cmdline_config_path))
+        updated_grub_configuration = deployment.replace_line_matching(
+            grub_configuration, match, newvalue)
+        deployment.write(
+            self.join_root(self.grub2_cmdline_config_path),
+            updated_grub_configuration)
 
     def grub_disable_recovery(self):
         match = 'GRUB_DISABLE_RECOVERY'

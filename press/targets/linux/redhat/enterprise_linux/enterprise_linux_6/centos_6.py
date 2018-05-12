@@ -7,4 +7,3 @@ log = logging.getLogger(__name__)
 
 class CentOS6Target(EL6Target):
     name = 'centos_6'
-

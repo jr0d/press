@@ -1,7 +1,5 @@
-
 import imp
 import logging
-
 
 from press import exceptions
 
@@ -18,9 +16,11 @@ def get_module(module_name, path):
 
 def register_extension(cls, run_method='run'):
     if not hasattr(cls, '__extends__'):
-        raise exceptions.PressCriticalException('__extends__ attribute is missing')
+        raise exceptions.PressCriticalException(
+            '__extends__ attribute is missing')
     if not hasattr(cls, run_method):
-        raise exceptions.PressCriticalException('Run method is missing from class')
+        raise exceptions.PressCriticalException(
+            'Run method is missing from class')
     log.info('Extending %s target using %s' % (cls.__extends__, cls.__name__))
     target_extensions.append(cls)
 
