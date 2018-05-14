@@ -44,7 +44,7 @@ class UDevHelper(object):
             return None
         return udisk
 
-    def discover_valid_storage_devices(self, fc_enabled=False, loop_only=False):
+    def discover_valid_storage_devices(self, fc_enabled=False, nvme_enabled=False, loop_only=False):
         """
         Kind of ugly, but gets the job done. It strips devices we don't
         care about, such as cd roms, device mapper block devices, loop, and fibre channel.
@@ -52,17 +52,21 @@ class UDevHelper(object):
         """
         invalid_id_type = ['cd', 'usb']
         invalid_major = ['253', '254', '1'] # 253/254 are LVM/DM, 1 is ramdisk
+        nvme_major = '259'
         loop_major = '7'
 
         disks = self.get_disks()
 
         pruned = list()
         fc_devices = list()
+        nvme_devices = list()
         loop_devices = list()
 
         for disk in disks:
             if '-fc-' in disk.get('ID_PATH', ''):
                 fc_devices.append(disk)
+            elif disk.get('MAJOR') == nvme_major:
+                nvme_devices.append(disk)
             elif disk.get('MAJOR') == loop_major:
                 loop_devices.append(disk)
             elif (disk.get('ID_TYPE') in invalid_id_type or
@@ -75,9 +79,14 @@ class UDevHelper(object):
             return loop_devices
 
         if fc_enabled:
-            return pruned + fc_devices
+            pruned += fc_devices
 
-        return pruned
+        if nvme_enabled:
+            pruned += nvme_devices
+
+        # This is the default behavior if not sorted by name (sda, sdb, etc)
+        # Making this explicit instead of assumed.
+        return sorted(pruned, key=lambda k: k['DEVPATH'])
 
     def yield_mapped_devices(self):
         disks = self.get_disks()

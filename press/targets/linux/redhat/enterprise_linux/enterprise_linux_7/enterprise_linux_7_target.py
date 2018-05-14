@@ -40,9 +40,11 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
             _required_packages += ['grub2-efi', 'efibootmgr', 'shim']
             self.grub2_config_path = '/boot/efi/EFI/{}/grub.cfg'.format(os_id)
             self.grub2_efi_command = ('efibootmgr --create --gpt '
-                                      '--disk /dev/sda --part 1 --write-signature '
+                                      '--disk {} --part 1 --write-signature '
                                       '--label "{}" '
-                                      '--loader /EFI/{}/shim.efi'.format(os_label, os_id))
+                                      '--loader /EFI/{}/shim.efi'.format(self.disk_target,
+                                                                         os_label,
+                                                                         os_id))
         if not self.packages_exist(_required_packages):
             self.baseline_yum(self.proxy)
             if self.install_packages(_required_packages):

@@ -185,6 +185,7 @@ example:
 example:
     
     use_fiber_channel: false
+    use_nvm_express: false
     loop_only: false
     partition_tables:
     -

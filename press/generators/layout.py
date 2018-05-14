@@ -416,7 +416,9 @@ def set_disk_labels(layout, layout_config):
         else:
             LOG.info('Booting in UEFI mode, using gpt')
             label = 'gpt'
-            add_efi_boot_partition(partition_table)
+            # Only install boot partition on "first" RAID
+            if layout.disks.keys().index(disk.devname) == 0:
+                add_efi_boot_partition(partition_table)
 
         partition_table['label'] = label
 

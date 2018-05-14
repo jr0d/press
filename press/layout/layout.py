@@ -26,7 +26,7 @@ class Layout(object):
     """
 
     def __init__(self,
-                 use_fibre_channel=False, loop_only=False,
+                 use_fibre_channel=False, use_nvm_express=False, loop_only=False,
                  parted_path='/sbin/parted'):
         """
         Docs, maybe later
@@ -40,9 +40,11 @@ class Layout(object):
 
         self.committed = False
         self.fc_enabled = use_fibre_channel
+        self.nvme_enabled = use_nvm_express
         self.parted_path = parted_path
         self.udev = UDevHelper()
         self.udisks = self.udev.discover_valid_storage_devices(fc_enabled=self.fc_enabled,
+                                                               nvme_enabled=self.nvme_enabled,
                                                                loop_only=loop_only)
 
         if not self.udisks:
