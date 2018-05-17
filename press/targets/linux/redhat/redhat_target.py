@@ -177,7 +177,7 @@ class RedhatTarget(LinuxTarget):
         Check to see if we need proxy, and enable in yum.conf
         Check if we are 'rhel' and if so add base repo
         """
-        os_name = self.get_os_release_value('NAME')
+        os_id = self.get_el_release_value('os')
         short_version  = self.get_el_release_value('short_version')
         rhel_repo_name = 'rhel_base'
 
@@ -192,7 +192,7 @@ class RedhatTarget(LinuxTarget):
 
         if proxy:
             self.enable_yum_proxy(proxy)
-        if 'Red Hat' in os_name:
+        if 'Red Hat' in os_id:
             self.add_repo(rhel_repo_name, rhel_repo_url, gpgkey=None)
 
     def revert_yum(self, proxy):
