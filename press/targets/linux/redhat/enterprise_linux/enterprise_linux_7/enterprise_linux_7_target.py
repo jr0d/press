@@ -31,7 +31,10 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
         os_id = self.get_el_release_value('os')
         if 'red hat' in os_id.lower():
             return 'redhat', 'Red Hat Enterprise Linux'
-        return 'centos', 'CentOS Linux'
+        elif 'oracle' in os_id.lower():
+            return 'redhat', 'Oracle Linux'
+        else:
+            return 'centos', 'CentOS Linux'
 
     def check_for_grub(self):
         _required_packages = ['grub2', 'grub2-tools']
