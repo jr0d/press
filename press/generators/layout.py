@@ -53,6 +53,7 @@ def __get_parted_path():
     paths = yaml.load(data)
     return paths.get('parted') or PARTED_PATH
 
+
 _layout_defaults = dict(
     # TODO: Possibly load these from a yaml, defaults.yaml
     use_fibre_channel=False,
@@ -399,7 +400,10 @@ def set_disk_labels(layout, layout_config):
             disk = layout.find_device_by_ref(partition_table['disk'])
 
         if not sysfs_info.has_efi():
-            if disk.size.over_2t:
+            if disk is None:
+                raise GeneratorError('Unable to find proper disk to install OS. '
+                                     'Please check if virtual media is enabled.')
+            elif disk.size.over_2t:
                 LOG.info('%s is over 2.2TiB, using gpt' % disk.devname)
                 label = 'gpt'
                 if not layout_config.get('no_bios_boot_partition'):
@@ -491,4 +495,3 @@ def layout_from_config(layout_config):
             layout.add_volume_group_from_model(vg)
 
     return layout
-

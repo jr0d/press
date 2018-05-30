@@ -132,16 +132,7 @@ class OMSARedHat(TargetExtension):
 
 class OMSARHEL7(OMSARedHat):
     __extends__ = 'enterprise_linux_7'
-    def install_openmanage(self):
-        """
-         TODO remove this workaround when smbios packages are fixed.For now if os_name does not include 'Red Hat' add tmp CentOS repo, and install smbios packages
-        """
-        os_name = self.target.get_os_release_value('NAME')
-        if 'Red Hat' not in os_name:
-            self.target.add_repo('centos7-common', 'https://intra.mirror.rackspace.com/kickstart/rackspace-centos7-x86_64-common/', None)
-            self.target.install_packages(['libsmbios', 'smbios-utils-bin'])
-            self.target.remove_repo('centos7-common')
-        self.target.install_packages(self.open_manage_packages())
+
 
 class OMSARHEL6(OMSARedHat):
     __extends__ = 'enterprise_linux_6'
