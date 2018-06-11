@@ -1,6 +1,4 @@
 import logging
-import os
-from press.helpers import deployment
 from press.targets.target_base import TargetExtension
 
 log = logging.getLogger('press.plugins.server_management')
@@ -13,11 +11,18 @@ class VMWareToolsDebian(TargetExtension):
         log.info('Install vmware tools')
         self.target.install_packages(['open-vm-tools', 'open-vm-tools-dkms'])
 
+
 class VMWareToolsUbuntu1404(VMWareToolsDebian):
     __extends__ = 'ubuntu_1404'
 
+
 class VMWareToolsUbuntu1604(VMWareToolsDebian):
     __extends__ = 'ubuntu_1604'
+
+
+class VMWareToolsUbuntu1804(VMWareToolsDebian):
+    __extends__ = 'ubuntu_1804'
+
 
 class VMWareToolsEL(TargetExtension):
     __configuration__ = {}
@@ -38,8 +43,10 @@ class VMWareToolsEL(TargetExtension):
         self.install_vmware_tools()
         self.target.revert_yum(self.proxy)
 
+
 class VMWareToolsEL7(VMWareToolsEL):
     __extends__ = 'enterprise_linux_7'
+
 
 class VMWareToolsEL6(VMWareToolsEL):
     __extends__ = 'enterprise_linux_6'

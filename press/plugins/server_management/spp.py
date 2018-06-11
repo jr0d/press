@@ -22,7 +22,8 @@ class SPPDebian(TargetExtension):
 
     def write_sources(self):
         for source_name, source_description in self.sources_to_add.items():
-            log.info('Creating {source_description} APT sources file'.format(source_description=source_description))
+            log.info('Creating {source_description} APT sources file'.format(
+                source_description=source_description))
             sources_path = self.join_root(
                 '/etc/apt/sources.list.d/hp-{source_name}.list'.format(source_name=source_name))
             source = '\n'.join([
@@ -77,6 +78,11 @@ class SPPUbuntu1604(SPPDebian):
     dist = 'xenial'
 
 
+class SPPUbuntu1804(SPPDebian):
+    __extends__ = 'ubuntu_1804'
+    dist = 'bionic'
+
+
 class SPPRHEL(TargetExtension):
     __configuration__ = {}  # Filled at runtime
 
@@ -88,8 +94,10 @@ class SPPRHEL(TargetExtension):
             raise ServerManagementException(
                 '{} is not present. Verify /sys is present and this is an HP chassis'.format(
                     self.dmi_product_name))
-        self.hp_repos = {'spp-{generation}'.format(generation=self.generation): 'HP Service Pack for Proliant',
-                         'stk': 'HP Proliant Scripting Toolkit'}
+        self.hp_repos = {
+            'spp-{generation}'.format(generation=self.generation): 'HP Service Pack for Proliant',
+            'stk': 'HP Proliant Scripting Toolkit'
+        }
         self.repo_file = '/etc/yum.repos.d/hp-{repo_id}.repo'
         self.repo_template = '\n'.join([
             '[hp-{repo_id}]',

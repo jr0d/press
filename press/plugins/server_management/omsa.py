@@ -61,6 +61,11 @@ class OMSAUbuntu1604(OMSADebian):
     dist = 'xenial'
 
 
+class OMSAUbuntu1804(OMSADebian):
+    __extends__ = 'ubuntu_1804'
+    dist = 'bionic'
+
+
 class OMSARedHat(TargetExtension):
     __configuration__ = {}  # Filled at runtime
 
