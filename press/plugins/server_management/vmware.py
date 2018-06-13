@@ -7,9 +7,11 @@ log = logging.getLogger('press.plugins.server_management')
 class VMWareToolsDebian(TargetExtension):
     __configuration__ = {}
 
+    open_vm_tools = ['open-vm-tools', 'open-vm-tools-dkms']
+
     def run(self):
         log.info('Install vmware tools')
-        self.target.install_packages(['open-vm-tools', 'open-vm-tools-dkms'])
+        self.target.install_packages(self.open_vm_tools)
 
 
 class VMWareToolsUbuntu1404(VMWareToolsDebian):
@@ -23,6 +25,7 @@ class VMWareToolsUbuntu1604(VMWareToolsDebian):
 class VMWareToolsUbuntu1804(VMWareToolsDebian):
     __extends__ = 'ubuntu_1804'
 
+    open_vm_tools = ['open-vm-tools']
 
 class VMWareToolsEL(TargetExtension):
     __configuration__ = {}
