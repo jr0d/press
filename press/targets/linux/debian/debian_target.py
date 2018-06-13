@@ -17,6 +17,7 @@ class DebianTarget(LinuxTarget):
     dist = ''
 
     mdadm_conf = '/etc/mdadm/mdadm.conf'
+    interfaces_path = '/etc/network/interfaces'
 
     __apt_command = 'DEBIAN_FRONTEND=noninteractive apt-get -y'
 
@@ -143,11 +144,11 @@ class DebianTarget(LinuxTarget):
         self.reconfigure_package('tzdata')
 
     def write_interfaces(self):
-        interfaces_path = self.join_root('/etc/network/interfaces')
+        interfaces_path = self.join_root(self.interfaces_path)
         if self.network_configuration:
             log.info('Writing network configuration')
-            debian_networking.write_interfaces(interfaces_path,
-                                               self.network_configuration)
+            debian_networking.write_interfaces(
+                interfaces_path, self.network_configuration, self.name)
 
     def update_debconf_for_grub(self):
         log.info('Updating debconf for grub')
