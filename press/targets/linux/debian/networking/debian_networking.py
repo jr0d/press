@@ -62,8 +62,8 @@ def write_interfaces(path, network_configuration, os_name=None):
 
     this_dir = os.path.dirname(os.path.abspath(__file__))
     if os_name == 'ubuntu_1804':
-        template = os.path.join(this_dir, 'netplan_interface.template')
+        template = os.path.join(this_dir, 'netplan_interfaces.template')
         deployment.write(path, render_template(template, network_configuration))
     else:
-        template = os.path.join(this_dir, 'interface.template')
+        template = os.path.join(this_dir, 'interfaces.template')
         deployment.write(path, render_template(template, networks))
