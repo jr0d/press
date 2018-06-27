@@ -58,7 +58,9 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
 
     def rebuild_initramfs(self):
         if not self.package_exists('dracut-config-generic'):
+            self.baseline_yum(self.proxy)
             self.install_package('dracut-config-generic')
+            self.revert_yum(self.proxy)
 
         kernels = os.listdir(self.join_root('/usr/lib/modules'))
         for kernel in kernels:
