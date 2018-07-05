@@ -63,7 +63,7 @@ class OMSAUbuntu1604(OMSADebian):
 
 class OMSAUbuntu1804(OMSADebian):
     __extends__ = 'ubuntu_1804'
-    dist = 'bionic'
+    dist = 'xenial'
 
 
 class OMSARedHat(TargetExtension):

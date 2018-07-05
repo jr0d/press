@@ -80,7 +80,7 @@ class SPPUbuntu1604(SPPDebian):
 
 class SPPUbuntu1804(SPPDebian):
     __extends__ = 'ubuntu_1804'
-    dist = 'bionic'
+    dist = 'xenial'
 
 
 class SPPRHEL(TargetExtension):
