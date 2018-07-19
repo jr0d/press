@@ -153,6 +153,9 @@ class LogicalVolume(object):
     def devlink(self):
         if not self.devlinks:
             return self.devname
+        for link in self.devlinks:
+            if os.path.split(link)[0] == '/dev/mapper':
+                return link
         return self.devlinks[0]
 
     def generate_fstab_entry(self, method='UUID'):
