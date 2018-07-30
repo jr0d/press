@@ -1,11 +1,16 @@
 import json
 import logging
+
 import requests
+
+from press.helpers.requests_retry import requests_retry_session
 
 # Disabled pesky warnings
 requests.packages.urllib3.disable_warnings()
 
 LOG = logging.getLogger('')
+
+client = requests_retry_session(30)
 
 
 class KserverLogHandler(logging.Handler):
@@ -18,7 +23,7 @@ class KserverLogHandler(logging.Handler):
     def emit(self, record):
         data = json.dumps(record.__dict__)
         try:
-            r = requests.post(self.url, data=data, headers=self.headers, verify=False)
+            r = client.post(self.url, data=data, headers=self.headers, verify=False)
             r.raise_for_status()
         except (KeyboardInterrupt, SystemExit):
             raise
@@ -31,7 +36,6 @@ def plugin_init(configuration):
     kserver_data = configuration.get('kserver')
     # suppress requests logging messages
     logging.getLogger('requests').setLevel(logging.WARNING)
-
     from requests.packages import urllib3
     urllib3.disable_warnings()
 

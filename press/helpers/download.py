@@ -1,13 +1,16 @@
 import hashlib
 import logging
 import os
-import requests
-import shutil
 import time
-import urlparse
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 from press.helpers.deployment import tar_extract
+from press.helpers.requests_retry import requests_retry_session
 
+client = requests_retry_session(30)
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +51,7 @@ class Download(object):
         if download_directory is None:
             self.download_directory = '/tmp'
 
-        parsed_url = urlparse.urlparse(self.url)
+        parsed_url = urlparse(self.url)
 
         self.url_scheme = parsed_url.scheme
 
@@ -100,7 +103,7 @@ class Download(object):
         else:
             proxies = None
 
-        ret = requests.get(self.url, stream=True, proxies=proxies)
+        ret = client.get(self.url, stream=True, proxies=proxies)
         ret.raise_for_status()
 
         content_length = int(ret.headers.get('content-length', '0'))

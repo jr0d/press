@@ -1,12 +1,16 @@
 import hashlib
 import logging
 import os
-import requests
-import urlparse
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 from press.exceptions import PressCriticalException
 from press.helpers.deployment import tar_extract
+from press.helpers.requests_retry import requests_retry_session
 
+client = requests_retry_session(30)
 
 log = logging.getLogger(__name__)
 
@@ -49,7 +53,7 @@ class ImageFile(object):
         self.filename_from_url()
 
     def filename_from_url(self):
-        parsed_url = urlparse.urlparse(self.url)
+        parsed_url = urlparse(self.url)
         self.url_scheme = parsed_url.scheme or 'file'
         filename = parsed_url.path
         if self.url_scheme == 'file':
@@ -83,7 +87,7 @@ class ImageFile(object):
         else:
             proxies = None
 
-        res = requests.get(self.url, stream=True, proxies=proxies)
+        res = client.get(self.url, stream=True, proxies=proxies)
         res.raise_for_status()
 
         content_length = int(res.headers.get('content-length', '0'))

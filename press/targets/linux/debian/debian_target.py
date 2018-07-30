@@ -2,14 +2,15 @@ import logging
 import os
 import uuid
 
-import requests
-
 from press.helpers import deployment
+from press.helpers.requests_retry import requests_retry_session
 from press.targets.linux.linux_target import LinuxTarget
 from press.targets.linux.debian.networking import debian_networking
 from press.hooks.hooks import add_hook
 
 log = logging.getLogger(__name__)
+
+client = requests_retry_session(30)
 
 
 class DebianTarget(LinuxTarget):
@@ -35,7 +36,7 @@ class DebianTarget(LinuxTarget):
     def insert_no_start_hack(self):
         log.info('Inserting NOSTART hack')
         deployment.write(self.join_root(self.__start_hack_path),
-                         self.__start_hack_script, mode=0755)
+                         self.__start_hack_script, mode=0o755)
 
     def remove_no_start_hack(self):
         log.info('Removing NOSTART hack')
@@ -92,7 +93,7 @@ class DebianTarget(LinuxTarget):
             with open(gpgkey, "r") as f:
                 key_data = f.read()
         else:
-            r = requests.get(gpgkey, stream=True)
+            r = client.get(gpgkey, stream=True)
             key_data = r.content
 
         destination = os.path.join(self.join_root(self.chroot_staging_dir), key_name)
