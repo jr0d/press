@@ -76,21 +76,9 @@ class OMSARedHat(TargetExtension):
         self.base_omsa_packages = ['srvadmin-all']
         self.gen12_omsa_packages = ['srvadmin-idrac7', 'srvadmin-idracadm7']
         self.gen12_chassis = ['R720', 'R820']
-        # Dell R740/14G work around
-        self.dell_repos = 'dell-system-update_dependent ' \
-                          'dell-system-update_independent'
-        self.gen14_chassis = 'R740'
-        self.gen14_gpg_key = \
-            'https://linux.dell.com/repo/hardware/dsu/public.key'
-        # TODO Will need to modify URL in OMSARHEL6() class if/when EL6 verison is available
-        self.gen14_tmp_repo_url = 'https://mirror.rackspace.com/omsa91/EL7/'
-        self.gen14_tmp_boorstrap_url = \
-            'https://linux.dell.com/repo/hardware/dsu/bootstrap.cgi'
-        self.gen14_tmp_repo_name = 'omsa91'
 
         super(OMSARedHat, self).__init__(target_obj)
         self.product_name = self.target.get_product_name()
-        self.is_gen14 = self.gen14_chassis in self.product_name
 
     def download_and_prepare_repositories(self, url):
         log.debug("Configuring Dell System Update repository.")
@@ -108,15 +96,6 @@ class OMSARedHat(TargetExtension):
                 packages += self.gen12_omsa_packages
         return packages
 
-    def tmp_gen14_fix(self):
-        self.target.chroot('yum-config-manager --disable ' + self.dell_repos)
-        self.target.add_repo(self.gen14_tmp_repo_name, self.gen14_tmp_repo_url,
-                             self.gen14_gpg_key)
-
-    def tmp_gen14_clean(self):
-        self.target.chroot('yum-config-manager --enable ' + self.dell_repos)
-        self.target.remove_repo(self.gen14_tmp_repo_name)
-
     def install_openmanage(self):
         self.target.install_packages(self.open_manage_packages())
 
@@ -127,11 +106,7 @@ class OMSARedHat(TargetExtension):
         self.target.baseline_yum(self.proxy)
         self.install_wget()
         self.download_and_prepare_repositories(self.omsa_bootstrap_url)
-        if self.is_gen14:
-            self.tmp_gen14_fix()
         self.install_openmanage()
-        if self.is_gen14:
-            self.tmp_gen14_clean()
         self.target.revert_yum(self.proxy)
 
 
@@ -146,12 +121,3 @@ class OMSARHEL6(OMSARedHat):
         self.target.install_packages(self.open_manage_packages())
         self.target.service_control('sblim-sfcb', 'stop')
         self.target.service_control('dataeng', 'stop')
-
-    # Temp fix for EL6 kicks with 14G servers, once RAX mirrors are synced
-    # will revert back changes
-    def tmp_gen14_fix(self):
-        url = self.gen14_tmp_boorstrap_url
-        self.download_and_prepare_repositories(url)
-
-    def tmp_gen14_clean(self):
-        pass
