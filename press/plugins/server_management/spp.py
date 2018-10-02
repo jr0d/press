@@ -49,7 +49,9 @@ class SPPDebian(TargetExtension):
                 pgp_key_file))
 
     def install_hp_packages(self):
-        self.target.install_packages(hp_packages)
+        if self.target.install_packages(hp_packages):
+            raise ServerManagementException('failed to install packages: '
+                                            '{}'.format(hp_packages))
 
     def run(self):
         self.write_sources()
@@ -120,7 +122,9 @@ class SPPRHEL(TargetExtension):
                 self.repo_file.format(repo_id=repo_id)))
 
     def install_hp_packages(self):
-        self.target.install_packages(hp_packages)
+        if self.target.install_packages(hp_packages):
+            raise ServerManagementException('failed to install packages: '
+                                            '{}'.format(hp_packages))
 
     def run(self):
         self.target.baseline_yum(self.proxy)

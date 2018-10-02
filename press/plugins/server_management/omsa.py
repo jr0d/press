@@ -1,6 +1,7 @@
 import logging
 import os
 
+from press.exceptions import ServerManagementException
 from press.helpers import deployment
 from press.targets.target_base import TargetExtension
 
@@ -33,10 +34,14 @@ class OMSADebian(TargetExtension):
             os.path.join(self.target.chroot_staging_dir, pgp_key_file)))
 
     def install_openipmi(self):
-        self.target.install_package('openipmi')
+        if self.target.install_package('openipmi'):
+            raise ServerManagementException('failed to install package: '
+                                            '{}'.format('openipmi'))
 
     def install_openmanage(self):
-        self.target.install_package('srvadmin-all')
+        if self.target.install_package('srvadmin-all'):
+            raise ServerManagementException('failed to install package: '
+                                            '{}'.format('srvadmin-all'))
 
     def run(self):
         self.write_sources()
@@ -97,7 +102,10 @@ class OMSARedHat(TargetExtension):
         return packages
 
     def install_openmanage(self):
-        self.target.install_packages(self.open_manage_packages())
+        packages = self.open_manage_packages()
+        if self.target.install_packages(packages):
+            raise ServerManagementException('failed to install packages: '
+                                            '{}'.format(packages))
 
     def install_wget(self):
         self.target.install_package('wget')

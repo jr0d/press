@@ -47,6 +47,7 @@ class RedhatTarget(LinuxTarget):
             log.error('Failed to install package {}'.format(package))
         else:
             log.info('Installed: {}'.format(package))
+        return res.returncode
 
     def install_packages(self, packages):
         command = '{} install -y --quiet {}'.format(self.yum_path,

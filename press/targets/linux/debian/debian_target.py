@@ -54,7 +54,7 @@ class DebianTarget(LinuxTarget):
             self.cache_updated = True
 
     def install_package(self, package):
-        self.install_packages([package])
+        return self.install_packages([package])
 
     def install_packages(self, packages):
         if not self.cache_updated:
