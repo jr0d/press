@@ -14,4 +14,4 @@ layout = layout_from_config(layout_config)
 
 layout.apply()
 
-print layout.generate_fstab()
+print(layout.generate_fstab())
