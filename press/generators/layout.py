@@ -357,7 +357,7 @@ def set_disk_labels(layout, layout_config):
                     # TODO: Add config option to disks,
                     # allowing user to specify the boot disk
                     # if disk == the first disk or presumed boot disk
-                    if layout.disks.keys().index(disk.devname) == 0:
+                    if list(layout.disks.keys()).index(disk.devname) == 0:
                         add_bios_boot_partition(partition_table)
             elif label == 'gpt':
                 add_bios_boot_partition(partition_table)
@@ -368,8 +368,8 @@ def set_disk_labels(layout, layout_config):
             LOG.info('Booting in UEFI mode, using gpt')
             label = 'gpt'
             # Only install boot partition on "first" drive
-            # TODO: Allow the user to specify
-            if layout.disks.keys().index(disk.devname) == 0:
+            # TODO: Allow the user to specifygit
+            if list(layout.disks.keys().index(disk.devname)) == 0:
                 add_efi_boot_partition(partition_table)
 
         partition_table['label'] = label
