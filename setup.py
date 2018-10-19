@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
 
-version = '0.5.2'
+version = '0.5.3'
 
 setup(
     name='press',
     version=version,
-    description="An OS image installer that supports customer partitioning, lvm, and software raid",
+    description="An OS image installer that supports custome partitioning, lvm, and software raid",
     long_description='',
     classifiers=[],
     # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers

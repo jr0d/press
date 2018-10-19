@@ -369,7 +369,7 @@ def set_disk_labels(layout, layout_config):
             label = 'gpt'
             # Only install boot partition on "first" drive
             # TODO: Allow the user to specifygit
-            if list(layout.disks.keys().index(disk.devname)) == 0:
+            if list(layout.disks.keys()).index(disk.devname) == 0:
                 add_efi_boot_partition(partition_table)
 
         partition_table['label'] = label
