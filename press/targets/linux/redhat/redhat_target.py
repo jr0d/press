@@ -171,6 +171,7 @@ class RedhatTarget(LinuxTarget):
         return value
 
     def baseline_yum(self, proxy):
+        # TODO: Un-raxify this
         """
         Check major version an adjust for .eus or .z path on mirror
         Check to see if we need proxy, and enable in yum.conf

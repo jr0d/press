@@ -3,6 +3,7 @@ import os
 
 import ipaddress
 
+from press.exceptions import OSImageException
 from press.helpers import deployment, sysfs_info
 from press.targets import GeneralPostTargetError
 from press.targets import util
@@ -30,7 +31,12 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
         os_id = self.get_el_release_value('os')
         if 'red hat' in os_id.lower():
             return 'redhat', 'Red Hat Enterprise Linux'
-        return 'centos', 'CentOS Linux'
+        elif 'oracle' in os_id.lower():
+            return 'redhat', 'Oracle Linux'
+        elif 'centos' in os_id.lower():
+            return 'centos', 'CentOS Linux'
+        else:
+            raise OSImageException('Could not determine EL distribution')
 
     def check_for_grub(self):
         _required_packages = ['grub2', 'grub2-tools']
