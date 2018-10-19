@@ -3,6 +3,7 @@ import os
 
 import ipaddress
 
+from press.exceptions import OSImageException
 from press.helpers import deployment, sysfs_info
 from press.targets import GeneralPostTargetError
 from press.targets import util
@@ -30,7 +31,12 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
         os_id = self.get_el_release_value('os')
         if 'red hat' in os_id.lower():
             return 'redhat', 'Red Hat Enterprise Linux'
-        return 'centos', 'CentOS Linux'
+        elif 'oracle' in os_id.lower():
+            return 'redhat', 'Oracle Linux'
+        elif 'centos' in os_id.lower():
+            return 'centos', 'CentOS Linux'
+        else:
+            raise OSImageException('Could not determine EL distribution')
 
     def check_for_grub(self):
         _required_packages = ['grub2', 'grub2-tools']
@@ -40,9 +46,9 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
             self.grub2_config_path = '/boot/efi/EFI/{}/grub.cfg'.format(os_id)
             self.grub2_efi_command = (
                 'efibootmgr --create --gpt '
-                '--disk /dev/sda --part 1 --write-signature '
+                '--disk {} --part 1 --write-signature '
                 '--label "{}" '
-                '--loader /EFI/{}/shim.efi'.format(os_label, os_id))
+                '--loader /EFI/{}/shim.efi'.format(self.disk_target, os_label, os_id))
         if not self.packages_exist(_required_packages):
             self.baseline_yum(self.proxy)
             if self.install_packages(_required_packages):
@@ -52,7 +58,9 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
 
     def rebuild_initramfs(self):
         if not self.package_exists('dracut-config-generic'):
+            self.baseline_yum(self.proxy)
             self.install_package('dracut-config-generic')
+            self.revert_yum(self.proxy)
 
         kernels = os.listdir(self.join_root('/usr/lib/modules'))
         for kernel in kernels:

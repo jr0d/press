@@ -24,12 +24,14 @@ class Layout(object):
     def __init__(self,
                  use_fibre_channel=False,
                  loop_only=False,
+                 use_nvm_express=True,
                  parted_path='/sbin/parted'):
         """
         Docs, maybe later
 
         :param use_fibre_channel:
         :param loop_only:
+        :param use_nvm_express:
         :param parted_path:
 
         :ivar self.committed: False on __init__, True after calling apply()
@@ -40,7 +42,7 @@ class Layout(object):
         self.parted_path = parted_path
         self.udev = UDevHelper()
         self.udisks = self.udev.discover_valid_storage_devices(
-            fc_enabled=self.fc_enabled, loop_only=loop_only)
+            fc_enabled=self.fc_enabled, loop_only=loop_only, nvme_enabled=use_nvm_express)
 
         if not self.udisks:
             raise PhysicalDiskException('There are no valid disks.')
