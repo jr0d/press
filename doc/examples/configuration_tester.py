@@ -1,3 +1,4 @@
+from __future__ import print_function
 from press.configuration import configuration_from_file
 from press.generators.layout import layout_from_config
 from press.logger import setup_logging
@@ -14,4 +15,4 @@ layout = layout_from_config(layout_config)
 
 layout.apply()
 
-print layout.generate_fstab()
+print(layout.generate_fstab())
