@@ -10,6 +10,8 @@ Image installer with custom partitioning
     - 12.04 (LTS)
     - 14.04 (LTS)
     - 15.04
+    - 16.04 (LTS)
+    - 18.04 (LTS)
 * Debian
     - 7 Wheezy
     - 8 Jessie
@@ -32,7 +34,7 @@ Python packages:
 * six
 
 ### Installation
-    git clone git@github.rackspace.com:OSDeployment/press.git
+    git clone git@github.rackspace.com:jr0d/press.git
     cd press/
     git checkout -b 0.4.5 origin/0.4.5
     python setup.py develop
