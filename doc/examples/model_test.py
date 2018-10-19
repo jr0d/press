@@ -1,3 +1,4 @@
+from __future__ import print_function
 from press.models.lvm import VolumeGroupModel
 from press.models.partition import PartitionTableModel
 from press.layout import EXT4, Partition, PercentString, Layout, SWAP
@@ -33,16 +34,16 @@ lv1 = LogicalVolume('lv_test1', PercentString('99%FREE'),
                     fsck_option=1)
 vg1.add_logical_volume(lv1)
 
-print vg1
+print(vg1)
 
 l1 = Layout(loop_only=True)
 
 l1.add_partition_table_from_model(pm1)
-print pv1.reference.size.bytes
+print(pv1.reference.size.bytes)
 l1.add_volume_group_from_model(vg1)
 
 for vg in l1.volume_groups:
-    print vg
+    print(vg)
 
 log.debug(l1.disks)
 log.debug(l1.disks[disk].partition_table)

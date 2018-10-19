@@ -1,3 +1,4 @@
+from __future__ import print_function
 import logging
 import sys
 
@@ -14,8 +15,8 @@ import yaml
 try:
     yaml_file = str(sys.argv[1])
 except:
-    print 'Please pass a path to a configuration file to run.'
-    print "ex. python2.7 doc/examples/end_to_end_test.py configuration/debian7.yaml"
+    print('Please pass a path to a configuration file to run.')
+    print("ex. python2.7 doc/examples/end_to_end_test.py configuration/debian7.yaml")
     sys.exit()
 
 setup_logging()
