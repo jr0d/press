@@ -15,6 +15,7 @@ class Grub(Target):
     grub_efi_bootloader_name = " "
 
     grub_install_path = 'grub-install'
+    grub_install_opts = '--recheck'
     grubby_path = 'grubby'
 
     @property
@@ -58,7 +59,7 @@ class Grub(Target):
         data = deployment.read(full_path, splitlines=True)
 
         modified = False
-        for idx in xrange(len(data)):
+        for idx in range(len(data)):
             line = data[idx]
             line = line.strip()
 
@@ -109,7 +110,7 @@ class Grub(Target):
                             self.grubby_path, root_uuid, kernel))
         for disk in self.disk_targets:
             log.info('Installing grub on {}'.format(disk))
-            self.chroot('{} {}'.format(self.grub_install_path, disk))
+            self.chroot('{} {} {}'.format(self.grub_install_path, self.grub_install_opts, disk))
             if sysfs_info.has_efi():
                 log.info('Configuring bootloader for EFI')
                 # For EFI kick to work we have to copy grub.conf from /boot/grub

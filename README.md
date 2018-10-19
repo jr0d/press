@@ -1,9 +1,6 @@
 # Press
 Image installer with custom partitioning
 
-## What is press?
-...Elevator pitch here...
-# 'Forgetful Tyrannosaurus' release 0.4.5
 ## Distro Support (baked in)
 
 * RHEL/CentOS
