@@ -1,11 +1,13 @@
 import logging
-import os
 
 from press.helpers import deployment
 from press.targets import util
-from press.targets.linux.debian.networking.interfaces_template import \
+from press.targets.linux.debian.networking.interfaces_template import (
     INTERFACES_TEMPLATE
-
+)
+from press.targets.linux.debian.networking.netplan_template import (
+    NETPLAN_TEMPLATE
+)
 
 # TODO: Remove jinja2 dependency
 from jinja2 import Environment
@@ -13,23 +15,20 @@ from jinja2 import Environment
 log = logging.getLogger(__name__)
 
 
-def render_template(template_path, networks):
+def render_template(template, networks):
     """
     Render a network configuration file using Jinja templating.
 
     Args:
-        template_path (str): The path to a file that contains Jinja templating.
+        template (str): The template to render
         networks (dict): A dictionary containing network information.
 
     Returns:
         str: A rendered unicode string derived from the Jinja template and the
             network configuration.
     """
-    if not os.path.exists(template_path):
-        log.warn('Interfaces template is missing')
-        return
     environment = Environment(trim_blocks=True, lstrip_blocks=True)
-    template = environment.from_string(INTERFACES_TEMPLATE)
+    template = environment.from_string(template)
     log.debug('Rendering: %s' % networks)
     data = template.render(dict(networks=networks))
     log.debug('Write:\n%s' % data)
@@ -63,10 +62,9 @@ def write_interfaces(path, network_configuration, os_name=None):
                 network['device'] = device.devname
                 network['type'] = network.get('type', 'AF_INET')
 
-    this_dir = os.path.dirname(os.path.abspath(__file__))
     if os_name == 'ubuntu_1804':
-        template = os.path.join(this_dir, 'netplan_interface.template')
+        template = NETPLAN_TEMPLATE
         deployment.write(path, render_template(template, network_configuration))
     else:
-        template = os.path.join(this_dir, 'interface.template')
+        template = INTERFACES_TEMPLATE
         deployment.write(path, render_template(template, networks))

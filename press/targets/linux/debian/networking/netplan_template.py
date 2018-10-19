@@ -1,4 +1,4 @@
-#
+NETPLAN_TEMPLATE = """#
 # https://netplan.io/
 #
 network:
@@ -30,3 +30,4 @@ network:
         {% endfor %}
       {% endif %}
     {% endfor %}
+"""
