@@ -1,3 +1,4 @@
+from __future__ import print_function
 from press.models.lvm import VolumeGroupModel
 from press.models.partition import PartitionTableModel
 from press.layout import EXT4, Partition, PercentString, Layout, SWAP

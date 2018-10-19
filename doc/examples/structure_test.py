@@ -1,3 +1,4 @@
+from __future__ import print_function
 from press.layout import Size, Layout, Disk, PartitionTable, Partition, EXT4, PercentString
 
 
