@@ -10,6 +10,8 @@ Image installer with custom partitioning
     - 12.04 (LTS)
     - 14.04 (LTS)
     - 15.04
+    - 16.04 (LTS)
+    - 18.04 (LTS)
 * Debian
     - 7 Wheezy
     - 8 Jessie
