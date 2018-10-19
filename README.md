@@ -34,7 +34,7 @@ Python packages:
 * six
 
 ### Installation
-    git clone git@github.rackspace.com:OSDeployment/press.git
+    git clone git@github.rackspace.com:jr0d/press.git
     cd press/
     git checkout -b 0.4.5 origin/0.4.5
     python setup.py develop
