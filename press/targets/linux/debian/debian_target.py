@@ -148,7 +148,7 @@ class DebianTarget(LinuxTarget):
         if self.network_configuration:
             log.info('Writing network configuration')
             debian_networking.write_interfaces(
-                interfaces_path, self.network_configuration, self.name)
+                    interfaces_path, self.network_configuration)
 
     def update_debconf_for_grub(self):
         log.info('Updating debconf for grub')
