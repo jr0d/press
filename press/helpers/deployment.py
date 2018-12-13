@@ -8,7 +8,7 @@ from tempfile import mkstemp
 log = logging.getLogger(__name__)
 
 
-def recursive_makedir(path, mode=0775):
+def recursive_makedir(path, mode=0o775):
     if os.path.isdir(path):
         return False
 
@@ -39,7 +39,8 @@ def read(filename, splitlines=False):
 
     :param filename: Absolute path to a file.
     :type filename: str.
-
+    :param splitlines: split the lines or just return string
+    :type splitlines: boolean
     :return: str.
 
     """
@@ -50,7 +51,7 @@ def read(filename, splitlines=False):
     return read_data
 
 
-def write(filename, data, append=False, mode=0644):
+def write(filename, data, append=False, mode=0o644):
     """
     Writes to a file by absolute path.
 
@@ -82,6 +83,12 @@ def write(filename, data, append=False, mode=0644):
 
     # Last step lets change the file mode to specified mode
     os.chmod(filename, mode)
+
+
+def replace_line_in_file(path, match, newline, mode=0o644):
+    data = read(path)
+    new_data = replace_line_matching(data, match, newline)
+    write(path, new_data, mode=mode)
 
 
 def replace_file(path, data):
@@ -156,7 +163,7 @@ def tar_extract(archive_path, chdir=''):
         compress_method = 'j'
 
     return cli.run('%s -%sxf %s%s' % (base_tar_cmd, compress_method, archive_path,
-                                       chdir and ' -C %s' % chdir or ''))
+                                      chdir and ' -C %s' % chdir or ''))
 
 
 def create_fstab(fstab, target):
