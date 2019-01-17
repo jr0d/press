@@ -12,15 +12,32 @@ log = logging.getLogger('press.plugins.server_management')
 
 class OMSADebian(TargetExtension):
     dist = ''
-    mirrorbase = 'https://mirror.rackspace.com/dell/community/ubuntu'
-    component = 'openmanage'
+    apt_repo = 'deb https://mirror.rackspace.com/dell//community/ubuntu {dist} openmanage/{omsa_version}\n'
+    new_apt_repo = 'deb https://mirror.rackspace.com/dell/community/openmanage/{omsa_version}/{dist} {dist} main\n'
+    omsa_version = '840'
+    """
+    Details on apt_repo - http://linux.dell.com/repo/community/ubuntu/ 
+    Details on new_apt_repo - http://linux.dell.com/repo/community/openmanage/
+    
+    apt_repo is used for:
+    Debian jessie (7)
+    Debian wheezy (8)
+    Ubuntu trusty 14.04
+    Ubuntu xenial 16.04 * except R740 ** only HWE image (openstack)
+    Ubuntu bionic 18.04 * except 14gen (Rx40)
+    
+    new_apt_repo is used for:
+    Ubuntu xenial 16.04 on R740 * only HWE image (openstack)
+    with omsa_version '910'
+    
+    Ubuntu bionic 18.04 on 14gen (Rx40)
+    with omsa_version '920'
+    """
 
     def write_sources(self):
-        log.info('Creating OMSA sources file')
+        log.info('Creating OMSA sources file for {dist} version openmanage packages'.format(dist=self.omsa_version))
         sources_path = self.join_root('/etc/apt/sources.list.d/dell-omsa.list')
-        source = 'deb {} {} {}\n'.format(OMSADebian.mirrorbase,
-                                         self.dist,
-                                         self.component)
+        source = self.apt_repo.format(omsa_version=self.omsa_version, dist=self.dist)
         deployment.write(sources_path, source)
 
     def import_key(self):
@@ -65,10 +82,32 @@ class OMSAUbuntu1604(OMSADebian):
     __extends__ = 'ubuntu_1604'
     dist = 'xenial'
 
+    def __init__(self, target_obj):
+        super(OMSADebian, self).__init__(target_obj)
+        self.product_name = self.target.get_product_name()
+        # Only if is R740 change to new repo
+
+        if 'R740' in self.product_name:
+            self.apt_repo = self.new_apt_repo
+            # dataeng service from 911 fails to start, so using 910
+            self.omsa_version = '910'
+
 
 class OMSAUbuntu1804(OMSADebian):
     __extends__ = 'ubuntu_1804'
+    # This is really bionic but Dell only supports it on 14 gen servers
     dist = 'xenial'
+
+    def __init__(self, target_obj):
+        self.gen14_chassis = ['R740', 'R840', 'R940']
+        super(OMSADebian, self).__init__(target_obj)
+        self.product_name = self.target.get_product_name()
+        # if 14th gen, use new repo as 'bionic'
+        for chassis in self.gen14_chassis:
+            if chassis in self.product_name:
+                self.dist = 'bionic'
+                self.apt_repo = self.new_apt_repo
+                self.omsa_version = '920'
 
 
 class OMSARedHat(TargetExtension):
