@@ -76,6 +76,8 @@ class XFSSingleParam(XFSParam):
 
 class XFS(FileSystem):
     fs_type = 'xfs'
+    # parted uses ext2 as a catch all for fs-type 0x83h (Linux Filesystem)
+    parted_fs_type_alias = 'ext2'
     command_name = 'mkfs.xfs'
 
     xfs_required_mount_options = ['inode64', 'nobarrier']

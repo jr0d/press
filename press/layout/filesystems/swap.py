@@ -10,6 +10,7 @@ log = logging.getLogger(__name__)
 
 class SWAP(FileSystem):
     fs_type = 'swap'
+    parted_fs_type_alias = 'linux-swap'
     command_name = 'mkswap'
 
     def __init__(self, label=None, mount_options=None, **extra):
