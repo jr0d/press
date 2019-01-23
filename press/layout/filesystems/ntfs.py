@@ -17,9 +17,9 @@ class NTFS(FileSystem):
     parted_fs_type_alias = 'NTFS'
     command_name = 'mkfs.ntfs'
 
-    def __init__(self, label=None, mount_options=None, **extra):
+    def __init__(self, label=None, mount_options=None, late_uuid=True, **extra):
         super(NTFS, self).__init__(label, mount_options,
-                                   extra.get('late_uuid'))
+                                   late_uuid=late_uuid)
         self.extra = extra
 
         self.command_path = self.locate_command(self.command_name)
