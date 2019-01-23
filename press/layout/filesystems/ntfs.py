@@ -28,13 +28,11 @@ class NTFS(FileSystem):
             raise FileSystemFindCommandException(
                 'Cannot locate {} in PATH'.format(self.command_name))
 
-        self.full_command = '{command_path} {late_uuid} {quick_option} {' \
-                            'device}'
+        self.full_command = '{command_path} -U {quick_option} {device}'
 
-    def create(self, device, quick_flag=True, late_uuid=True):
+    def create(self, device, quick_flag=True):
         command = self.full_command.format(
                 command_path=self.command_path,
-                late_uuid="-U" if late_uuid else '',
                 quick_option="-f" if quick_flag else '',
                 device=device)
 
