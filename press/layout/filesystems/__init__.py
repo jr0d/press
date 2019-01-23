@@ -5,6 +5,7 @@ from press.helpers.cli import find_in_path, run
 
 class FileSystem(object):
     fs_type = ''
+    parted_fs_type_alias = ''
     default_mount_options = ('defaults',)
 
     def __init__(self, label=None, mount_options=None, late_uuid=False):

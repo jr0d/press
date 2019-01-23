@@ -12,6 +12,7 @@ from press.layout.filesystems.extended import (EXT2, EXT3, EXT4)
 from press.layout.filesystems.swap import (SWAP)
 from press.layout.filesystems.xfs import XFS
 from press.layout.filesystems.fat import FAT32, EFI
+from press.layout.filesystems.ntfs import NTFS
 from press.layout.raid import MDRaid
 from press.models.lvm import VolumeGroupModel
 from press.models.partition import PartitionTableModel
@@ -34,6 +35,44 @@ fs_selector = dict(
 
 default_use_fibre_channel = False
 default_loop_only = False
+
+
+_layout_defaults = dict(
+    # TODO: Possibly load these from a yaml, defaults.yaml
+    use_fibre_channel=False,
+    loop_only=False,
+)
+
+_partition_table_defaults = dict(
+    # TODO: Alignment will be calculated by the orchestrator using sysfs
+    partition_start=1048576,
+    alignment=1048576
+)
+
+_partition_defaults = dict(
+    flags=list()
+)
+
+_fs_selector = dict(
+    ext2=EXT2,
+    ext3=EXT3,
+    ext4=EXT4,
+    swap=SWAP,
+    xfs=XFS,
+    efi=EFI,
+    fat32=FAT32,
+    ntfs=NTFS
+)
+
+_volume_group_defaults = dict(
+    pe_size='4MiB'
+)
+
+
+def _fill_defaults(d, defaults):
+    for k in defaults:
+        if k not in d:
+            d[k] = defaults[k]
 
 
 def has_logical(partitions):

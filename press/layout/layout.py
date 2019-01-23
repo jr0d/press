@@ -1,18 +1,19 @@
-import os
-import logging
 import time
 from collections import OrderedDict
 
+import logging
+import os
+
 from press import helpers
+from press.exceptions import (PhysicalDiskException, LayoutValidationError,
+                              GeneralValidationException)
 from press.helpers.cli import run
-from press.helpers.parted import PartedInterface, NullDiskException, PartedException
 from press.helpers.lvm import LVM
 from press.helpers.mdadm import MDADM
+from press.helpers.parted import PartedInterface, NullDiskException, PartedException
 from press.helpers.udev import UDevHelper
 from press.layout.disk import Disk
 from press.layout.lvm import VolumeGroup
-from press.exceptions import (PhysicalDiskException, LayoutValidationError,
-                              GeneralValidationException)
 
 log = logging.getLogger(__name__)
 
@@ -224,11 +225,18 @@ class Layout(object):
             partition_table = disk.partition_table
             parted.set_label(partition_table.type)
             for partition in partition_table.partitions:
+                fs_type = ('' if not partition.file_system
+                           else partition.file_system.parted_fs_type_alias)
                 monitor = self.udev.get_monitor()
                 monitor.start()
                 log.debug(str(type(monitor)))
+
                 partition_id = parted.create_partition(
-                    partition.name, partition.size.bytes, flags=partition.flags)
+                    partition.name,
+                    partition.size.bytes,
+                    flags=partition.flags,
+                    fs_type=fs_type)
+
                 # Dirty race condition hack, need to re-write udev monitor to make it more stable
                 time.sleep(2)
                 # end hack
