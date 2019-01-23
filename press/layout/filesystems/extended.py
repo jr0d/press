@@ -77,6 +77,7 @@ class EXTFeature(object):
 
 class EXT(FileSystem):
     fs_type = ''
+    parted_fs_type_alias = 'ext2'
     command_name = ''
 
     # class level defaults
@@ -150,10 +151,16 @@ class EXT2(EXT):
     fs_type = 'ext2'
     command_name = 'mkfs.ext2'
 
+    def _enable_or_disable_features(self):
+        raise NotImplementedError
+
 
 class EXT3(EXT):
     fs_type = 'ext3'
     command_name = 'mkfs.ext3'
+
+    def _enable_or_disable_features(self):
+        raise NotImplementedError
 
 
 class EXT4(EXT):

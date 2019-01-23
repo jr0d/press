@@ -13,6 +13,7 @@ log = logging.getLogger(__name__)
 
 class FAT32(FileSystem):
     fs_type = 'fat'
+    parted_fs_type_alias = 'fat32'
     command_name = 'mkfs.vfat'
 
     def __init__(self, label=None, mount_options=None, **extra):

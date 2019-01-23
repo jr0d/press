@@ -56,10 +56,11 @@ class PartedInterface(object):
             raise PartedException(result.stderr)
         return result
 
-    def make_partition(self, type_or_name, start, end):
+    def make_partition(self, type_or_name, start, end, fs_type=''):
         log.info("Creating partition type %s, start %d, end %d" % (type_or_name,
                                                                    start, end))
-        command = 'mkpart %s %d %d' % (type_or_name, start, end)
+        fs_type_alias = ' %s ' % fs_type if fs_type else ' '
+        command = 'mkpart %s%s%d %d' % (type_or_name, fs_type_alias, start, end)
         return self.run_parted(command)
 
     def get_table(self, raw=False):
@@ -219,12 +220,28 @@ class PartedInterface(object):
             return False
         return True
 
-    def create_partition(self, type_or_name, part_size, flags=None):
+    def create_partition(self, type_or_name, part_size, fs_type=None, flags=None):
         """
 
         :rtype : int
         :param type_or_name:
         :param part_size:
+        :param fs_type: parted fs_type alias must be one of
+
+            .. code-block::
+
+                ext2
+                fat16, fat32
+                hfs, hfs+, hfsx
+                linux-swap
+                NTFS
+                reiserfs
+                ufs
+                btrfs
+
+        These aliases map to partition type codes for MBR partitions or
+        GUID file system hints on GPT.
+
         :param flags: list of partition flags
         """
 
@@ -260,7 +277,7 @@ class PartedInterface(object):
 
         if type_or_name == 'logical' and label == 'msdos':
             if not self.extended_partition:
-                self.make_partition('extended', start, table_size - 1)
+                self.make_partition('extended', start, table_size - 1, fs_type=fs_type)
                 start += self.partition_start
                 partition_number = 5
 
@@ -275,9 +292,9 @@ class PartedInterface(object):
             # requires the name, yet always fails, saying that only
             # logical partitions may have names.
             # If you want a name, use parted's separate "name" command.  */
-            self.make_partition('unused', start, end)
+            self.make_partition('unused', start, end, fs_type=fs_type)
         else:
-            self.make_partition(type_or_name, start, end)
+            self.make_partition(type_or_name, start, end, fs_type=fs_type)
 
         if label == 'gpt':
             # obviously we need to determine the new partition's id.
