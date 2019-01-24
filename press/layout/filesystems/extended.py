@@ -77,6 +77,7 @@ class EXTFeature(object):
 
 class EXT(FileSystem):
     fs_type = ''
+    parted_fs_type_alias = 'ext2'
     command_name = ''
 
     # class level defaults
