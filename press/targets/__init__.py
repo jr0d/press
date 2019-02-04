@@ -2,6 +2,7 @@ from .target_base import (Chroot, GeneralPostTargetError, Target,
                           VendorRegistry)
 
 from press.targets import linux
+from press.targets import windows
 
 from press.targets.linux import linux_target
 from press.targets.linux.debian import debian_target
@@ -13,3 +14,6 @@ from press.targets.linux.redhat.enterprise_linux import enterprise_linux_target
 from press.targets.linux.redhat.enterprise_linux.enterprise_linux_6 import enterprise_linux_6_target
 from press.targets.linux.redhat.enterprise_linux.enterprise_linux_7 import enterprise_linux_7_target
 from press.targets.linux.redhat.enterprise_linux.enterprise_linux_7 import oracle_linux_7
+from press.targets.windows import windows_target
+from press.targets.windows.windows_2k12 import windows_2k12_target
+from press.targets.windows.windows_2k16 import windows_2k16_target
