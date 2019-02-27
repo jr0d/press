@@ -1,7 +1,6 @@
 import logging
 from press import exceptions
-from press.helpers.imagefile import ImageFile
-from press.hooks.hooks import run_hooks
+from press.images.selector import get_image_handler
 
 log = logging.getLogger(__name__)
 
@@ -22,12 +21,17 @@ def imagefile_generator(image_config, target, proxy_info=None):
         image_hash = None
         hash_method = None
 
-    dl = ImageFile(
+    image_handler = get_image_handler(image_config['format'])
+    extra = image_config.copy()
+    del extra['url']
+
+    ih = image_handler(
         url=image_config['url'],
         target=target,
         hash_method=hash_method,
         expected_hash=image_hash,
         buffer_size=image_config.get('chunk_size', _default_chunk_size),
-        proxy=proxy_info)
+        proxy=proxy_info,
+        **extra)
 
-    return dl
+    return ih

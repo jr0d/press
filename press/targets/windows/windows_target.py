@@ -1,6 +1,9 @@
 import logging
+import uuid
 
+from press.helpers import deployment
 from press.helpers.cli import run
+from press.helpers.sysfs_info import has_efi
 from press.targets import Target
 
 
@@ -11,39 +14,19 @@ class WindowsTarget(Target):
     name = 'windows'
     dev_name = ''
 
+    # Current values to replace in the BCD template
+    BCD_DISK_GUID = None
+    BCD_EFI_PART_GUID = None
+    BCD_C_PART_GUID = None
+
+    # The path of the BCD file to edit
+    BCD_PATH = None
+
+    EFI_PARTITION_MOUNT_POINT = '/mnt/efi'
+
     @property
     def bootloader_configuration(self):
         return self.press_configuration.get('bootloader')
-
-    def get_file_name(self):
-        url = self.press_configuration.get('image').get('url')
-        return url.split('/')[-1]
-
-    def get_wim_index(self):
-        return self.press_configuration.get('image').get('wim_index')
-
-    def disk_target(self):
-        _target = self.bootloader_configuration.get('target', 'first')
-        if _target == 'first':
-            return self.layout.disks.keys()[0]
-        return _target
-
-    def get_dev_name(self):
-        self.dev_name = '{}1'.format(self.disk_target())
-
-    def wimapply(self):
-        file_name = self.get_file_name()
-        wim_index = self.get_wim_index()
-        log.info('Applying windows image {}'.format(file_name))
-        command = "wimapply {0} {1} {2}".format(self.join_root(file_name),
-                                                wim_index,
-                                                self.dev_name)
-        res = run(command)
-        if res.returncode:
-            log.error("Failed to apply windows files on "
-                      "device {}".format(self.dev_name))
-        else:
-            log.info('Applied windows files on device {}'.format(self.dev_name))
 
     def write_windows_boot_record(self):
         log.info("Writting windows boot record")
@@ -63,9 +46,46 @@ class WindowsTarget(Target):
         if res.returncode:
             log.error("Failed to run command {}".format(command))
 
-    def run(self):
-        self.get_dev_name()
-        self.wimapply()
-        self.write_windows_boot_record()
-        self.install_mbr()
+    @staticmethod
+    def replace_guid(data, old, new):
+        current_pos = 0
+        replace_count = 0
+        while True:
+            try:
+                idx = data[current_pos:].index(old)
+            except ValueError:
+                break
+            replace_count += 1
+            for i in range(16):
+                data[current_pos+idx+i] = new[i]
+            print(uuid.UUID(bytes_le=bytes(data[current_pos+idx:current_pos+idx+16])))
+            current_pos = current_pos + 16 + idx
+        return replace_count
 
+    def update_bcd_guids(self, data, new_disk_guid, new_efi_guid, new_c_guid):
+        self.replace_guid(data, self.BCD_DISK_GUID, new_disk_guid)
+        self.replace_guid(data, self.BCD_EFI_PART_GUID, new_efi_guid)
+        self.replace_guid(data, self.BCD_C_PART_GUID, new_c_guid)
+
+    def mount_efi_partition(self):
+        pass
+
+    def umount_efi_partition(self):
+        pass
+
+    def copy_efi_data(self):
+        deployment.recursive_makedir('/mnt')
+
+    def update_and_copy_bcd_hive(self):
+        pass
+
+    def get_bcd_data(self):
+        with open(self.BCD_PATH, "rb") as fp:
+            return bytearray(fp.read())
+
+    def run(self):
+        if has_efi():
+            pass
+        else:
+            self.write_windows_boot_record()
+            self.install_mbr()

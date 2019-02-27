@@ -3,4 +3,5 @@ from press.images.imagefile import ImageFile
 
 
 class TarImage(ImageFile):
-    image_types = ['tgz', 'tar_xz']
+    def extract(self):
+        return tar_extract(self.full_filename, chdir=self.target)

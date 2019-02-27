@@ -150,12 +150,17 @@ def remove_file(path):
 
 def tar_extract(archive_path, chdir=''):
     # TODO: read header to determine compression / archive type?
+    # TODO: check for GNU tar and skip this crap?
     base_tar_cmd = 'tar --numeric-owner --xattrs --xattrs-include=* --acls'
     bzip_extensions = ('bz2', 'tbz', 'tbz2')
-    compress_method = 'z'
-    use_bzip = bool([i for i in bzip_extensions if archive_path.endswith(i)])
-    if use_bzip:
+    xz_extensions = ['xz']
+
+    if any([i for i in bzip_extensions if archive_path.endswith(i)]):
         compress_method = 'j'
+    elif any([i for i in xz_extensions if archive_path.endswith(i)]):
+        compress_method = 'J'
+    else:
+        compress_method = 'z'
 
     return cli.run('%s -%sxf %s%s' %
                    (base_tar_cmd, compress_method, archive_path,

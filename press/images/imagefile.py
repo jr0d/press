@@ -12,8 +12,6 @@ log = logging.getLogger(__name__)
 
 
 class ImageFile(object):
-    image_types = []
-
     def __init__(self,
                  url,
                  target,
@@ -21,7 +19,8 @@ class ImageFile(object):
                  expected_hash=None,
                  download_directory=None,
                  buffer_size=20480,
-                 proxy=None):
+                 proxy=None,
+                 **extra):
         """
         Extending (or renaming really) Chad Catlett's Download class.
 
@@ -55,6 +54,8 @@ class ImageFile(object):
             self.download_directory = self.target
 
         self.filename_from_url()
+
+        self.extra = extra
 
     def filename_from_url(self):
         parsed_url = urllib.parse.urlparse(self.url)
@@ -122,13 +123,6 @@ class ImageFile(object):
         """Deletes downloaded file in this version
         """
         os.unlink(self.full_filename)
-
-    def prepare_for_extract(self):
-        """Prepare for extraction.
-
-        This doesn't do anything, subclasses(like qcow) or something could do something like mount an image
-        """
-        raise NotImplementedError
 
     def extract(self):
         """Extracts downloaded file to the target_path
