@@ -19,16 +19,16 @@ class Ubuntu1604Target(DebianTarget, Grub2Debian):
                 raise GeneralPostTargetError(
                     'Error installing required packages for grub2')
 
-    def install_hwe_kernel_on_14gen(self):
-        """16.04 needs HWE kernel for R740"""
-        if 'R740' in self.get_product_name():
+    def install_hwe_kernel(self):
+        """16.04 needs HWE kernel for Dell 14 Gen and HPE Gen10 chassis"""
+        if any(x in self.get_product_name() for x in ['R740', 'R840', 'Gen10']):
             _hwe_kernel = ['linux-generic-hwe-16.04']
             if self.install_packages(_hwe_kernel):
-                raise GeneralPostTargetError('Error installing HWE kernel for R740')
+                raise GeneralPostTargetError('Error installing HWE kernel')
 
     def run(self):
         super(Ubuntu1604Target, self).run()
-        self.install_hwe_kernel_on_14gen()
+        self.install_hwe_kernel()
         self.grub_disable_recovery()
         self.check_for_grub()
         self.install_grub2()
