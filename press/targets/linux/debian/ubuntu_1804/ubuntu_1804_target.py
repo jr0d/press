@@ -15,8 +15,8 @@ class Ubuntu1804Target(DebianTarget, Grub2Debian):
     dist = 'bionic'
     netplan_interfaces_path = '/etc/netplan/01-netcfg.yaml'
     ifupdown_interfaces_path = '/etc/network/interfaces'
-    netplan_readme_msg = ("netplan.io has been disabled in favor of ifupdown "
-                          "contact Rackspace support to switch to netplan")
+    netplan_readme_msg = ("Press defaults to /etc/network/interfaces, to enable netplan; "
+                          "add use_netplan: True to your network configuration.")
 
     def __init__(self, press_configuration, layout, root, chroot_staging_dir):
         super(Ubuntu1804Target, self).__init__(press_configuration,
