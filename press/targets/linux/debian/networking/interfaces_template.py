@@ -23,8 +23,8 @@ iface {{ network.device }}{{'.' ~ network.vlan}} {{'inet6' if network.type == 'A
     gateway {{ network.gateway }}
 {% endif %}
 {% for route in network.routes %}
-        post-up route add -net {{ route.cidr }} gw {{ route.gateway }}
-        post-down route del -net {{ route.cidr }} gw {{ route.gateway }}
+        post-up ip route add {{ route.cidr }} via {{ route.gateway }} dev {{ network.device }}
+        pre-down ip route del {{ route.cidr }} via {{ route.gateway }} dev {{ network.device }}
 {% endfor %}
 {% else %}
 auto {{ network.device }}
@@ -35,8 +35,8 @@ iface {{ network.device }} {{'inet6' if network.type == 'AF_INET6' else 'inet'}}
     gateway {{ network.gateway }}
 {% endif %}
 {% for route in network.routes %}
-        post-up route add -net {{ route.cidr }} gw {{ route.gateway }}
-        post-down route del -net {{ route.cidr }} gw {{ route.gateway }}
+        post-up ip route add {{ route.cidr }} via {{ route.gateway }} dev {{ network.device }}
+        pre-down ip route del {{ route.cidr }} via {{ route.gateway }} dev {{ network.device }}
 {% endfor %}
 {% endif %}
 {% endfor %}

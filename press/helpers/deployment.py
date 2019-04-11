@@ -39,7 +39,8 @@ def read(filename, splitlines=False):
 
     :param filename: Absolute path to a file.
     :type filename: str.
-
+    :param splitlines: split the lines or just return string
+    :type splitlines: boolean
     :return: str.
 
     """
@@ -82,6 +83,12 @@ def write(filename, data, append=False, mode=0o644):
 
     # Last step lets change the file mode to specified mode
     os.chmod(filename, mode)
+
+
+def replace_line_in_file(path, match, newline, mode=0o644):
+    data = read(path)
+    new_data = replace_line_matching(data, match, newline)
+    write(path, new_data, mode=mode)
 
 
 def replace_file(path, data):

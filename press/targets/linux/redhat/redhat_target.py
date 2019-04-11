@@ -182,7 +182,7 @@ class RedhatTarget(LinuxTarget):
         rhel_repo_name = 'rhel_base'
 
         if short_version[0] == '6':
-            short_version = str(short_version) + '.z'
+            short_version = '6'
         elif short_version[0] == '7':
             short_version = str(short_version) + '.eus'
 
