@@ -46,7 +46,7 @@ class UDevHelper(object):
             return None
         return udisk
 
-    def discover_valid_storage_devices(self, fc_enabled=False, nvme_enabled=False, loop_only=False):
+    def discover_valid_storage_devices(self, fc_enabled=False, nvme_enabled=True, loop_only=False):
         """
         Kind of ugly, but gets the job done. It strips devices we don't
         care about, such as cd roms, device mapper block devices, loop, and fibre channel.
