@@ -110,7 +110,7 @@ class EL7Target(EnterpriseLinuxTarget, Grub2):
             vlan = network_config.get('vlan')
             if not prefix:
                 prefix = ipaddress.ip_network(
-                    "{ip_address}/{netmask}".format(**network_config),
+                    u"{ip_address}/{netmask}".format(**network_config),
                     strict=False).prefixlen
 
             _template = interface_template(

@@ -92,8 +92,8 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
             prefix = network_config.get('prefix')
             if not prefix:
                 prefix = ipaddress.ip_network(
-                    "{ip_address}/{netmask}".format(
-                        **network_config).decode("utf-8"),
+                    u"{ip_address}/{netmask}".format(
+                        **network_config),
                     strict=False).prefixlen
 
             _template = interface_template(
