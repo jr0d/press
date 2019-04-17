@@ -1,5 +1,9 @@
+from __future__ import absolute_import
+
 import logging
 import sys
+
+from six import print_ as p3print
 
 from size import Size
 
@@ -23,7 +27,7 @@ def safe_convert_sizes(size):
     try:
         return Size(size).bytes
     except ValueError as ve:
-        print('Error converting value : {}'.format(ve), file=sys.stderr)
+        p3print('Error converting value : {}'.format(ve), file=sys.stderr)
         sys.exit(1)
 
 
@@ -31,7 +35,7 @@ def apply(namespace):
     try:
         configuration = configuration_from_file(namespace.configuration)
     except PressCriticalException:
-        print(
+        p3print(
             'Could not open configuration at {}'.format(
                 namespace.configuration),
             file=sys.stderr)
@@ -66,7 +70,7 @@ def apply(namespace):
             lvm_pe_size=namespace.lvm_pe_size,
             http_proxy=namespace.proxy)
     except Exception as e:
-        print(
+        p3print(
             'Encountered an error while initializing : {}'.format(e),
             file=sys.stderr)
         if namespace.debug:
@@ -77,7 +81,7 @@ def apply(namespace):
     try:
         orchestrator.run()
     except Exception as e:
-        print('Error applying configuration : {}'.format(e), file=sys.stderr)
+        p3print('Error applying configuration : {}'.format(e), file=sys.stderr)
         if namespace.debug:
             raise
         error = True

@@ -35,6 +35,7 @@ fs_selector = dict(
 
 default_use_fibre_channel = False
 default_loop_only = False
+default_clear_device_mapper = True
 
 
 def has_logical(partitions):
@@ -281,6 +282,7 @@ def generate_layout_stub(layout_config, parted_path):
                                             default_use_fibre_channel),
         loop_only=layout_config.get('loop_only', default_loop_only),
         parted_path=parted_path,
+        clear_dm=layout_config.get('clear_device_mapper', default_clear_device_mapper)
     )
 
 

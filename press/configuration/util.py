@@ -6,7 +6,7 @@ from press.exceptions import PressCriticalException
 
 
 def configuration_from_yaml(data):
-    return yaml.load(data)
+    return yaml.safe_load(data)
 
 
 def configuration_from_json(data):
