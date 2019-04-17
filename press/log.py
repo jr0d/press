@@ -11,7 +11,7 @@ def setup_logging(log_level=logging.ERROR,
     press_logger = logging.getLogger('press')
     press_cli_logger = logging.getLogger('press.helpers.cli')
 
-    if console_logging:  # True unless explicitly defined
+    if console_logging:  # True unless explicitly untrue
         stream_handler = logging.StreamHandler()
         press_logger.addHandler(stream_handler)
         press_logger.setLevel(log_level)

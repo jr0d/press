@@ -25,7 +25,8 @@ class Layout(object):
                  use_fibre_channel=False,
                  loop_only=False,
                  use_nvm_express=True,
-                 parted_path='/sbin/parted'):
+                 parted_path='/sbin/parted',
+                 clear_dm=False):
         """
         Docs, maybe later
 
@@ -33,6 +34,7 @@ class Layout(object):
         :param loop_only:
         :param use_nvm_express:
         :param parted_path:
+        :param clear_dm: Should apply clear the device mapper
 
         :ivar self.committed: False on __init__, True after calling apply()
         """
@@ -40,6 +42,7 @@ class Layout(object):
         self.committed = False
         self.fc_enabled = use_fibre_channel
         self.parted_path = parted_path
+        self.clear_dm =clear_dm
         self.udev = UDevHelper()
         self.udisks = self.udev.discover_valid_storage_devices(
             fc_enabled=self.fc_enabled, loop_only=loop_only, nvme_enabled=use_nvm_express)
@@ -317,14 +320,18 @@ class Layout(object):
                 self.lvm.pvremove(array.devname)
             array.clean()
 
+    def clear_device_mapper(self):
+        log.info('Clearing the device mapper')
+        run('dmsetup remove_all')
+
     def apply(self):
         """Lots of logging here
         """
 
         # TODO: now that we have some clean up operations, determine if we still need to do this
-        log.info('Clearing the device mapper')
-        run('dmsetup remove_all')
 
+        if self.clear_dm:
+            self.clear_device_mapper()
         # Destroy any volume groups present at boot time
         self.destroy_volume_groups()
         self.clean_software_raid()
