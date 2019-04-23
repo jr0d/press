@@ -249,6 +249,22 @@ class LinuxTarget(Target):
                 continue
             return line.strip()
 
+    def enable_service(self, service):
+        """
+        :param service: string of single service to enable
+        :return:
+        """
+        command = 'systemctl enable {}'.format(service)
+        log.info('Enabling service: {}'.format(command))
+        self.chroot(command)
+
+    def enable_services(self, services):
+        """
+        :param services: list of services to enable
+        """
+        for service in services:
+            self.enable_service(service)
+
     def run(self):
         self.authentication()
         self.set_hostname()
