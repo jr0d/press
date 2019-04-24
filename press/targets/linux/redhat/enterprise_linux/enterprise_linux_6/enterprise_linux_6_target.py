@@ -265,6 +265,15 @@ class EL6Target(EnterpriseLinuxTarget, Grub):
         log.info('Updating /etc/sysconfig/clock: %s' % data)
         deployment.replace_file(clock_file_path, data)
 
+    def enable_service(self, service):
+        """
+        :param service: string of single service to enable
+        :return:
+        """
+        command = 'chkconfig {} on'.format(service)
+        log.info('Enabling service: {}'.format(command))
+        self.chroot(command)
+
     def run(self):
         super(EL6Target, self).run()
         self.localization()
